@@ -1,0 +1,20 @@
+{
+  "name": "caderno-inb",
+  "version": "1.0.0",
+  "description": "Cronograma de estudos INB 2026 com cronômetro de foco, login e progresso",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "node --watch --disable-warning=ExperimentalWarning server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
