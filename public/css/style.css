@@ -332,7 +332,7 @@ a { color: inherit; }
 
 .mini-timer {
   position: fixed; right: 16px; bottom: calc(86px + var(--safe-b)); z-index: 30;
-  display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px; border-radius: 12px;
+  display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 14px;
   background: var(--dark-2); color: #fff; box-shadow: 0 10px 30px rgba(32, 44, 42, .3); font: 600 15px var(--head);
   font-variant-numeric: tabular-nums;
 }
@@ -422,12 +422,12 @@ a { color: inherit; }
 .apostila th, .apostila td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
 .apostila th { background: #f7f6f2; font-weight: 700; }
 .apostila .tbl { overflow-x: auto; }
-.box { border-radius: 12px; padding: 12px 16px; margin: 14px 0; border: 1px solid; }
-.box > b:first-child, .box .bt { display: block; font: 700 13px var(--head); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.box.dica { background: #f6fbf9; border-color: #cfe5dc; } .box.dica .bt { color: var(--green); }
-.box.atencao { background: #fff7f4; border-color: #f6d3c8; } .box.atencao .bt { color: #c8452b; }
-.box.exemplo { background: #f7f6ff; border-color: #dcd6f6; } .box.exemplo .bt { color: var(--purple); }
-.box.prova { background: #fdf8ec; border-color: #eedcae; } .box.prova .bt { color: #9a6a14; }
+.apostila .box { border-radius: 12px; padding: 12px 16px; margin: 14px 0; border: 1px solid; }
+.apostila .box > b:first-child, .apostila .box .bt { display: block; font: 700 13px var(--head); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.apostila .box.dica { background: #f6fbf9; border-color: #cfe5dc; } .apostila .box.dica .bt { color: var(--green); }
+.apostila .box.atencao { background: #fff7f4; border-color: #f6d3c8; } .apostila .box.atencao .bt { color: #c8452b; }
+.apostila .box.exemplo { background: #f7f6ff; border-color: #dcd6f6; } .apostila .box.exemplo .bt { color: var(--purple); }
+.apostila .box.prova { background: #fdf8ec; border-color: #eedcae; } .apostila .box.prova .bt { color: #9a6a14; }
 .roteiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
 .roteiro div { background: #f7f6f2; border-radius: 10px; padding: 10px 12px; font-size: 13.5px; line-height: 1.4; }
 .roteiro b { display: block; font: 700 15px var(--head); color: var(--coral); }
@@ -493,3 +493,11 @@ mark.hl.flash { outline: 3px solid var(--coral); }
   body.printing-apostila .box, body.printing-apostila .roteiro div, body.printing-apostila th, body.printing-apostila .q .gab-body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body.printing-apostila .reais a::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 8.5pt; color: #666; }
 }
+
+.mini-timer .mt-time { display: flex; align-items: center; gap: 9px; padding: 6px 10px; border-radius: 10px; color: #fff; font: 600 16px var(--head); font-variant-numeric: tabular-nums; }
+.mini-timer .mt-time small { display: block; font: 500 10.5px "DM Sans", sans-serif; color: #9fb0ab; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-timer .mt-btn { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #d5ddda; padding: 0; }
+.mini-timer .mt-btn:hover, .mini-timer .mt-time:hover { background: var(--dark-3); color: #fff; }
+.mini-timer .mt-btn.primary { background: #f17153; color: #fff; }
+.mini-timer.paused .mt-t { animation: blink 1.4s infinite; }
+.check-btn .box .ic { display: block; }

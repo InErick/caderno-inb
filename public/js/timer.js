@@ -48,8 +48,9 @@ window.Timer = (() => {
   function isActive() { return !!st; }
   function current() { return st; }
 
-  async function start(topic, mode, goalMin, originEl) {
-    if (st) { expand(originEl); return; }
+  // compact = true: não abre a tela cheia; o cronômetro fica no canto (ex.: lendo a apostila)
+  async function start(topic, mode, goalMin, originEl, compact = false) {
+    if (st) { compact ? showMini() : expand(originEl); return; }
     const target = mode === "pomodoro" ? 25 * 60 : mode === "meta" ? goalMin * 60 : null;
     st = {
       dayKey: topic?.key || null, title: topic?.t || "Estudo livre", m: topic?.m || "REV", area: topic?.a || "",
@@ -60,7 +61,8 @@ window.Timer = (() => {
     if ("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {});
     buildOverlay();
     startTick();
-    expand(originEl);
+    if (compact) { expanded = false; showMini(); opts.toast?.("Cronômetro iniciado. Ele fica no canto da tela enquanto você lê."); }
+    else expand(originEl);
     if (wantsPip()) openPip();
     else if (isTouch()) document.documentElement.requestFullscreen?.().catch(() => {});
   }
@@ -196,7 +198,22 @@ window.Timer = (() => {
   }
 
   async function minimize() { exitFullscreen(); await shrink(); showMini(); }
-  function showMini() { if (!st || expanded) return; const m = $mini(); m.hidden = false; m.onclick = () => expand(m); render(); }
+  function showMini() {
+    if (!st || expanded) return;
+    const m = $mini();
+    m.innerHTML = `<button class="mt-time" data-a="open" title="Abrir modo foco"><span class="dot"></span><span><b class="mt-t">00:00</b><small class="mt-s"></small></span></button>
+      <button class="mt-btn primary" data-a="toggle" title="Pausar / continuar"></button>
+      <button class="mt-btn" data-a="finish" title="Finalizar e salvar">${Icon("stop", 16)}</button>
+      <button class="mt-btn" data-a="open" title="Abrir em tela cheia">${Icon("expand", 16)}</button>`;
+    m.onclick = e => {
+      const a = e.target.closest("[data-a]")?.dataset.a;
+      if (a === "open") expand(m);
+      if (a === "toggle") toggle();
+      if (a === "finish") finish();
+    };
+    m.hidden = false;
+    render();
+  }
 
   // ---------- render a cada tick ----------
   function render() {
@@ -217,7 +234,14 @@ window.Timer = (() => {
       f.classList.toggle("paused", !running);
     }
     const m = $mini();
-    if (!m.hidden) m.innerHTML = `<span class="dot" style="${running ? "" : "animation:none;background:#facc15"}"></span>${fmt(shown)}`;
+    if (!m.hidden && m.querySelector(".mt-t")) {
+      m.querySelector(".mt-t").textContent = fmt(shown);
+      m.querySelector(".mt-s").textContent = st.title;
+      m.querySelector(".dot").style.cssText = running ? "" : "animation:none;background:#facc15;box-shadow:none";
+      const tg = m.querySelector('[data-a="toggle"]'), want = running ? "pause" : "play";
+      if (tg.dataset.ic !== want) { tg.dataset.ic = want; tg.innerHTML = Icon(want, 16); }
+      m.classList.toggle("paused", !running);
+    }
     document.title = `${running ? "⏱" : "⏸"} ${fmt(shown)} · ${baseTitle}`;
     renderPip(shown, frac, running, sub);
 

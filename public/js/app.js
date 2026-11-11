@@ -390,8 +390,8 @@
       day, edital: S.user.edital, plan: S.plan, labels: ED().labels, toast,
       onBack: () => { history.length > 1 ? history.back() : (location.hash = "#cronograma"); },
       onStudy: el => {
-        if (Timer.isActive()) return Timer.expand(el);
-        Timer.start(S.plan.find(x => x.key === day), S.mode, S.user.dailyGoal, el);
+        if (Timer.isActive()) return toast("O cronômetro já está rodando no canto da tela.");
+        Timer.start(S.plan.find(x => x.key === day), S.mode, S.user.dailyGoal, el, true);
       },
     });
   }
