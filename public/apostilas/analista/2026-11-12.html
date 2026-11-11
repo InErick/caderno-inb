@@ -1,0 +1,148 @@
+<h1>Requisitos II — regras de negócio, aceitação, rastreabilidade e mudanças</h1>
+<p class="lead">Ontem você aprendeu a levantar e escrever requisitos. Hoje o foco é o que acontece <b>depois</b>: como diferenciar requisito de regra de negócio, como escrever critérios de aceitação, como acompanhar cada requisito até o código e o teste (rastreabilidade) e como avaliar o impacto de uma mudança.</p>
+<div class="meta-row"><span class="chip-i">Engenharia de Requisitos</span><span class="chip-i">Dia 3 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="roteiro">
+  <div><b>0–35 min</b>Teoria: seções 1 a 6</div>
+  <div><b>35–55 min</b>Exercícios + questões reais</div>
+  <div><b>55–60 min</b>Resumo: monte uma mini matriz de rastreabilidade</div>
+</div>
+
+<h2>1. Regra de negócio × requisito</h2>
+<p>Uma <b>regra de negócio</b> é uma política, lei ou condição da organização que existe <b>independentemente de haver um sistema</b>. O <b>requisito</b> descreve o que o software faz para cumprir essa regra.</p>
+<div class="tbl"><table>
+  <tr><th>Regra de negócio</th><th>Requisito que a implementa</th></tr>
+  <tr><td>"O servidor só pode tirar férias após 12 meses de exercício."</td><td>"O sistema deve bloquear a solicitação de férias de servidores com menos de 12 meses de exercício e exibir o motivo."</td></tr>
+  <tr><td>"Compras acima de R$ 50 mil exigem aprovação do diretor."</td><td>"O sistema deve encaminhar automaticamente ao diretor os pedidos acima de R$ 50 mil."</td></tr>
+</table></div>
+<p>A regra continuaria valendo se o setor usasse papel e caneta. Por isso ela é documentada <b>à parte</b> (num catálogo de regras) e <b>referenciada</b> pelos requisitos e casos de uso: se a regra mudar, você sabe exatamente o que alterar.</p>
+<p>Tipos comuns de regra (Wiegers): <b>fatos</b> ("todo processo tem um número único"), <b>restrições</b> ("menor de idade não pode contratar"), <b>gatilhos/ações</b> ("se o estoque ficar abaixo do mínimo, gerar pedido"), <b>inferências</b> ("cliente com 3 atrasos é inadimplente") e <b>cálculos</b> ("desconto = 5% do valor bruto").</p>
+
+<h2>2. Histórias de usuário e critérios de aceitação</h2>
+<p>Em times ágeis, requisitos costumam ser escritos como <b>histórias de usuário</b>:</p>
+<div class="box exemplo"><span class="bt">Formato</span><b>Como</b> &lt;papel&gt;, <b>quero</b> &lt;ação&gt;, <b>para</b> &lt;benefício&gt;.<br>Ex.: "Como servidor, quero solicitar férias pelo celular, para não depender do RH."</div>
+<p>A história sozinha é curta demais para testar. Por isso ela vem com <b>critérios de aceitação</b>: as condições específicas que precisam ser verdadeiras para a história ser considerada pronta. Um formato muito usado é o <b>Gherkin</b>, do BDD (Behavior-Driven Development):</p>
+<div class="box exemplo"><span class="bt">Critério em Gherkin</span><b>Cenário:</b> servidor com menos de 12 meses<br><b>Dado</b> que o servidor tem 8 meses de exercício<br><b>Quando</b> ele solicitar férias<br><b>Então</b> o sistema deve recusar a solicitação<br><b>E</b> exibir "Período aquisitivo incompleto".</div>
+<p>Bons critérios de aceitação são <b>claros, testáveis e escritos do ponto de vista do usuário</b>. Eles também servem de base para os testes de aceitação.</p>
+<div class="box prova"><span class="bt">Critérios de aceitação × Definition of Done</span><b>Critérios de aceitação</b>: específicos de <b>uma</b> história ("recusar férias com menos de 12 meses").<br><b>Definition of Done (DoD)</b>: padrão de qualidade que vale para <b>todas</b> as histórias ("código revisado, testes passando, documentação atualizada").</div>
+
+<h2>3. Gerenciamento de requisitos</h2>
+<p>Requisitos mudam: leis mudam, o negócio muda, o usuário entende melhor o que quer. Gerenciar requisitos é <b>controlar essas mudanças</b> sem perder o rumo. Envolve:</p>
+<ul>
+  <li><b>Identificação única</b> de cada requisito (RF01, RNF07…);</li>
+  <li><b>Baseline</b>: versão aprovada do conjunto de requisitos, que só muda por processo formal;</li>
+  <li><b>Controle de versão e de status</b> (proposto, aprovado, implementado, verificado);</li>
+  <li><b>Priorização</b>, por exemplo pelo método <b>MoSCoW</b>: <i>Must</i> (obrigatório), <i>Should</i> (importante), <i>Could</i> (desejável), <i>Won't</i> (não será feito agora);</li>
+  <li><b>Controle de mudanças</b> e <b>rastreabilidade</b> (próximas seções).</li>
+</ul>
+<h3>Fluxo de controle de mudanças</h3>
+<p><b>Solicitação de mudança → análise de impacto → decisão (aprovar/rejeitar, muitas vezes por um comitê, o CCB) → implementação → atualização da documentação e da rastreabilidade.</b></p>
+
+<h2>4. Rastreabilidade</h2>
+<p><b>Rastreabilidade</b> é a capacidade de seguir a "vida" de um requisito: de onde ele veio e em quais artefatos ele se transformou (modelos, código, testes).</p>
+<div class="tbl"><table>
+  <tr><th>Tipo</th><th>O que liga</th><th>Pergunta que responde</th></tr>
+  <tr><td><b>Para trás</b> (backward)</td><td>Requisito → sua origem (stakeholder, lei, documento)</td><td>"Por que este requisito existe? Quem pediu?"</td></tr>
+  <tr><td><b>Para frente</b> (forward)</td><td>Requisito → design, código, testes</td><td>"Onde este requisito foi implementado e testado?"</td></tr>
+  <tr><td><b>Bidirecional</b></td><td>Os dois sentidos</td><td>Permite ir e voltar, e é o que as normas e a FGV mais pedem</td></tr>
+  <tr><td><b>Horizontal</b></td><td>Requisito ↔ requisito (ou artefatos do mesmo nível)</td><td>"Quais requisitos dependem deste?"</td></tr>
+  <tr><td><b>Vertical</b></td><td>Entre níveis diferentes (requisito → projeto → código)</td><td>"Como este requisito desce até o código?"</td></tr>
+</table></div>
+<p>Gotel e Finkelstein também dividem em <b>pré-especificação</b> (a vida do requisito <i>antes</i> de entrar no documento: origem, discussões) e <b>pós-especificação</b> (a vida <i>depois</i>: projeto, código, testes).</p>
+<h3>Matriz de rastreabilidade</h3>
+<p>A ferramenta mais simples é uma tabela cruzando requisitos com outros artefatos:</p>
+<div class="tbl"><table>
+  <tr><th>Requisito</th><th>Origem</th><th>Caso de uso</th><th>Classe/serviço</th><th>Caso de teste</th></tr>
+  <tr><td>RF01 Solicitar férias</td><td>RH – entrevista 03/02</td><td>UC05</td><td>FeriasService</td><td>CT-11, CT-12</td></tr>
+  <tr><td>RF02 Aprovar férias</td><td>Portaria 12/2024</td><td>UC06</td><td>AprovacaoService</td><td>CT-13</td></tr>
+  <tr><td>RNF03 Resposta ≤ 2 s</td><td>Diretoria de TI</td><td>—</td><td>Cache de consultas</td><td>CT-40 (carga)</td></tr>
+</table></div>
+<div class="box dica"><span class="bt">Para que serve (cai muito)</span>• <b>Análise de impacto</b>: ao mudar RF01, você sabe que precisa mexer em UC05, FeriasService e refazer CT-11 e CT-12.<br>• <b>Cobertura de testes</b>: todo requisito tem pelo menos um teste?<br>• Evitar <b>gold plating</b>: código que não atende a nenhum requisito.<br>• <b>Auditoria</b> e conformidade.</div>
+
+<h2>5. Análise de impacto de mudanças</h2>
+<p>Antes de aprovar uma mudança, avalia-se o que ela afeta. Passos típicos:</p>
+<ol>
+  <li>Entender a mudança pedida e seu motivo;</li>
+  <li>Usar a rastreabilidade para listar os <b>artefatos afetados</b> (outros requisitos, telas, classes, banco, testes, documentação);</li>
+  <li>Estimar <b>esforço, custo e prazo</b>;</li>
+  <li>Identificar <b>riscos</b> (efeitos colaterais, regressões);</li>
+  <li>Levar a análise para a <b>decisão</b> (aprovar, rejeitar, adiar).</li>
+</ol>
+<div class="box exemplo"><span class="bt">Exemplo</span>Uma nova portaria permite dividir as férias em 3 períodos, não mais em 2. A matriz mostra que a regra está ligada a RF01, à tela de solicitação, à tabela <code>Ferias</code> e a 4 casos de teste. A equipe estima 3 dias de trabalho, alerta que relatórios antigos podem quebrar e o comitê aprova a mudança para a próxima versão.</div>
+
+<h2>6. Documentação técnica e funcional</h2>
+<div class="tbl"><table>
+  <tr><th>Documentação funcional</th><th>Documentação técnica</th></tr>
+  <tr><td>Foco no <b>o que</b> e no <b>porquê</b>; público: usuários, negócio, analistas</td><td>Foco no <b>como</b>; público: desenvolvedores, operação</td></tr>
+  <tr><td>Especificação de requisitos, casos de uso, regras de negócio, protótipos, manual do usuário</td><td>Arquitetura, modelo de dados, documentação de API (Swagger/OpenAPI), README, guia de implantação</td></tr>
+</table></div>
+<p>Boa documentação é <b>atualizada, versionada junto com o sistema, objetiva</b> e voltada a quem vai ler. Em times ágeis, prefere-se a documentação "suficiente" e viva (README, Swagger gerado do código) a documentos enormes que ninguém atualiza.</p>
+
+<h2>Mapa-resumo</h2>
+<ul>
+  <li><b>Regra de negócio</b> existe sem o sistema; o <b>requisito</b> diz o que o sistema faz para cumpri-la.</li>
+  <li>História: "Como… quero… para…". <b>Critérios de aceitação</b>: Dado/Quando/Então, testáveis, específicos da história. <b>DoD</b>: vale para todas.</li>
+  <li>Gerenciar requisitos: ID, baseline, versão, status, priorização (MoSCoW), controle de mudanças.</li>
+  <li>Rastreabilidade: para trás (origem), para frente (código/teste), bidirecional; horizontal × vertical; pré × pós-especificação.</li>
+  <li>Matriz de rastreabilidade → análise de impacto e cobertura de testes.</li>
+</ul>
+
+<h2>Exercícios de fixação</h2>
+<p class="muted small">Questões inéditas no estilo FGV, escritas para esta apostila.</p>
+
+<div class="q"><div class="q-n">Questão 1 · inédita</div>
+<p class="q-stem">"Pedidos de diárias devem ser feitos com antecedência mínima de 10 dias da viagem." Essa sentença é melhor classificada como</p>
+<ol class="alts"><li class="alt" data-l="A">requisito não funcional de desempenho.</li><li class="alt" data-l="B">regra de negócio do tipo restrição.</li><li class="alt" data-l="C">critério de Definition of Done.</li><li class="alt" data-l="D">requisito de portabilidade.</li><li class="alt" data-l="E">caso de teste de integração.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> É uma política da organização que vale mesmo sem sistema e que restringe uma ação: regra de negócio de restrição.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 2 · inédita</div>
+<p class="q-stem">A rastreabilidade que liga um requisito à sua origem (stakeholder, norma ou documento que o motivou) é chamada de rastreabilidade</p>
+<ol class="alts"><li class="alt" data-l="A">para frente.</li><li class="alt" data-l="B">para trás.</li><li class="alt" data-l="C">horizontal.</li><li class="alt" data-l="D">de configuração.</li><li class="alt" data-l="E">de execução.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Para trás (backward) volta à origem; para frente (forward) segue até design, código e testes.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 3 · inédita</div>
+<p class="q-stem">O principal benefício de manter rastreabilidade bidirecional entre requisitos, código e testes é</p>
+<ol class="alts"><li class="alt" data-l="A">eliminar a necessidade de testes de regressão.</li><li class="alt" data-l="B">aumentar a velocidade de compilação.</li><li class="alt" data-l="C">permitir avaliar o impacto de uma mudança de requisito sobre os demais artefatos e verificar a cobertura de testes.</li><li class="alt" data-l="D">dispensar a validação com o cliente.</li><li class="alt" data-l="E">garantir que não haverá mudanças de requisitos.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Análise de impacto e cobertura são as duas grandes utilidades. Rastreabilidade não impede mudanças nem substitui testes ou validação.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 4 · inédita</div>
+<p class="q-stem">Considere: "Dado que o usuário errou a senha 3 vezes, quando tentar entrar novamente, então a conta deve ser bloqueada por 15 minutos." Esse texto é um exemplo de</p>
+<ol class="alts"><li class="alt" data-l="A">critério de aceitação no formato Gherkin.</li><li class="alt" data-l="B">Definition of Done.</li><li class="alt" data-l="C">requisito organizacional.</li><li class="alt" data-l="D">diagrama de sequência.</li><li class="alt" data-l="E">matriz de rastreabilidade.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> A estrutura Dado/Quando/Então é a marca do Gherkin, usado em BDD para escrever critérios de aceitação testáveis.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 5 · inédita</div>
+<p class="q-stem">Sobre critérios de aceitação e Definition of Done (DoD), é correto afirmar que</p>
+<ol class="alts"><li class="alt" data-l="A">são sinônimos.</li><li class="alt" data-l="B">os critérios de aceitação valem para todas as histórias, e a DoD é específica de cada uma.</li><li class="alt" data-l="C">os critérios de aceitação são específicos de cada história, e a DoD é um padrão comum a todos os itens.</li><li class="alt" data-l="D">a DoD é definida apenas ao final do projeto.</li><li class="alt" data-l="E">critérios de aceitação não precisam ser testáveis.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Critério de aceitação = condições daquela história. DoD = checklist de qualidade aplicado a tudo que se considera "pronto".</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 6 · inédita</div>
+<p class="q-stem">Ao receber uma solicitação de mudança em um requisito já aprovado na baseline, o primeiro passo técnico recomendado antes da decisão é</p>
+<ol class="alts"><li class="alt" data-l="A">implementar a mudança e depois documentá-la.</li><li class="alt" data-l="B">realizar a análise de impacto, identificando artefatos afetados, esforço e riscos.</li><li class="alt" data-l="C">descartar a baseline e criar outra do zero.</li><li class="alt" data-l="D">rejeitar automaticamente, pois requisitos aprovados não mudam.</li><li class="alt" data-l="E">alterar apenas os casos de teste.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> O fluxo é solicitação → análise de impacto → decisão → implementação → atualização da documentação.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 7 · inédita</div>
+<p class="q-stem">Na priorização MoSCoW, um requisito classificado como "Could" é</p>
+<ol class="alts"><li class="alt" data-l="A">obrigatório para a entrega.</li><li class="alt" data-l="B">importante, mas não crítico.</li><li class="alt" data-l="C">desejável, feito se houver tempo e recursos.</li><li class="alt" data-l="D">descartado definitivamente.</li><li class="alt" data-l="E">um requisito legal.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Must = obrigatório; Should = importante; Could = desejável; Won't = não será feito agora (não necessariamente descartado para sempre).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 8 · inédita</div>
+<p class="q-stem">Assinale a opção que contém apenas exemplos de documentação técnica.</p>
+<ol class="alts"><li class="alt" data-l="A">Manual do usuário e protótipo de telas.</li><li class="alt" data-l="B">Especificação OpenAPI da API, modelo de dados e guia de implantação.</li><li class="alt" data-l="C">Catálogo de regras de negócio e histórias de usuário.</li><li class="alt" data-l="D">Ata de reunião com o cliente e questionário.</li><li class="alt" data-l="E">Documento de visão e glossário do negócio.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> São documentos voltados a quem desenvolve e opera o sistema (o "como"). As demais opções trazem documentação funcional ou de negócio.</p></div></details></div>
+
+<h2>Questões reais para resolver</h2>
+<ul class="reais">
+  <li><span class="src">FGV · Banestes 2021 · Analista em TI – Desenvolvimento de Sistemas · questão 58</span> — engenharia de requisitos: falha na validação de e-mails.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/analista_em_tecnologia_da_informacao_-_desenvolvimento_de_sistemasan-sist_tipo_1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · DPE-RO 2025 · Analista de Sistemas · questão 61</span> — características de TDD e BDD (base dos critérios de aceitação em Gherkin).<br><a href="https://arquivos.qconcursos.com/prova/arquivo_prova/132592/fgv-2025-dpe-ro-analista-de-sistemas-classe-b-prova.pdf" target="_blank" rel="noopener">Abrir caderno de prova</a></li>
+  <li><span class="src">Lista de questões de várias bancas: "Classificação de requisitos"</span> — inclui questão sobre rastreabilidade bidirecional (MoReq-Jus).<br><a href="https://questoes.grancursosonline.com.br/questoes-de-concursos/tecnologia-da-informacao-classificacao-de-requisitos-428808" target="_blank" rel="noopener">Abrir lista (Gran Questões)</a></li>
+  <li><span class="src">Lista de questões de várias bancas: "Técnicas de validação de requisitos"</span><br><a href="https://questoes.grancursosonline.com.br/questoes-de-concursos/tecnologia-da-informacao-tecnicas-de-validacao-de-requisitos-428807" target="_blank" rel="noopener">Abrir lista (Gran Questões)</a></li>
+</ul>
+
+<h2>Checklist do dia</h2>
+<ul class="checklist">
+  <li>Diferencio regra de negócio de requisito.</li>
+  <li>Escrevo uma história de usuário e um critério de aceitação em Gherkin.</li>
+  <li>Sei a diferença entre critérios de aceitação e DoD.</li>
+  <li>Sei os tipos de rastreabilidade e para que serve a matriz.</li>
+  <li>Sei os passos da análise de impacto de uma mudança.</li>
+</ul>

@@ -42,6 +42,16 @@ CREATE TABLE IF NOT EXISTS sessions (
   ended_at    TEXT    NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user_date ON sessions(user_id, local_date);
+
+-- Marca-texto, notas e "parei aqui" de cada apostila
+CREATE TABLE IF NOT EXISTS notes (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital     TEXT    NOT NULL,
+  day_key    TEXT    NOT NULL,
+  data       TEXT    NOT NULL,
+  updated_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, edital, day_key)
+);
 `);
 
 module.exports = db;

@@ -1,0 +1,134 @@
+<h1>Revisão da semana 1</h1>
+<p class="lead">Domingo é dia de consolidar. Nada de assunto novo: você vai revisar os cinco temas da semana, resolver um simulado curto misturando tudo e montar seu <b>caderno de erros</b>, a ferramenta que mais rende na reta final.</p>
+<div class="meta-row"><span class="chip-i">Revisão semanal</span><span class="chip-i">Dia 6 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="roteiro">
+  <div><b>0–15 min</b>Releia suas marcações e os mapas abaixo</div>
+  <div><b>15–45 min</b>Simulado de 12 questões, sem consultar</div>
+  <div><b>45–60 min</b>Corrija e anote cada erro no caderno de erros</div>
+</div>
+
+<div class="box dica"><span class="bt">Use suas marcações</span>Em cada apostila da semana, abra <b>Marcações</b> na barra do leitor: a lista mostra tudo que você destacou e suas notas, e cada item leva direto ao trecho. Revisar só o que você marcou leva 3 minutos por apostila.</div>
+
+<h2>1. Mapa da semana</h2>
+<h3>Processo de software (dia 1)</h3>
+<ul>
+  <li>Sommerville: <b>especificação, projeto e implementação, validação, evolução</b>. Pressman: <b>comunicação, planejamento, modelagem, construção, entrega</b>.</li>
+  <li>Cascata = sequencial, para requisitos estáveis. V = cada fase com um tipo de teste. Incremental = entregas operacionais em partes. Prototipação = esclarecer requisitos. <b>Espiral = risco</b>.</li>
+  <li>UP/RUP: iterativo e incremental, dirigido por casos de uso, centrado na arquitetura. Fases <b>Concepção → Elaboração (arquitetura) → Construção → Transição</b>.</li>
+</ul>
+<h3>Requisitos I (dia 2)</h3>
+<ul>
+  <li>Levantamento → análise → especificação → validação (iterativo) + gerenciamento.</li>
+  <li><b>RF</b> = o que faz. <b>RNF</b> = qualidade ou restrição: de produto, organizacional ou externo. RNF bom é mensurável.</li>
+  <li>Técnicas: observação (requisitos implícitos), JAD (consenso), protótipo (incerteza), engenharia reversa (legado).</li>
+  <li>Validação = produto certo. Verificação = conforme a especificação.</li>
+</ul>
+<h3>Requisitos II (dia 3)</h3>
+<ul>
+  <li>Regra de negócio existe sem sistema; o requisito a implementa.</li>
+  <li>História "Como… quero… para…"; critério de aceitação em Gherkin (Dado/Quando/Então). DoD vale para todas as histórias.</li>
+  <li>Rastreabilidade para trás (origem) e para frente (código/teste); bidirecional; matriz → análise de impacto e cobertura.</li>
+  <li>Mudança: solicitação → análise de impacto → decisão → implementação → atualização.</li>
+</ul>
+<h3>Interpretação (dia 4)</h3>
+<ul>
+  <li>"Segundo o texto" = explícito; "infere-se" = implícito. Erros típicos: extrapolação, redução, contradição.</li>
+  <li>Coesão referencial (pronome, hiperônimo, elipse; anáfora × catáfora) e sequencial (conectores).</li>
+  <li>Pressupostos: "voltar a", "deixar de", "ainda", "finalmente". Paráfrase mantém o sentido; paródia muda.</li>
+</ul>
+<h3>Normas (dia 5)</h3>
+<ul>
+  <li>LIMPE; publicidade sem promoção pessoal. Concurso: até 2 anos + 1 prorrogação igual.</li>
+  <li>Três esferas independentes; inexistência do fato ou negativa de autoria vinculam as demais. §6º: objetiva + regresso com dolo ou culpa.</li>
+  <li>9.784: CE-NO-RE; impedimento (perito parente até 3º grau) × suspeição (amizade íntima / inimizade notória); recurso em <b>10 dias</b>; decisão em <b>30</b>; revisão não agrava.</li>
+</ul>
+
+<h2>2. Simulado da semana</h2>
+<p class="muted small">12 questões inéditas no estilo FGV. Cronometre cerca de 2,5 minutos por questão e só abra os gabaritos no final.</p>
+
+<div class="q"><div class="q-n">Questão 1 · processo de software</div>
+<p class="q-stem">Um projeto de grande porte, com tecnologia nunca usada pela equipe e alto risco de inviabilidade técnica, deve priorizar um modelo que avalie riscos a cada ciclo. O modelo indicado é o</p>
+<ol class="alts"><li class="alt" data-l="A">cascata.</li><li class="alt" data-l="B">em V.</li><li class="alt" data-l="C">espiral.</li><li class="alt" data-l="D">codifica-remenda.</li><li class="alt" data-l="E">incremental sem planejamento.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>C.</b> Risco em cada volta = espiral.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 2 · processo de software</div>
+<p class="q-stem">No Processo Unificado, a versão beta do produto, com capacidade operacional inicial, é o marco que encerra a fase de</p>
+<ol class="alts"><li class="alt" data-l="A">Concepção.</li><li class="alt" data-l="B">Elaboração.</li><li class="alt" data-l="C">Construção.</li><li class="alt" data-l="D">Transição.</li><li class="alt" data-l="E">Implementação.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>C.</b> Concepção → objetivos; Elaboração → arquitetura; Construção → capacidade operacional inicial; Transição → release.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 3 · processo de software</div>
+<p class="q-stem">A característica que distingue o modelo incremental do modelo cascata é</p>
+<ol class="alts"><li class="alt" data-l="A">a ausência de testes.</li><li class="alt" data-l="B">a entrega de partes operacionais do sistema ao longo do projeto.</li><li class="alt" data-l="C">a análise formal de riscos em cada fase.</li><li class="alt" data-l="D">a proibição de documentação.</li><li class="alt" data-l="E">o desenvolvimento de um único protótipo descartável.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> Entregas operacionais em partes; risco (C) é do espiral.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 4 · requisitos</div>
+<p class="q-stem">"O sistema deve permitir a exportação do relatório de frequência em formato CSV." Trata-se de requisito</p>
+<ol class="alts"><li class="alt" data-l="A">funcional.</li><li class="alt" data-l="B">não funcional de portabilidade.</li><li class="alt" data-l="C">não funcional organizacional.</li><li class="alt" data-l="D">não funcional externo.</li><li class="alt" data-l="E">de domínio regulatório.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>A.</b> Exportar é uma função que o usuário pede ao sistema.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 5 · requisitos</div>
+<p class="q-stem">"O sistema deve ser desenvolvido em C# com banco SQL Server, por determinação da política de TI do órgão." Segundo Sommerville, é requisito não funcional</p>
+<ol class="alts"><li class="alt" data-l="A">de produto.</li><li class="alt" data-l="B">organizacional.</li><li class="alt" data-l="C">externo.</li><li class="alt" data-l="D">de usabilidade.</li><li class="alt" data-l="E">de desempenho.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> Vem de política interna da organização.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 6 · requisitos</div>
+<p class="q-stem">A matriz que relaciona cada requisito aos casos de teste que o verificam permite, principalmente,</p>
+<ol class="alts"><li class="alt" data-l="A">eliminar a fase de validação.</li><li class="alt" data-l="B">verificar a cobertura de testes e avaliar o impacto de mudanças.</li><li class="alt" data-l="C">gerar código automaticamente.</li><li class="alt" data-l="D">substituir o documento de requisitos.</li><li class="alt" data-l="E">priorizar requisitos pelo método MoSCoW.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> Cobertura e análise de impacto são as utilidades clássicas da rastreabilidade.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 7 · requisitos</div>
+<p class="q-stem">"Todo servidor com mais de 3 faltas injustificadas no mês perde o adicional de assiduidade." Essa sentença é</p>
+<ol class="alts"><li class="alt" data-l="A">uma regra de negócio.</li><li class="alt" data-l="B">um requisito não funcional de confiabilidade.</li><li class="alt" data-l="C">um critério de Definition of Done.</li><li class="alt" data-l="D">um caso de teste.</li><li class="alt" data-l="E">um requisito de portabilidade.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>A.</b> É uma política que existe com ou sem sistema (regra do tipo inferência/restrição).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 8 · interpretação</div>
+<p class="q-stem">"O servidor continua sem acesso ao sistema." A palavra que gera um pressuposto nessa frase é</p>
+<ol class="alts"><li class="alt" data-l="A">"servidor", que indica um cargo.</li><li class="alt" data-l="B">"continua", que pressupõe que ele já estava sem acesso antes.</li><li class="alt" data-l="C">"sem", que indica oposição.</li><li class="alt" data-l="D">"sistema", que indica tecnologia.</li><li class="alt" data-l="E">"acesso", que indica permissão futura.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> "Continuar" pressupõe que a situação já existia.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 9 · interpretação</div>
+<p class="q-stem">"Os técnicos chegaram cedo; os gestores, só à tarde." Na segunda oração, ocorre</p>
+<ol class="alts"><li class="alt" data-l="A">catáfora.</li><li class="alt" data-l="B">elipse do verbo.</li><li class="alt" data-l="C">hiperônimo.</li><li class="alt" data-l="D">conector conclusivo.</li><li class="alt" data-l="E">paródia.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> A vírgula substitui o verbo "chegaram", omitido.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 10 · interpretação</div>
+<p class="q-stem">"Embora a sede tenha mudado, o atendimento continua no mesmo horário." O conector "embora" pode ser substituído, sem alterar o sentido, por</p>
+<ol class="alts"><li class="alt" data-l="A">porque.</li><li class="alt" data-l="B">ainda que.</li><li class="alt" data-l="C">portanto.</li><li class="alt" data-l="D">desde que.</li><li class="alt" data-l="E">a fim de que.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> Ambos são concessivos. "Desde que" é condicional.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 11 · normas</div>
+<p class="q-stem">Segundo a Lei 9.784/1999, a decisão de recursos administrativos</p>
+<ol class="alts"><li class="alt" data-l="A">pode ser delegada a qualquer servidor.</li><li class="alt" data-l="B">pode ser delegada apenas a órgãos subordinados.</li><li class="alt" data-l="C">não pode ser objeto de delegação.</li><li class="alt" data-l="D">só pode ser avocada pelo Judiciário.</li><li class="alt" data-l="E">deve ser tomada em 5 dias.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>C.</b> CE-NO-RE: o "RE" é a decisão de recursos (art. 13).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 12 · normas</div>
+<p class="q-stem">A acumulação remunerada de cargos públicos é permitida, havendo compatibilidade de horários, no caso de</p>
+<ol class="alts"><li class="alt" data-l="A">dois cargos técnicos quaisquer.</li><li class="alt" data-l="B">um cargo de professor com outro técnico ou científico.</li><li class="alt" data-l="C">um emprego em sociedade de economia mista com qualquer cargo efetivo.</li><li class="alt" data-l="D">dois cargos em comissão.</li><li class="alt" data-l="E">três cargos de profissional de saúde.</li></ol>
+<details><summary>Ver gabarito</summary><div class="gab-body"><p><b>B.</b> As exceções são: 2 de professor; professor + técnico/científico; 2 de saúde (no máximo dois).</p></div></details></div>
+
+<h2>3. Como montar seu caderno de erros</h2>
+<p>Para cada questão errada, escreva 3 linhas:</p>
+<ol>
+  <li><b>Tema</b> (ex.: "9.784 – delegação").</li>
+  <li><b>Por que errei</b>: não sabia, confundi dois conceitos ou li rápido demais.</li>
+  <li><b>Regra certa</b>, com suas palavras (ex.: "decisão de recurso nunca se delega").</li>
+</ol>
+<p>Na reta final (4 a 9 de janeiro), você vai revisar <b>só esse caderno</b>. É a revisão mais eficiente que existe, porque foca exatamente nos seus pontos fracos.</p>
+
+<h2>4. Questões reais da semana (se sobrar tempo)</h2>
+<p>Resolva as que ficaram pendentes nas apostilas dos dias 1 a 5. Os cadernos abaixo concentram várias delas:</p>
+<ul class="reais">
+  <li><span class="src">FGV · TJ-RJ 2026 · Analista de Sistemas</span> — questões 2, 6, 11, 12 (português), 38 (requisitos) e 66 (administração pública).<br><a href="https://arquivos.qconcursos.com/prova/arquivo_prova/145547/fgv-2026-tj-rj-analista-judiciario-tecnologia-da-informacao-analista-de-sistemas-prova.pdf" target="_blank" rel="noopener">Abrir caderno de prova</a></li>
+  <li><span class="src">FGV · ALEMA 2023 · Analista de Sistemas</span> — questões 1, 20, 22, 23 (português), 30 (servidor), 32 (requisitos) e 36 (Processo Unificado).<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/cns105-tecnico-de-gestao-administrativa-analista-de-sistemascns105-tipo-1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · DPE-RO 2025 · Analista de Sistemas</span> — questões 14 (coesão), 26 e 28 (administração e responsabilidade civil) e 61 (TDD/BDD).<br><a href="https://arquivos.qconcursos.com/prova/arquivo_prova/132592/fgv-2025-dpe-ro-analista-de-sistemas-classe-b-prova.pdf" target="_blank" rel="noopener">Abrir caderno de prova</a></li>
+  <li><span class="src">FGV · Banestes 2021 · Analista em TI – Desenvolvimento de Sistemas</span> — questões 4, 6 (interpretação), 52 (ágil × tradicional), 57 e 58 (requisitos).<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/analista_em_tecnologia_da_informacao_-_desenvolvimento_de_sistemasan-sist_tipo_1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+</ul>
+
+<h2>Checklist da semana</h2>
+<ul class="checklist">
+  <li>Revisei as marcações das 5 apostilas.</li>
+  <li>Fiz o simulado de 12 questões e anotei os erros.</li>
+  <li>Resolvi pelo menos 5 questões reais da semana.</li>
+  <li>Marquei os dias da semana como concluídos no cronograma.</li>
+</ul>

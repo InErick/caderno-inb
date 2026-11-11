@@ -1,0 +1,134 @@
+<h1>Lógica I — proposições, conectivos, tabela-verdade e associação</h1>
+<p class="lead">Raciocínio Lógico tem só 10 questões com peso 1, mas não pode zerar, e as questões de lógica são as mais "certas" de acertar quando você conhece as regras. Hoje você aprende a base: o que é proposição, os cinco conectivos, a tabela-verdade e um método seguro para resolver problemas de associação ("quem é quem").</p>
+<div class="meta-row"><span class="chip-i">Raciocínio Lógico</span><span class="chip-i">Dia 3 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="roteiro">
+  <div><b>0–30 min</b>Teoria: seções 1 a 5, fazendo as contas no papel</div>
+  <div><b>30–55 min</b>Exercícios + questões reais da FGV</div>
+  <div><b>55–60 min</b>Copie a tabela da seção 3 num cartão de revisão</div>
+</div>
+
+<h2>1. O que é uma proposição</h2>
+<p><b>Proposição</b> é uma frase <b>declarativa</b> que pode ser classificada como <b>verdadeira (V) ou falsa (F)</b>, mas nunca as duas coisas ao mesmo tempo.</p>
+<div class="tbl"><table>
+  <tr><th>É proposição</th><th>Não é proposição</th></tr>
+  <tr><td>"Brasília é a capital do Brasil." (V)</td><td>"Que horas são?" (pergunta)</td></tr>
+  <tr><td>"5 é maior que 8." (F, mas é proposição!)</td><td>"Feche a porta." (ordem)</td></tr>
+  <tr><td>"Todo assistente usa Excel."</td><td>"Que dia lindo!" (exclamação)</td></tr>
+  <tr><td></td><td>"x + 3 = 10" (sentença aberta: depende de x)</td></tr>
+  <tr><td></td><td>"Esta frase é falsa." (paradoxo)</td></tr>
+</table></div>
+<div class="box atencao"><span class="bt">Cuidado</span>Ser <b>falsa</b> não impede de ser proposição. O que importa é poder ser julgada como V ou F.</div>
+<p>Proposição <b>simples</b> tem uma ideia só ("Ana é técnica"). <b>Composta</b> junta simples com <b>conectivos</b> ("Ana é técnica <b>e</b> Bia é analista"). Usamos letras: p, q, r…</p>
+<p>A <b>negação</b> (~p ou ¬p) inverte o valor: se p é V, ~p é F. Forma comum: "Não é verdade que…", "É falso que…".</p>
+
+<h2>2. Os cinco conectivos</h2>
+<div class="tbl"><table>
+  <tr><th>Conectivo</th><th>Símbolo</th><th>Leitura</th><th>Regra de ouro</th></tr>
+  <tr><td>Conjunção</td><td>p ∧ q</td><td>p <b>e</b> q</td><td>Só é <b>V</b> se as duas forem V</td></tr>
+  <tr><td>Disjunção (inclusiva)</td><td>p ∨ q</td><td>p <b>ou</b> q</td><td>Só é <b>F</b> se as duas forem F</td></tr>
+  <tr><td>Disjunção exclusiva</td><td>p ⊻ q</td><td><b>ou</b> p <b>ou</b> q</td><td>É V se forem <b>diferentes</b></td></tr>
+  <tr><td>Condicional</td><td>p → q</td><td><b>se</b> p, <b>então</b> q</td><td>Só é <b>F</b> em <b>V → F</b></td></tr>
+  <tr><td>Bicondicional</td><td>p ↔ q</td><td>p <b>se e somente se</b> q</td><td>É V se forem <b>iguais</b></td></tr>
+</table></div>
+<div class="box dica"><span class="bt">Dicas de leitura</span>• "<b>mas</b>", "porém", "nem" funcionam como <b>e</b>: "Chove, mas faz calor" = chove ∧ faz calor.<br>• Na condicional, o que vem depois do "se" é o <b>antecedente</b> (condição suficiente) e o que vem depois do "então" é o <b>consequente</b> (condição necessária).<br>• "Quando", "sempre que", "caso", "todo… é…" também viram condicional: "Sempre que chove, a rua molha" = chove → rua molha.</div>
+<div class="box exemplo"><span class="bt">A condicional explicada com uma promessa</span>"<b>Se</b> você passar no concurso, <b>então</b> eu te dou um presente."<br>• Passou e ganhou (V→V): promessa cumprida → <b>V</b>.<br>• Passou e não ganhou (V→F): promessa quebrada → <b>F</b>.<br>• Não passou e ganhou (F→V): eu não menti, só fui generoso → <b>V</b>.<br>• Não passou e não ganhou (F→F): eu não menti → <b>V</b>.<br>A única mentira é <b>V → F</b>.</div>
+
+<h2>3. Tabela-verdade completa</h2>
+<div class="tbl"><table>
+  <tr><th>p</th><th>q</th><th>p ∧ q</th><th>p ∨ q</th><th>p ⊻ q</th><th>p → q</th><th>p ↔ q</th></tr>
+  <tr><td>V</td><td>V</td><td>V</td><td>V</td><td>F</td><td>V</td><td>V</td></tr>
+  <tr><td>V</td><td>F</td><td>F</td><td>V</td><td>V</td><td><b>F</b></td><td>F</td></tr>
+  <tr><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td><td>V</td><td>F</td></tr>
+  <tr><td>F</td><td>F</td><td>F</td><td><b>F</b></td><td>F</td><td>V</td><td>V</td></tr>
+</table></div>
+<p><b>Número de linhas</b> de uma tabela-verdade: <b>2<sup>n</sup></b>, em que n é o número de proposições simples diferentes. Com 2 proposições: 4 linhas; com 3: 8; com 4: 16.</p>
+
+<h2>4. Calculando o valor de uma proposição composta</h2>
+<p>Método: <b>substitua cada letra pelo seu valor e resolva de dentro para fora</b>, como numa expressão matemática (primeiro os parênteses, depois as negações).</p>
+<div class="box exemplo"><span class="bt">Passo a passo</span>Sabendo que p = V, q = F e r = V, qual o valor de <b>(p ∧ q) → r</b>?<br>1º) p ∧ q = V ∧ F = <b>F</b><br>2º) F → r = F → V = <b>V</b> (condicional só é falsa em V→F)<br>Resposta: <b>V</b>.<br><br>E de <b>~p ∨ (q ↔ r)</b>?<br>1º) ~p = <b>F</b><br>2º) q ↔ r = F ↔ V = <b>F</b> (são diferentes)<br>3º) F ∨ F = <b>F</b>.</div>
+<div class="box dica"><span class="bt">Atalho que a FGV adora</span>• Se o <b>antecedente é F</b>, a condicional é <b>V</b>, não importa o consequente.<br>• Se o <b>consequente é V</b>, a condicional é <b>V</b>, não importa o antecedente.<br>• Se uma condicional é <b>F</b>, então obrigatoriamente o antecedente é V e o consequente é F.</div>
+
+<h2>5. Problemas de associação ("quem é quem")</h2>
+<p>São problemas com várias pessoas e características ("Ana, Bruno e Carla trabalham em setores diferentes…"). O método mais seguro é a <b>tabela de dupla entrada</b>:</p>
+<ol>
+  <li>Monte uma tabela com pessoas nas linhas e características nas colunas;</li>
+  <li>Marque <b>✗</b> em tudo o que as pistas <b>proíbem</b>;</li>
+  <li>Quando sobrar só uma opção numa linha ou coluna, marque <b>✓</b> e risque o resto daquela coluna;</li>
+  <li>Comece pelas pistas mais diretas ("Ana não é do RH") e deixe as condicionais para o fim.</li>
+</ol>
+<div class="box exemplo"><span class="bt">Exemplo resolvido</span>Ana, Bruno e Carla trabalham no Protocolo, no RH e em Compras, um em cada setor. Pistas: (1) Ana não trabalha no RH nem em Compras. (2) Bruno não trabalha no RH.<br>
+<div class="tbl"><table><tr><th></th><th>Protocolo</th><th>RH</th><th>Compras</th></tr><tr><td>Ana</td><td>✓</td><td>✗</td><td>✗</td></tr><tr><td>Bruno</td><td>✗</td><td>✗</td><td>✓</td></tr><tr><td>Carla</td><td>✗</td><td>✓</td><td>✗</td></tr></table></div>
+Pela pista 1, Ana só pode ser do Protocolo. Bruno não é do RH nem do Protocolo (que já é de Ana), então é de Compras. Sobra o RH para Carla.</div>
+<h3>"Só um diz a verdade"</h3>
+<p>Quando o problema diz quantas pessoas mentem, use <b>hipóteses</b>: suponha cada possibilidade, conte quantas frases ficam verdadeiras e descarte as hipóteses que não batem com o enunciado. O exercício 7 abaixo treina isso.</p>
+
+<h2>Mapa-resumo</h2>
+<ul>
+  <li>Proposição = declarativa, V ou F. Perguntas, ordens, exclamações e sentenças abertas não são.</li>
+  <li><b>E</b>: só V se tudo V. <b>OU</b>: só F se tudo F. <b>OU…OU</b>: V se diferentes. <b>SE…ENTÃO</b>: só F em V→F. <b>SE E SOMENTE SE</b>: V se iguais.</li>
+  <li>Linhas da tabela = 2<sup>n</sup>.</li>
+  <li>Resolva de dentro para fora; use os atalhos da condicional.</li>
+  <li>Associação: tabela de dupla entrada com ✗ e ✓. "Só um mente": teste hipóteses.</li>
+</ul>
+
+<h2>Exercícios de fixação</h2>
+<p class="muted small">Questões inéditas no estilo FGV, escritas para esta apostila.</p>
+
+<div class="q"><div class="q-n">Questão 1 · inédita</div>
+<p class="q-stem">Assinale a opção que apresenta uma proposição.</p>
+<ol class="alts"><li class="alt" data-l="A">Que horas começa a reunião?</li><li class="alt" data-l="B">Entregue o relatório até sexta.</li><li class="alt" data-l="C">x + 3 = 10.</li><li class="alt" data-l="D">O Rio de Janeiro fica na Região Sudeste.</li><li class="alt" data-l="E">Que excelente notícia!</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> É a única frase declarativa que pode ser julgada V ou F. C é sentença aberta (depende de x).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 2 · inédita</div>
+<p class="q-stem">Considere p: "2 + 2 = 4" (verdadeira) e q: "O Rio de Janeiro é a capital do Brasil" (falsa). É verdadeira a proposição</p>
+<ol class="alts"><li class="alt" data-l="A">p ∧ q.</li><li class="alt" data-l="B">p → q.</li><li class="alt" data-l="C">p ↔ q.</li><li class="alt" data-l="D">q → p.</li><li class="alt" data-l="E">~p ∨ q.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> q → p = F → V = V. A: V∧F = F. B: V→F = F. C: valores diferentes = F. E: F∨F = F.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 3 · inédita</div>
+<p class="q-stem">A tabela-verdade da proposição "(p ∧ q) → (r ∨ s)" tem</p>
+<ol class="alts"><li class="alt" data-l="A">4 linhas.</li><li class="alt" data-l="B">8 linhas.</li><li class="alt" data-l="C">12 linhas.</li><li class="alt" data-l="D">16 linhas.</li><li class="alt" data-l="E">32 linhas.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> São 4 proposições simples (p, q, r, s): 2<sup>4</sup> = 16.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 4 · inédita</div>
+<p class="q-stem">A proposição "Se o sistema cair, então o atendimento será manual" é <b>falsa</b> quando</p>
+<ol class="alts"><li class="alt" data-l="A">o sistema cai e o atendimento é manual.</li><li class="alt" data-l="B">o sistema não cai e o atendimento é manual.</li><li class="alt" data-l="C">o sistema cai e o atendimento não é manual.</li><li class="alt" data-l="D">o sistema não cai e o atendimento não é manual.</li><li class="alt" data-l="E">nunca, pois toda condicional é verdadeira.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> A condicional só é falsa em V → F: o antecedente acontece e o consequente não.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 5 · inédita</div>
+<p class="q-stem">Ana, Bruno e Carla trabalham no Protocolo, no RH e em Compras, cada um em um setor. Sabe-se que Bruno não trabalha em Compras, e que Carla trabalha no Protocolo. Logo,</p>
+<ol class="alts"><li class="alt" data-l="A">Ana trabalha no RH.</li><li class="alt" data-l="B">Bruno trabalha no Protocolo.</li><li class="alt" data-l="C">Ana trabalha em Compras.</li><li class="alt" data-l="D">Bruno trabalha em Compras.</li><li class="alt" data-l="E">Carla trabalha no RH.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Carla está no Protocolo. Bruno não está em Compras, então está no RH. Sobra Compras para Ana.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 6 · inédita</div>
+<p class="q-stem">Considere: "Ou Pedro viaja na sexta, ou Pedro trabalha na sexta". Se Pedro viajou e também trabalhou na sexta, essa proposição é</p>
+<ol class="alts"><li class="alt" data-l="A">verdadeira, pois as duas partes aconteceram.</li><li class="alt" data-l="B">falsa, pois na disjunção exclusiva as partes devem ter valores diferentes.</li><li class="alt" data-l="C">verdadeira, pois a disjunção só é falsa quando nada acontece.</li><li class="alt" data-l="D">impossível de avaliar.</li><li class="alt" data-l="E">uma tautologia.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> "Ou… ou…" é a disjunção exclusiva: só é V quando exatamente uma parte é V.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 7 · inédita</div>
+<p class="q-stem">Um processo sumiu e há três suspeitos. Alberto diz: "Foi o Bento". Bento diz: "Não fui eu". Célia diz: "Não fui eu". Sabe-se que apenas um deles disse a verdade. Quem pegou o processo foi</p>
+<ol class="alts"><li class="alt" data-l="A">Alberto.</li><li class="alt" data-l="B">Bento.</li><li class="alt" data-l="C">Célia.</li><li class="alt" data-l="D">Alberto e Bento.</li><li class="alt" data-l="E">não é possível determinar.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Teste: se foi Bento, Alberto e Célia dizem a verdade (2, não serve). Se foi Alberto, Bento e Célia dizem a verdade (2, não serve). Se foi Célia, só Bento diz a verdade (1, serve).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 8 · inédita</div>
+<p class="q-stem">"Se eu ganhar na loteria, então comprarei um carro." Sabendo que eu <b>não</b> ganhei na loteria, essa proposição é</p>
+<ol class="alts"><li class="alt" data-l="A">falsa, se eu não comprar o carro.</li><li class="alt" data-l="B">verdadeira, independentemente de eu comprar ou não o carro.</li><li class="alt" data-l="C">falsa, se eu comprar o carro.</li><li class="alt" data-l="D">sempre falsa.</li><li class="alt" data-l="E">sem valor lógico.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Com antecedente falso, a condicional é sempre verdadeira (F → V e F → F são V).</p></div></details></div>
+
+<h2>Questões reais para resolver</h2>
+<ul class="reais">
+  <li><span class="src">FGV · FUNSAÚDE-CE 2021 · Assistente Administrativo · questões 12 e 16</span> — ordem de chegada de colegas (associação) e conclusão lógica a partir de afirmações.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/fs2_e2nm01_assistente_administrativo_e2nm01_tipo_2.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · MP-GO 2022 · Assistente Administrativo · questões 16 e 24</span> — posição numa fila com restrições e ordem das cadeiras após trocas.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/assistente_administrativompgo-nm001_tipo_1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · NITTRANS (Niterói) 2025 · Assistente Administrativo · questão 26</span> — dedução das vitórias num torneio.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/assistente-administrativocnm001-tipo-1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · Banestes 2021 · Analista em TI · questões 29 e 31</span> — afirmativas em que só uma é verdadeira e dedução com condicionais (nível superior, mesma banca).<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/analista_em_tecnologia_da_informacao_-_desenvolvimento_de_sistemasan-sist_tipo_1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">Lista de questões de várias bancas: "Tabelas-verdade"</span> — inclui questão FGV 2023 sobre proposições compostas falsas.<br><a href="https://www.estudegratis.com.br/questoes-de-concurso/materia/raciocinio-logico/assunto/tabelas-verdade?pag=4" target="_blank" rel="noopener">Abrir lista (Estude Grátis)</a></li>
+</ul>
+
+<h2>Checklist do dia</h2>
+<ul class="checklist">
+  <li>Sei reconhecer o que é e o que não é proposição.</li>
+  <li>Sei a regra de ouro de cada um dos 5 conectivos.</li>
+  <li>Sei calcular o número de linhas (2<sup>n</sup>).</li>
+  <li>Resolvo o valor de uma composta de dentro para fora.</li>
+  <li>Monto a tabela de dupla entrada para problemas de associação.</li>
+</ul>

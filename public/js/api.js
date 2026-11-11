@@ -29,5 +29,9 @@ window.Api = (() => {
     sessions: () => req("GET", "/api/sessions"),
     deleteSession: (id) => req("DELETE", `/api/sessions/${id}`),
     stats: (today) => req("GET", `/api/stats?today=${today}`),
+    apostilas: () => req("GET", "/api/apostilas"),
+    notes: (day) => req("GET", `/api/notes/${day}`),
+    saveNotes: (day, data) => req("PUT", `/api/notes/${day}`, data),
+    apostilaHtml: async (edital, day) => { const r = await fetch(`/apostilas/${edital}/${day}.html`, { cache: "no-cache" }); if (!r.ok) throw new Error("Apostila ainda não disponível."); return r.text(); },
   };
 })();

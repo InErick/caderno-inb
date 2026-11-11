@@ -2,7 +2,7 @@
 // Caderno INB — telas do app (SPA sem framework)
 // =====================================================================
 (() => {
-  const S = { user: null, plan: [], done: new Set(), stats: null, filter: "ALL", query: "", pick: null, mode: "meta", openDays: new Set() };
+  const S = { user: null, plan: [], done: new Set(), stats: null, filter: "ALL", query: "", pick: null, mode: "meta", openDays: new Set(), apostilas: new Set() };
   const app = document.getElementById("app");
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const todayKey = () => Plans.keyOf(new Date());
@@ -55,9 +55,10 @@
   }
 
   async function refreshData() {
-    const [p, st] = await Promise.all([Api.progress(), Api.stats(todayKey())]);
+    const [p, st, ap] = await Promise.all([Api.progress(), Api.stats(todayKey()), Api.apostilas().catch(() => ({ days: [] }))]);
     S.done = new Set(p.done);
     S.stats = st;
+    S.apostilas = new Set(ap.days);
   }
 
   function planToday() {
@@ -172,9 +173,11 @@
 
   function route() {
     if (!S.user) return;
-    const r = (location.hash || "#inicio").slice(1);
+    Reader.close();
+    const full = (location.hash || "#inicio").slice(1);
+    const r = full.startsWith("apostila/") ? "apostila" : full;
     const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
-    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === r));
+    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (r === "apostila" ? "cronograma" : r)));
     const v = document.getElementById("view");
     if (!v) return;
     const ng = document.getElementById("navGoal");
@@ -182,6 +185,7 @@
       const goal = S.user.dailyGoal * 60 * 7, p = Math.min(100, Math.round((S.stats.week / goal) * 100));
       ng.innerHTML = `<div class="gh">${Icon("target", 16)}<span>Meta semanal</span><b>${p}%</b></div><div class="track"><i style="width:${p}%"></i></div><p>${hm(S.stats.week)} de ${hm(goal)}</p>`;
     }
+    if (r === "apostila") return viewApostila(v, full.slice(9));
     ({ inicio: viewHome, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile }[r] || viewHome)(v);
     window.scrollTo(0, 0);
   }
@@ -229,6 +233,7 @@
         ${dayCardBody(t, 5)}
         <div class="day-actions" style="margin-top:14px">
           <button class="btn btn-pink" id="startToday">${Icon("play", 16)} ${Timer.isActive() ? "Voltar ao foco" : "Iniciar foco"}</button>
+          ${S.apostilas.has(t.key) ? `<a class="btn btn-ghost ap-btn" href="#apostila/${t.key}">📖 Abrir apostila</a>` : ""}
           <button class="check-btn ${done ? "on" : ""}" id="doneToday"><span class="box">${Icon("check", 12)}</span>${done ? "Concluído" : "Marcar concluído"}</button>
           ${studied ? `<span class="badge-time">${Icon("clock", 14)} ${hm(studied)} estudados</span>` : ""}
         </div>
@@ -297,11 +302,12 @@
             <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
               <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]} · dia ${d.index}</span>
               <div class="ttl">${esc(d.t)}</div>
-              <div class="meta">${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${isDone ? `<span class="badge-time" style="color:var(--green)">${Icon("check", 13)} concluído</span>` : ""}</div></div>
+              <div class="meta">${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${isDone ? `<span class="badge-time" style="color:var(--green)">${Icon("check", 13)} concluído</span>` : ""}</div></div>
               <span class="chev">${Icon("chevron", 20)}</span>
             </div>
             <div class="day-body">${dayCardBody(d)}
               <div class="day-actions">
+                ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
                 <button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>
                 <button class="check-btn ${isDone ? "on" : ""}" data-done><span class="box">${Icon("check", 12)}</span>${isDone ? "Concluído" : "Marcar concluído"}</button>
               </div>
@@ -376,9 +382,23 @@
     };
   }
 
+  // =================================================================
+  // APOSTILA
+  // =================================================================
+  function viewApostila(v, day) {
+    Reader.open(v, {
+      day, edital: S.user.edital, plan: S.plan, labels: ED().labels, toast,
+      onBack: () => { history.length > 1 ? history.back() : (location.hash = "#cronograma"); },
+      onStudy: el => {
+        if (Timer.isActive()) return Timer.expand(el);
+        Timer.start(S.plan.find(x => x.key === day), S.mode, S.user.dailyGoal, el);
+      },
+    });
+  }
+
   async function onSaved(session, secs) {
     try { await refreshData(); } catch {}
-    route();
+    if (!location.hash.startsWith("#apostila/")) route();
     const key = session.dayKey;
     if (key && !S.done.has(key)) {
       modal(`<div style="font-size:42px">🎉</div><h3>Sessão salva!</h3>

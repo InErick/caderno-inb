@@ -1,0 +1,157 @@
+<h1>Requisitos I — levantamento, análise, especificação e validação</h1>
+<p class="lead">Engenharia de requisitos é um dos temas preferidos da FGV em provas de Analista de Sistemas. Hoje você aprende o processo completo, as técnicas de levantamento e, principalmente, a separar <b>requisito funcional</b> de <b>não funcional</b>, que é o tipo de questão que mais cai.</p>
+<div class="meta-row"><span class="chip-i">Engenharia de Requisitos</span><span class="chip-i">Dia 2 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="roteiro">
+  <div><b>0–35 min</b>Teoria: seções 1 a 6 (dê atenção especial à seção 3)</div>
+  <div><b>35–55 min</b>Exercícios de fixação + questões reais</div>
+  <div><b>55–60 min</b>Resumo: faça sua própria tabela RF × RNF</div>
+</div>
+
+<h2>1. O que é um requisito</h2>
+<p>Um <b>requisito</b> é a descrição de algo que o sistema <b>deve fazer</b> ou de uma <b>condição</b> que ele deve respeitar. Ele nasce da necessidade de alguém: usuário, cliente, gestor, uma lei.</p>
+<p>Sommerville separa dois níveis de detalhe:</p>
+<ul>
+  <li><b>Requisitos de usuário</b>: escritos em linguagem natural, com diagramas simples, para o cliente entender. Ex.: "O sistema deve permitir que o servidor solicite férias."</li>
+  <li><b>Requisitos de sistema</b>: versão detalhada e técnica, base para o projeto e o contrato. Ex.: "A solicitação de férias deve registrar matrícula, período (máximo de 3 frações) e enviar notificação ao chefe imediato."</li>
+</ul>
+<p>Quem tem interesse no sistema é chamado de <b>stakeholder</b> (parte interessada): usuários finais, gestores, área jurídica, equipe de TI, órgãos de controle.</p>
+
+<h2>2. O processo de engenharia de requisitos</h2>
+<p>É um processo <b>iterativo</b>: as atividades se repetem e se realimentam, não acontecem uma única vez.</p>
+<ol>
+  <li><b>Levantamento (elicitação)</b>: descobrir as necessidades junto aos stakeholders.</li>
+  <li><b>Análise</b>: organizar, classificar, priorizar e resolver conflitos entre requisitos.</li>
+  <li><b>Especificação</b>: documentar os requisitos de forma clara e padronizada.</li>
+  <li><b>Validação</b>: conferir com os stakeholders se os requisitos documentados são os que eles realmente querem.</li>
+</ol>
+<p>Ao lado dessas atividades corre o <b>gerenciamento de requisitos</b> (controle de mudanças, rastreabilidade), que você estuda amanhã. Sommerville também cita o <b>estudo de viabilidade</b> no começo: vale a pena construir esse sistema?</p>
+
+<h2>3. Funcionais × não funcionais</h2>
+<p>Esta é a seção mais importante do dia.</p>
+<div class="tbl"><table>
+  <tr><th>Requisito funcional (RF)</th><th>Requisito não funcional (RNF)</th></tr>
+  <tr><td>Diz <b>o que</b> o sistema faz: serviços, funções, reações a entradas</td><td>Diz <b>como</b> o sistema deve ser: qualidades e restrições</td></tr>
+  <tr><td>"O sistema deve emitir o contracheque em PDF."</td><td>"O contracheque deve ser gerado em até 3 segundos."</td></tr>
+  <tr><td>"O usuário deve poder redefinir a senha por e-mail."</td><td>"As senhas devem ser armazenadas com hash e salt."</td></tr>
+  <tr><td>"O sistema deve permitir filtrar processos por data."</td><td>"O sistema deve funcionar nos navegadores Chrome e Firefox."</td></tr>
+</table></div>
+<div class="box dica"><span class="bt">Truque para a prova</span>Pergunte: "Isso é uma <b>ação/função</b> que o usuário pode pedir ao sistema?" Se sim, é RF. Se a frase fala de <b>velocidade, segurança, disponibilidade, usabilidade, compatibilidade, lei, padrão, tecnologia</b>, é RNF.</div>
+
+<h3>Classificação dos RNF (Sommerville)</h3>
+<ul>
+  <li><b>Requisitos de produto</b>: comportamento do software. Eficiência (desempenho, uso de memória), confiabilidade, proteção/segurança, usabilidade.</li>
+  <li><b>Requisitos organizacionais</b>: vêm de políticas da organização. Ex.: "deve ser desenvolvido em C#/.NET", "deve usar o login único do órgão".</li>
+  <li><b>Requisitos externos</b>: vêm de fora. Regulatórios, legais e éticos. Ex.: "deve cumprir a LGPD".</li>
+</ul>
+<p>Há ainda os <b>requisitos de domínio</b>, que vêm do domínio de aplicação (área de negócio) e podem ser funcionais ou não funcionais. Ex.: num sistema bancário, "o cálculo de juros deve seguir a regra do Banco Central".</p>
+
+<h3>RNF bom é RNF mensurável</h3>
+<p>"O sistema deve ser rápido" é um requisito <b>ruim</b>: não dá para testar. A versão boa traz uma métrica:</p>
+<div class="box exemplo"><span class="bt">Ruim → bom</span>"Deve ser rápido" → "95% das consultas devem responder em até 2 segundos com 500 usuários simultâneos."<br>"Deve ser fácil de usar" → "Um usuário novo deve conseguir abrir um chamado em até 3 minutos, sem treinamento."<br>"Deve estar sempre no ar" → "Disponibilidade mínima de 99,5% no mês."</div>
+
+<h3>Qualidade de software: ISO/IEC 25010</h3>
+<p>A norma de qualidade de produto (versão de 2011, a mais cobrada) lista 8 características, ótimas para classificar RNF: <b>adequação funcional, eficiência de desempenho, compatibilidade, usabilidade, confiabilidade, segurança, manutenibilidade e portabilidade</b>.</p>
+
+<h2>4. Técnicas de levantamento</h2>
+<div class="tbl"><table>
+  <tr><th>Técnica</th><th>Como funciona</th><th>Bom para…</th></tr>
+  <tr><td><b>Entrevista</b></td><td>Conversa com o stakeholder; pode ser <i>fechada</i> (perguntas prontas) ou <i>aberta</i> (livre)</td><td>Entender o trabalho e as dores de cada pessoa</td></tr>
+  <tr><td><b>Questionário</b></td><td>Perguntas enviadas a muitas pessoas</td><td>Público grande e disperso</td></tr>
+  <tr><td><b>Workshop / JAD</b></td><td>Sessão em grupo, com facilitador, usuários e TI juntos</td><td>Chegar a consenso rápido e resolver conflitos</td></tr>
+  <tr><td><b>Brainstorming</b></td><td>Gerar muitas ideias sem julgar, depois filtrar</td><td>Funcionalidades novas, inovação</td></tr>
+  <tr><td><b>Observação / etnografia</b></td><td>O analista acompanha o trabalho real do usuário</td><td>Descobrir requisitos implícitos, que ninguém lembra de falar</td></tr>
+  <tr><td><b>Prototipação</b></td><td>Mostrar telas/modelos para o usuário reagir</td><td>Interfaces e requisitos incertos</td></tr>
+  <tr><td><b>Cenários e casos de uso</b></td><td>Descrever interações passo a passo</td><td>Detalhar fluxos e exceções</td></tr>
+  <tr><td><b>Análise de documentos</b></td><td>Ler leis, normas, formulários, manuais</td><td>Requisitos legais e regras existentes</td></tr>
+  <tr><td><b>Engenharia reversa</b></td><td>Estudar o sistema legado (código, banco, telas)</td><td>Substituir um sistema antigo sem documentação</td></tr>
+</table></div>
+<div class="box atencao"><span class="bt">Por que levantar requisitos é difícil</span>Os stakeholders muitas vezes não sabem o que querem, usam a linguagem da área deles, têm interesses em conflito, e os requisitos mudam durante o projeto. A FGV gosta de pedir a técnica certa para cada um desses problemas.</div>
+
+<h2>5. Especificação</h2>
+<p>O resultado é o <b>documento de requisitos</b> (também chamado SRS, especificação de requisitos de software). As normas de referência são a antiga IEEE 830 e a atual ISO/IEC/IEEE 29148. Características de um bom requisito:</p>
+<ul>
+  <li><b>Correto</b> e <b>necessário</b>: representa uma necessidade real;</li>
+  <li><b>Não ambíguo</b>: só uma interpretação possível;</li>
+  <li><b>Completo</b> e <b>consistente</b>: não falta nada e nenhum requisito contradiz outro;</li>
+  <li><b>Verificável</b> (testável): dá para provar que foi atendido;</li>
+  <li><b>Rastreável</b>: dá para saber de onde veio e onde foi implementado;</li>
+  <li><b>Priorizado</b>: indica importância ou urgência.</li>
+</ul>
+<div class="box exemplo"><span class="bt">Ambíguo × claro</span>"O sistema deve exibir os processos <i>recentes</i>." (recente quanto?)<br>→ "O sistema deve exibir os processos cadastrados nos <b>últimos 30 dias</b>, do mais novo para o mais antigo."</div>
+
+<h2>6. Validação</h2>
+<p>A validação verifica se o documento descreve o sistema que o cliente <b>realmente quer</b>. Erros de requisito descobertos tarde (em produção) custam muitas vezes mais do que se fossem achados aqui.</p>
+<p><b>O que se confere:</b> validade (é a necessidade certa?), consistência, completude, realismo (é possível fazer com o orçamento e a tecnologia?) e verificabilidade.</p>
+<p><b>Técnicas:</b> revisões e inspeções do documento, prototipação e <b>geração de casos de teste</b> (se não dá para escrever um teste, o requisito está mal escrito).</p>
+<div class="box prova"><span class="bt">Verificação × validação (Boehm)</span><b>Validação</b>: "Estamos construindo o <b>produto certo</b>?" (atende ao cliente?)<br><b>Verificação</b>: "Estamos construindo o <b>produto certo da forma certa</b>?" (está de acordo com a especificação?)</div>
+
+<h2>Mapa-resumo</h2>
+<ul>
+  <li>Processo: <b>levantamento → análise → especificação → validação</b>, de forma iterativa, com gerenciamento ao lado.</li>
+  <li><b>RF</b> = o que faz. <b>RNF</b> = como deve ser (qualidade e restrição), de produto, organizacional ou externo.</li>
+  <li>RNF precisa ser <b>mensurável</b>.</li>
+  <li>Técnica certa para cada problema: observação para o que ninguém fala; JAD para consenso; protótipo para incerteza; engenharia reversa para legado.</li>
+  <li>Bom requisito: não ambíguo, completo, consistente, verificável, rastreável.</li>
+</ul>
+
+<h2>Exercícios de fixação</h2>
+<p class="muted small">Questões inéditas no estilo FGV, escritas para esta apostila.</p>
+
+<div class="q"><div class="q-n">Questão 1 · inédita</div>
+<p class="q-stem">Em entrevista, a chefe do almoxarifado pediu: (1) cadastrar entradas de material; (2) "que a tela abra rápido, em menos de 2 segundos"; (3) emitir relatório mensal de consumo por setor; (4) "que funcione no celular dos conferentes"; (5) alertar quando o estoque ficar abaixo do mínimo. A quantidade de requisitos funcionais e não funcionais é, respectivamente,</p>
+<ol class="alts"><li class="alt" data-l="A">2 e 3.</li><li class="alt" data-l="B">3 e 2.</li><li class="alt" data-l="C">4 e 1.</li><li class="alt" data-l="D">5 e 0.</li><li class="alt" data-l="E">1 e 4.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Funcionais: cadastrar entradas (1), emitir relatório (3), alertar estoque mínimo (5). Não funcionais: desempenho (2) e compatibilidade/portabilidade (4).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 2 · inédita</div>
+<p class="q-stem">Uma equipe precisa substituir um sistema de folha de pagamento de 1998, sem documentação e cujos desenvolvedores já saíram do órgão. A técnica de levantamento mais adequada como ponto de partida é</p>
+<ol class="alts"><li class="alt" data-l="A">o brainstorming com os novos estagiários.</li><li class="alt" data-l="B">o questionário enviado a todos os servidores.</li><li class="alt" data-l="C">a engenharia reversa do sistema legado (código, banco de dados e telas).</li><li class="alt" data-l="D">a prototipação descartável de novas telas.</li><li class="alt" data-l="E">a especificação direta de casos de teste.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Quando o conhecimento das regras está "preso" no sistema antigo, a engenharia reversa é a forma de recuperar os requisitos. As outras técnicas podem complementar depois.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 3 · inédita</div>
+<p class="q-stem">O requisito "O sistema deve estar em conformidade com a Lei Geral de Proteção de Dados" é classificado, segundo Sommerville, como requisito</p>
+<ol class="alts"><li class="alt" data-l="A">funcional de usuário.</li><li class="alt" data-l="B">não funcional de produto.</li><li class="alt" data-l="C">não funcional organizacional.</li><li class="alt" data-l="D">não funcional externo.</li><li class="alt" data-l="E">de domínio funcional.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> Requisitos legais e regulatórios vêm de fora da organização: são não funcionais externos.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 4 · inédita</div>
+<p class="q-stem">Assinale a opção que apresenta um requisito não funcional adequadamente especificado.</p>
+<ol class="alts"><li class="alt" data-l="A">O sistema deve ser intuitivo.</li><li class="alt" data-l="B">O sistema deve ter ótimo desempenho.</li><li class="alt" data-l="C">O sistema deve suportar 1.000 acessos simultâneos com tempo de resposta de até 3 segundos em 95% das requisições.</li><li class="alt" data-l="D">O sistema deve permitir a emissão de boletos.</li><li class="alt" data-l="E">O sistema deve ser seguro contra qualquer ataque.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> É o único mensurável e verificável. A, B e E são vagos; D é um requisito funcional.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 5 · inédita</div>
+<p class="q-stem">Os servidores de um setor sempre esquecem de mencionar, nas entrevistas, um controle paralelo que fazem numa planilha. A técnica mais indicada para revelar esse tipo de requisito implícito é</p>
+<ol class="alts"><li class="alt" data-l="A">a observação do trabalho (etnografia).</li><li class="alt" data-l="B">a entrevista fechada.</li><li class="alt" data-l="C">a análise de pontos de função.</li><li class="alt" data-l="D">o modelo em V.</li><li class="alt" data-l="E">a revisão por pares do código.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Observando a rotina real, o analista vê o que as pessoas fazem e não lembram de contar.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 6 · inédita</div>
+<p class="q-stem">Durante a validação de requisitos, a equipe tentou escrever casos de teste para cada requisito e não conseguiu fazê-lo para "o sistema deve ser amigável". Isso indica que o requisito não atende principalmente à característica de</p>
+<ol class="alts"><li class="alt" data-l="A">rastreabilidade.</li><li class="alt" data-l="B">verificabilidade.</li><li class="alt" data-l="C">consistência.</li><li class="alt" data-l="D">priorização.</li><li class="alt" data-l="E">modularidade.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Se não é possível testar, o requisito não é verificável. A geração de casos de teste é justamente uma técnica de validação.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 7 · inédita</div>
+<p class="q-stem">A pergunta "Estamos construindo o produto certo?" está associada à</p>
+<ol class="alts"><li class="alt" data-l="A">verificação.</li><li class="alt" data-l="B">validação.</li><li class="alt" data-l="C">implantação.</li><li class="alt" data-l="D">manutenção adaptativa.</li><li class="alt" data-l="E">gerência de configuração.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Validação confere se o produto atende às necessidades reais do cliente. Verificação confere se o produto está de acordo com a especificação.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 8 · inédita</div>
+<p class="q-stem">Duas diretorias apresentam necessidades conflitantes para o mesmo módulo de um sistema. Para obter consenso rápido entre elas, com participação conjunta de usuários e equipe de TI, é mais indicado usar</p>
+<ol class="alts"><li class="alt" data-l="A">questionário anônimo.</li><li class="alt" data-l="B">análise de documentos.</li><li class="alt" data-l="C">workshop no formato JAD.</li><li class="alt" data-l="D">engenharia reversa.</li><li class="alt" data-l="E">observação passiva.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O JAD (Joint Application Design) reúne todos numa sessão facilitada, ideal para negociar e fechar decisões.</p></div></details></div>
+
+<h2>Questões reais para resolver</h2>
+<ul class="reais">
+  <li><span class="src">FGV · TJ-RJ 2026 · Analista Judiciário – TI – Analista de Sistemas · questão 38</span> — classificar requisitos funcionais e não funcionais a partir de uma entrevista.<br><a href="https://arquivos.qconcursos.com/prova/arquivo_prova/145547/fgv-2026-tj-rj-analista-judiciario-tecnologia-da-informacao-analista-de-sistemas-prova.pdf" target="_blank" rel="noopener">Abrir caderno de prova</a></li>
+  <li><span class="src">FGV · ALEMA 2023 · Técnico de Gestão Administrativa – Analista de Sistemas · questão 32</span> — levantamento de requisitos a partir de código-fonte legado.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/cns105-tecnico-de-gestao-administrativa-analista-de-sistemascns105-tipo-1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">FGV · Banestes 2021 · Analista em TI – Desenvolvimento de Sistemas · questão 57</span> — engenharia de requisitos em um caso de conferência de documentos digitais.<br><a href="https://conhecimento.fgv.br/sites/default/files/concursos/analista_em_tecnologia_da_informacao_-_desenvolvimento_de_sistemasan-sist_tipo_1.pdf" target="_blank" rel="noopener">Abrir caderno de prova (FGV)</a></li>
+  <li><span class="src">Lista de questões de várias bancas: "Requisitos funcionais"</span><br><a href="https://questoes.grancursosonline.com.br/questoes-de-concursos/tecnologia-da-informacao-requisitos-funcionais-428809" target="_blank" rel="noopener">Abrir lista (Gran Questões)</a></li>
+  <li><span class="src">Lista de questões de várias bancas: "Requisitos não funcionais"</span><br><a href="https://questoes.grancursosonline.com.br/questoes-de-concursos/tecnologia-da-informacao-requisitos-nao-funcionais-428810" target="_blank" rel="noopener">Abrir lista (Gran Questões)</a></li>
+</ul>
+
+<h2>Checklist do dia</h2>
+<ul class="checklist">
+  <li>Sei as 4 atividades do processo de engenharia de requisitos.</li>
+  <li>Classifico RF × RNF sem hesitar e sei os 3 grupos de RNF de Sommerville.</li>
+  <li>Sei transformar um RNF vago em um RNF mensurável.</li>
+  <li>Sei escolher a técnica de levantamento para cada situação.</li>
+  <li>Sei a diferença entre verificação e validação.</li>
+</ul>

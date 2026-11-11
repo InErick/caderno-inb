@@ -1,5 +1,6 @@
 require("./load-env");
 const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 const express = require("express");
 const cookieParser = require("cookie-parser");
@@ -20,7 +21,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "300kb" }));
 app.use(cookieParser());
 app.use((req, res, next) => {
   res.set({
@@ -199,6 +200,40 @@ app.get("/api/stats", auth, (req, res) => {
 
   const sessionsCount = db.prepare("SELECT COUNT(*) c FROM sessions WHERE user_id = ? AND edital = ?").get(uid, ed).c;
   res.json({ today: byDate[today] || 0, week, total, streak, sessionsCount, last14, byDayKey });
+});
+
+// ---------- apostilas ----------
+const APOSTILAS_DIR = path.join(__dirname, "public", "apostilas");
+
+app.get("/api/apostilas", auth, (req, res) => {
+  let files = [];
+  try { files = fs.readdirSync(path.join(APOSTILAS_DIR, req.user.edital)); } catch {}
+  res.json({ days: files.filter(f => /^\d{4}-\d{2}-\d{2}\.html$/.test(f)).map(f => f.slice(0, 10)).sort() });
+});
+
+app.get("/api/notes/:dayKey", auth, (req, res) => {
+  if (!DATE_RE.test(req.params.dayKey)) return fail(res, 400, "Dia inválido.");
+  const row = db.prepare("SELECT data, updated_at FROM notes WHERE user_id = ? AND edital = ? AND day_key = ?")
+    .get(req.user.id, req.user.edital, req.params.dayKey);
+  const data = row ? JSON.parse(row.data) : { highlights: [], bookmark: null };
+  res.json({ ...data, updatedAt: row?.updated_at || null });
+});
+
+app.put("/api/notes/:dayKey", auth, (req, res) => {
+  if (!DATE_RE.test(req.params.dayKey)) return fail(res, 400, "Dia inválido.");
+  const hl = Array.isArray(req.body.highlights) ? req.body.highlights.slice(0, 2000) : [];
+  const clean = hl.map(h => ({
+    id: String(h.id || "").slice(0, 40), b: Math.max(0, parseInt(h.b, 10) || 0),
+    s: Math.max(0, parseInt(h.s, 10) || 0), e: Math.max(0, parseInt(h.e, 10) || 0),
+    c: ["y", "g", "p", "b"].includes(h.c) ? h.c : "y",
+    note: String(h.note || "").slice(0, 2000), text: String(h.text || "").slice(0, 400),
+  })).filter(h => h.id && h.e > h.s);
+  const bm = req.body.bookmark;
+  const bookmark = bm && Number.isInteger(bm.b) ? { b: bm.b, at: String(bm.at || "").slice(0, 40) } : null;
+  db.prepare(`INSERT INTO notes (user_id, edital, day_key, data, updated_at) VALUES (?,?,?,?,datetime('now'))
+    ON CONFLICT(user_id, edital, day_key) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`)
+    .run(req.user.id, req.user.edital, req.params.dayKey, JSON.stringify({ highlights: clean, bookmark }));
+  res.json({ ok: true });
 });
 
 // ---------- front-end ----------
