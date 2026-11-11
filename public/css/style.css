@@ -401,7 +401,31 @@ a { color: inherit; }
 .rd-tool em { font-style: normal; background: var(--coral-l); color: var(--coral); border-radius: 999px; padding: 0 7px; font-size: 11px; }
 .rd-tool.primary { background: var(--coral); color: #fff; border-color: var(--coral); }
 .rd-status { min-width: 60px; text-align: right; }
-@media (max-width: 640px) { .rd-tool span { display: none; } .rd-status { display: none; } .rd-bar { top: 66px; } }
+@media (max-width: 640px) {
+  .rd-bar { top: 66px; flex-wrap: nowrap; gap: 4px; padding: 5px 6px; margin: -10px -6px 10px; border-radius: 10px; transition: transform .25s, opacity .25s; }
+  .rd-bar .icon-btn { padding: 6px 2px; }
+  .rd-title { min-width: 0; flex: 1; }
+  .rd-title .tag { display: none; }
+  .rd-title b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rd-tool { padding: 7px; border-radius: 8px; }
+  .rd-tool span, .rd-tool em, .rd-status { display: none; }
+  .apostila { padding: 18px 16px; font-size: 16px; border-radius: 12px; margin: 0 -6px; }
+  /* ao rolar para baixo, a barra do topo do app some e a do leitor sobe */
+  body.rd-scrolled .topbar { transform: translateY(-100%); }
+  body.rd-scrolled .rd-bar { top: 4px; }
+  .topbar { transition: transform .25s; }
+}
+
+/* modo leitura (tela cheia) */
+.rd-float { display: none; position: fixed; top: max(10px, env(safe-area-inset-top)); right: 10px; z-index: 40; gap: 6px; }
+.rd-fbtn { width: 40px; height: 40px; border-radius: 12px; background: rgba(39, 53, 50, .82); color: #fff; display: grid; place-items: center; padding: 0; font-size: 16px; backdrop-filter: blur(6px); }
+body.reading .rd-float { display: flex; }
+body.reading .topbar, body.reading .nav, body.reading .rd-bar, body.reading .rd-resume { display: none !important; }
+body.reading .shell { display: block; }
+body.reading .main { padding: 14px 10px 40px; max-width: 820px; }
+body.reading .apostila { border: 0; box-shadow: none; padding-top: 44px; }
+body.reading .mini-timer { bottom: calc(14px + var(--safe-b)); }
+body.reading { background: #fff; }
 .rd-wrap { max-width: 780px; margin: 0 auto; }
 .rd-resume { background: var(--dark-2); color: #e7ecea; border-radius: 12px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; }
 .rd-resume .link-btn { color: #f58b72; margin-left: 6px; }

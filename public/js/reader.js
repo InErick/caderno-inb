@@ -243,6 +243,12 @@ window.Reader = (() => {
         <button class="rd-tool" id="rdList" title="Minhas marcações">${Icon("book", 18)}<span>Marcações</span><em id="rdCount">0</em></button>
         <button class="rd-tool" id="rdPdf" title="Baixar PDF">${Icon("link", 18)}<span>PDF</span></button>
         <button class="rd-tool primary" id="rdStudy" title="Iniciar foco com este tema">${Icon("play", 16)}<span>Foco</span></button>
+        <button class="rd-tool" id="rdFull" title="Modo leitura (tela cheia)">${Icon("expand", 18)}<span>Tela cheia</span></button>
+      </div>
+      <div class="rd-float" id="rdFloat">
+        <button class="rd-fbtn" id="rdFMark" title="Marcar onde parei">🔖</button>
+        <button class="rd-fbtn" id="rdFList" title="Minhas marcações">${Icon("book", 18)}</button>
+        <button class="rd-fbtn" id="rdExit" title="Sair da tela cheia">${Icon("close", 18)}</button>
       </div>
       <div class="rd-wrap">
         <div class="rd-resume" id="rdResume" hidden></div>
@@ -269,6 +275,12 @@ window.Reader = (() => {
     view.querySelector("#rdClose").onclick = () => st.panel.classList.remove("open");
     view.querySelector("#rdPdf").onclick = printPdf;
     view.querySelector("#rdStudy").onclick = e => onStudy(e.currentTarget);
+    view.querySelector("#rdFull").onclick = () => setReading(true);
+    view.querySelector("#rdExit").onclick = () => setReading(false);
+    view.querySelector("#rdFMark").onclick = setBookmark;
+    view.querySelector("#rdFList").onclick = () => st.panel.classList.toggle("open");
+    st.onFs = () => { if (!document.fullscreenElement && st?.fsByUs) { st.fsByUs = false; setReading(false); } };
+    document.addEventListener("fullscreenchange", st.onFs);
 
     st.art.addEventListener("mouseup", onSelectionEnd);
     st.art.addEventListener("touchend", onSelectionEnd);
@@ -278,7 +290,13 @@ window.Reader = (() => {
     });
     st.onDoc = e => { if (!e.target.isConnected) return; if (st && !st.pop.hidden && !st.pop.contains(e.target) && !e.target.closest("mark.hl, .hl-note")) hidePop(); };
     document.addEventListener("mousedown", st.onDoc);
-    st.onScroll = () => { if (st && Math.abs(scrollY - (st.popY || 0)) > 40 && !st.pop.contains(document.activeElement)) hidePop(); };
+    st.lastY = scrollY;
+    st.onScroll = () => {
+      if (!st) return;
+      if (Math.abs(scrollY - (st.popY || 0)) > 40 && !st.pop.contains(document.activeElement)) hidePop();
+      const dy = scrollY - st.lastY;
+      if (Math.abs(dy) > 6) { document.body.classList.toggle("rd-scrolled", dy > 0 && scrollY > 120); st.lastY = scrollY; }
+    };
     addEventListener("scroll", st.onScroll, { passive: true });
 
     if (st.data.bookmark) {
@@ -290,8 +308,23 @@ window.Reader = (() => {
     }
     scrollTo(0, 0);
   }
+  // modo leitura: esconde menus e barras; tenta tela cheia do navegador (onde o aparelho permite)
+  function setReading(on) {
+    if (!st) return;
+    const keep = topBlock();
+    document.body.classList.toggle("reading", on);
+    if (on && document.fullscreenEnabled && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().then(() => { if (st) st.fsByUs = true; }).catch(() => {});
+    }
+    if (!on && document.fullscreenElement && st.fsByUs) { st.fsByUs = false; document.exitFullscreen?.().catch(() => {}); }
+    requestAnimationFrame(() => keep?.scrollIntoView({ block: "start" }));
+  }
+
   function close() {
     if (!st) return;
+    document.body.classList.remove("reading", "rd-scrolled");
+    document.removeEventListener("fullscreenchange", st.onFs);
+    if (st.fsByUs && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
     document.removeEventListener("mousedown", st.onDoc);
     removeEventListener("scroll", st.onScroll);
     clearTimeout(st.saveT);
