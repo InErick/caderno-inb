@@ -452,10 +452,6 @@ body.reading { background: #fff; }
 .apostila .box.atencao { background: #fff7f4; border-color: #f6d3c8; } .apostila .box.atencao .bt { color: #c8452b; }
 .apostila .box.exemplo { background: #f7f6ff; border-color: #dcd6f6; } .apostila .box.exemplo .bt { color: var(--purple); }
 .apostila .box.prova { background: #fdf8ec; border-color: #eedcae; } .apostila .box.prova .bt { color: #9a6a14; }
-.apostila .fig { margin: 20px 0; padding: 14px 12px 10px; background: #fff; border: 1px solid var(--line, #e6e5df); border-radius: 14px; text-align: center; }
-.apostila .fig svg { display: block; width: 100%; height: auto; max-width: 680px; margin: 0 auto; }
-@media (max-width: 560px) { .apostila .fig { overflow-x: auto; } .apostila .fig svg { min-width: 520px; } .apostila .fig figcaption { position: sticky; left: 0; } }
-.apostila .fig figcaption { font-size: 13px; line-height: 1.45; color: var(--muted, #6f706c); margin-top: 8px; text-align: left; }
 .roteiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; }
 .roteiro div { background: #f7f6f2; border-radius: 10px; padding: 10px 12px; font-size: 13.5px; line-height: 1.4; }
 .roteiro b { display: block; font: 700 15px var(--head); color: var(--coral); }
@@ -507,7 +503,6 @@ mark.hl.flash { outline: 3px solid var(--coral); }
 @media print {
   @page { margin: 16mm 14mm; }
   body.printing-apostila { background: #fff; }
-  .apostila .fig { break-inside: avoid; page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body.printing-apostila .nav, body.printing-apostila .topbar, body.printing-apostila .rd-bar, body.printing-apostila .rd-resume,
   body.printing-apostila .rd-panel, body.printing-apostila .rd-pop, body.printing-apostila .mini-timer, body.printing-apostila .toast,
   body.printing-apostila .hl-note, body.printing-apostila .focus { display: none !important; }
