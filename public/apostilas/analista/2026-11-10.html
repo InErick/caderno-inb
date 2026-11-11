@@ -1,96 +1,178 @@
 <h1>Processo de software e modelos de desenvolvimento</h1>
-<p class="lead">Hoje você vai entender <b>como</b> um software é construído, do pedido do cliente até a manutenção, e conhecer os modelos de processo que a FGV mais cobra: cascata, incremental, prototipação, espiral e Processo Unificado (RUP/UP).</p>
+<p class="lead">Hoje você vai entender <b>como</b> um software é construído, do pedido do cliente até a manutenção, e estudar em detalhe os modelos de processo que a FGV mais cobra: cascata, modelo em V, incremental, prototipação, espiral e Processo Unificado (RUP/UP). No fim, você vai saber escolher o modelo certo para cada cenário, que é exatamente o formato das questões da banca.</p>
 <div class="meta-row"><span class="chip-i">Engenharia de Software</span><span class="chip-i">Dia 1 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
 
 <div class="roteiro">
-  <div><b>0–35 min</b>Teoria: leia as seções 1 a 6 e marque o que achar importante</div>
-  <div><b>35–55 min</b>Exercícios de fixação + 2 questões reais da lista</div>
-  <div><b>55–60 min</b>Resumo: escreva 3 a 5 linhas no seu caderno</div>
+  <div><b>0–40 min</b>Teoria: leia com calma e marque as palavras-chave de cada modelo</div>
+  <div><b>40–55 min</b>Exercícios de fixação (deixe as questões reais para o domingo, se faltar tempo)</div>
+  <div><b>55–60 min</b>Resumo: monte a sua tabela "modelo → quando usar"</div>
 </div>
 
-<h2>1. O que é um processo de software</h2>
-<p>Um <b>processo de software</b> é o conjunto organizado de atividades que leva à produção de um software. Não importa o modelo escolhido: todo processo passa, de algum jeito, por quatro atividades fundamentais, segundo Sommerville.</p>
-<ol>
-  <li><b>Especificação</b>: definir o que o sistema deve fazer e suas restrições (os requisitos).</li>
-  <li><b>Projeto e implementação</b>: desenhar a solução e escrever o código.</li>
-  <li><b>Validação</b>: conferir se o sistema faz o que o cliente precisa (testes, revisões).</li>
-  <li><b>Evolução</b>: alterar o sistema ao longo do tempo para acompanhar novas necessidades.</li>
-</ol>
-<p>Pressman descreve as mesmas ideias com outros nomes, as <b>atividades metodológicas genéricas</b>: <b>comunicação, planejamento, modelagem, construção e entrega</b> (implantação). Decore as duas listas: a FGV costuma trocar uma atividade de lugar ou incluir uma que não existe.</p>
-<p>O <b>ciclo de vida</b> é a história completa do software: nasce de uma necessidade, é desenvolvido, entra em operação, sofre manutenções e, um dia, é desativado. O <b>modelo de processo</b> é a "receita" de como organizar as atividades dentro desse ciclo: em sequência, em pedaços, em voltas etc.</p>
-<div class="box dica"><span class="bt">Para fixar</span>Processo = <i>o que</i> se faz (especificar, construir, validar, evoluir). Modelo de processo = <i>em que ordem e de que forma</i> isso é organizado.</div>
+<h2>1. Por que existem processos de software</h2>
+<p>Nos anos 1960 e 1970, os projetos de software começaram a ficar grandes demais para serem feitos "de cabeça": atrasavam, estouravam o orçamento e entregavam sistemas que não faziam o que o cliente precisava. Esse cenário ficou conhecido como <b>crise do software</b>, e foi dele que nasceu a <b>Engenharia de Software</b>: a aplicação de uma abordagem sistemática, disciplinada e mensurável ao desenvolvimento, à operação e à manutenção de software.</p>
+<p>A ideia central é simples: <b>quanto mais tarde um erro é descoberto, mais caro é corrigi-lo</b>. Um requisito mal entendido custa uma conversa para ser corrigido na fase de requisitos, mas pode custar semanas de retrabalho se só for percebido depois que o sistema está em produção. Um processo bem definido existe para organizar o trabalho e encontrar os problemas o mais cedo possível.</p>
+<div class="box exemplo"><span class="bt">Analogia</span>Construir um software sem processo é como construir uma casa sem planta: dá para levantar as paredes, mas no meio da obra alguém percebe que esqueceu o encanamento do banheiro, e aí é preciso quebrar parede. O processo é a planta, o cronograma e a vistoria de cada etapa.</div>
 
-<h2>2. Modelo em cascata (sequencial linear)</h2>
-<p>É o modelo mais antigo, descrito por Winston Royce em 1970. As fases acontecem <b>uma depois da outra</b>, e uma fase só começa quando a anterior termina e é aprovada:</p>
-<p><b>Requisitos → Projeto → Implementação → Testes → Implantação → Manutenção</b></p>
-<div class="box exemplo"><span class="bt">Exemplo</span>Um órgão público precisa de um sistema para emitir uma certidão definida em lei, com regras que não vão mudar. Dá para levantar tudo no início, aprovar o documento de requisitos e seguir fase a fase. Esse é o cenário ideal para a cascata.</div>
+<h2>2. O que é um processo de software</h2>
+<p>Um <b>processo de software</b> é o conjunto organizado de atividades, ações e tarefas que levam à produção de um software. Não existe um processo "ideal" para todos os casos: cada organização adapta o processo ao tipo de sistema, ao tamanho da equipe e ao risco do projeto.</p>
+<h3>2.1 As quatro atividades fundamentais (Sommerville)</h3>
+<p>Para Sommerville, todo processo, seja tradicional ou ágil, passa de algum modo por quatro atividades:</p>
+<div class="tbl"><table>
+  <tr><th>Atividade</th><th>O que acontece</th><th>Exemplos de tarefas</th></tr>
+  <tr><td><b>Especificação</b></td><td>Define o que o sistema deve fazer e suas restrições</td><td>Estudo de viabilidade, levantamento, especificação e validação de requisitos</td></tr>
+  <tr><td><b>Projeto e implementação</b></td><td>Transforma a especificação em um sistema executável</td><td>Projeto de arquitetura, de interfaces, de banco de dados; programação</td></tr>
+  <tr><td><b>Validação</b></td><td>Mostra que o sistema atende à especificação e às expectativas do cliente</td><td>Testes de unidade, de integração, de sistema e de aceitação; revisões</td></tr>
+  <tr><td><b>Evolução</b></td><td>Modifica o sistema para atender a necessidades que mudam</td><td>Correções, adaptações a novas leis ou tecnologias, melhorias</td></tr>
+</table></div>
+<h3>2.2 O arcabouço de Pressman</h3>
+<p>Pressman organiza o processo em <b>cinco atividades metodológicas genéricas</b> (o "arcabouço" ou framework do processo):</p>
+<ol>
+  <li><b>Comunicação</b>: conversar com o cliente e os interessados para entender objetivos e levantar requisitos.</li>
+  <li><b>Planejamento</b>: criar o "mapa" do projeto, com tarefas, riscos, recursos, produtos e cronograma.</li>
+  <li><b>Modelagem</b>: criar modelos (diagramas, protótipos) para entender melhor os requisitos e o projeto.</li>
+  <li><b>Construção</b>: gerar o código e testá-lo.</li>
+  <li><b>Entrega</b> (implantação): entregar o software ao cliente, que avalia e dá feedback.</li>
+</ol>
+<p>Além delas, Pressman cita as <b>atividades de apoio</b> (também chamadas de atividades "guarda-chuva"), que acontecem durante todo o projeto: <b>controle e acompanhamento do projeto</b>, <b>gestão de riscos</b>, <b>garantia da qualidade</b>, <b>revisões técnicas</b>, <b>medição</b>, <b>gerência de configuração</b>, <b>gestão da reusabilidade</b> e <b>preparo e produção de artefatos</b> (documentos, modelos, formulários).</p>
+<div class="box atencao"><span class="bt">Cuidado com a troca de listas</span>A FGV costuma misturar as listas: colocar "validação" entre as atividades de Pressman ou "comunicação" entre as de Sommerville. Guarde assim: <b>Sommerville = 4</b> (especificação, projeto e implementação, validação, evolução). <b>Pressman = 5</b> (comunicação, planejamento, modelagem, construção, entrega) + atividades guarda-chuva.</div>
+<h3>2.3 Fluxos de processo</h3>
+<p>Pressman também classifica <b>como</b> as atividades são encadeadas, o que ajuda a entender os modelos das próximas seções:</p>
+<ul>
+  <li><b>Fluxo linear</b>: uma atividade depois da outra, do começo ao fim (cascata).</li>
+  <li><b>Fluxo iterativo</b>: uma ou mais atividades se repetem antes de seguir adiante.</li>
+  <li><b>Fluxo evolucionário</b>: as atividades acontecem em ciclos, e cada ciclo gera uma versão mais completa (espiral, prototipação).</li>
+  <li><b>Fluxo paralelo</b>: algumas atividades acontecem ao mesmo tempo (por exemplo, modelar uma parte enquanto se constrói outra).</li>
+</ul>
+
+<h2>3. Ciclo de vida e manutenção</h2>
+<p>O <b>ciclo de vida</b> é a história completa do software: nasce de uma necessidade, é especificado, desenvolvido, testado, implantado, entra em operação, sofre manutenções e, um dia, é desativado (descontinuado). O <b>modelo de processo</b> é a forma de organizar as atividades dentro desse ciclo: em sequência, em pedaços, em voltas.</p>
+<p>A <b>manutenção</b> costuma ser a fase mais longa e mais cara da vida de um sistema. Ela é classificada em quatro tipos, que caem com frequência:</p>
+<div class="tbl"><table>
+  <tr><th>Tipo</th><th>Objetivo</th><th>Exemplo</th></tr>
+  <tr><td><b>Corretiva</b></td><td>Corrigir defeitos encontrados</td><td>O relatório de férias soma os dias errado</td></tr>
+  <tr><td><b>Adaptativa</b></td><td>Adaptar o sistema a mudanças no ambiente (lei, sistema operacional, banco de dados, integração)</td><td>Nova regra do eSocial exige outro formato de arquivo</td></tr>
+  <tr><td><b>Perfectiva</b> (evolutiva)</td><td>Melhorar ou acrescentar funcionalidades a pedido dos usuários; melhorar desempenho</td><td>Usuários pedem um filtro novo na tela de busca</td></tr>
+  <tr><td><b>Preventiva</b></td><td>Melhorar a manutenibilidade e evitar problemas futuros</td><td>Refatorar um módulo confuso antes que ele gere erros</td></tr>
+</table></div>
+<div class="box dica"><span class="bt">Para não confundir</span>Corretiva = "deu erro". Adaptativa = "o <b>mundo</b> mudou" (lei, plataforma). Perfectiva = "o <b>usuário</b> quer mais". Preventiva = "vamos arrumar antes que quebre".</div>
+
+<h2>4. Modelo em cascata (sequencial linear)</h2>
+<p>O modelo em cascata foi descrito por <b>Winston Royce em 1970</b>. As fases acontecem em sequência, e cada fase só começa quando a anterior termina e seus documentos são aprovados. O nome vem do desenho: cada etapa "despeja" o resultado na seguinte, como uma queda-d'água.</p>
+<h3>4.1 As fases (nomenclatura de Sommerville)</h3>
+<ol>
+  <li><b>Análise e definição de requisitos</b>: serviços, restrições e metas do sistema são definidos com os usuários e documentados em detalhe, servindo de especificação.</li>
+  <li><b>Projeto de sistema e de software</b>: define-se a arquitetura geral (hardware e software) e identificam-se as abstrações fundamentais e seus relacionamentos.</li>
+  <li><b>Implementação e teste unitário</b>: o projeto vira um conjunto de programas, e cada unidade é testada isoladamente.</li>
+  <li><b>Integração e teste de sistema</b>: as unidades são reunidas e testadas como um sistema completo, que então é entregue ao cliente.</li>
+  <li><b>Operação e manutenção</b>: o sistema é instalado e usado; corrigem-se erros que não apareceram antes e melhoram-se funções.</li>
+</ol>
+<div class="box exemplo"><span class="bt">Quando a cascata funciona bem</span>Um órgão público precisa de um sistema para emitir uma certidão definida em lei, com regras que não vão mudar, e exige documentação aprovada ao fim de cada etapa. Os requisitos são <b>estáveis e bem conhecidos</b>, e o contexto é <b>regulado</b>: cenário ideal para a cascata. Ela também aparece em projetos de sistemas críticos (controle de usinas, aviação) e em partes de grandes sistemas desenvolvidos por várias empresas, em que é preciso "congelar" interfaces e contratos.</div>
+<h3>4.2 Vantagens e problemas</h3>
 <div class="tbl"><table>
   <tr><th>Vantagens</th><th>Desvantagens</th></tr>
-  <tr><td>Simples de entender e de gerenciar</td><td>O cliente só vê o sistema funcionando no fim</td></tr>
-  <tr><td>Documentação completa em cada fase</td><td>Mudança de requisito no meio do caminho custa caro</td></tr>
-  <tr><td>Funciona bem quando os requisitos são estáveis e bem conhecidos</td><td>Erros de requisito só aparecem tarde, nos testes</td></tr>
+  <tr><td>Simples de entender, planejar e gerenciar; marcos claros</td><td>O cliente só vê o sistema funcionando perto do fim</td></tr>
+  <tr><td>Documentação completa em cada fase, o que ajuda auditoria e contratos</td><td>Mudanças de requisito no meio do caminho custam caro, porque exigem refazer fases já aprovadas</td></tr>
+  <tr><td>Funciona bem com requisitos estáveis e equipes acostumadas a trabalho formal</td><td>Erros de requisito só aparecem tarde, nos testes ou em produção</td></tr>
+  <tr><td>Facilita dividir o trabalho entre equipes diferentes</td><td>Projetos reais raramente seguem um fluxo totalmente sequencial; o processo fica "congelado" cedo demais</td></tr>
 </table></div>
-<p>Uma variação muito cobrada é o <b>modelo em V</b>: é uma cascata em que cada fase de construção tem uma fase de teste correspondente. Requisitos ↔ teste de aceitação; projeto de arquitetura ↔ teste de integração; projeto detalhado ↔ teste de unidade.</p>
-<div class="box atencao"><span class="bt">Pegadinha</span>Cascata <b>não</b> é iterativa nem incremental. Se a alternativa disser que a cascata "permite entregas parciais frequentes" ou "acomoda bem mudanças de requisitos", está errada.</div>
+<p>Curiosidade que já virou questão: o próprio Royce, no artigo original, já apontava os riscos do fluxo puramente sequencial e sugeria <b>retroalimentação</b> entre as fases e até construir uma versão preliminar do sistema. A cascata "pura" que se ensina hoje é uma simplificação.</p>
+<div class="box atencao"><span class="bt">Pegadinha</span>Cascata <b>não</b> é iterativa nem incremental. Se a alternativa disser que a cascata "permite entregas parciais frequentes", "acomoda bem mudanças tardias" ou "envolve o cliente continuamente", está errada. É um modelo <b>dirigido a planos</b>.</div>
 
-<h2>3. Modelo incremental</h2>
-<p>O sistema é dividido em <b>incrementos</b>. Cada incremento passa por análise, projeto, código e teste, e é <b>entregue ao cliente como uma versão operacional</b>. O primeiro incremento costuma ser o <b>núcleo</b> do produto: as funções essenciais. Os próximos acrescentam funcionalidades.</p>
-<div class="box exemplo"><span class="bt">Exemplo</span>Um app de controle de gastos: o incremento 1 entrega cadastro de despesas e saldo do mês; o incremento 2, os gráficos; o incremento 3, a exportação para Excel. Desde o primeiro mês o usuário já usa o app de verdade.</div>
+<h2>5. Modelo em V</h2>
+<p>O modelo em V é uma variação da cascata que deixa explícita a relação entre cada fase de <b>construção</b> (lado esquerdo do V, descendo) e a fase de <b>teste</b> que a verifica (lado direito do V, subindo). A ideia é planejar os testes desde o início: enquanto se escrevem os requisitos, já se planeja o teste de aceitação.</p>
+<div class="tbl"><table>
+  <tr><th>Lado esquerdo (definição)</th><th>↔</th><th>Lado direito (verificação)</th></tr>
+  <tr><td>Requisitos do usuário / especificação de requisitos</td><td>↔</td><td><b>Teste de aceitação</b> (o cliente confirma que é o que pediu)</td></tr>
+  <tr><td>Projeto do sistema / arquitetura</td><td>↔</td><td><b>Teste de sistema</b> e <b>de integração</b></td></tr>
+  <tr><td>Projeto detalhado (módulos)</td><td>↔</td><td><b>Teste de unidade</b></td></tr>
+  <tr><td colspan="3" style="text-align:center">Base do V: <b>codificação</b></td></tr>
+</table></div>
+<p>Vantagem: o planejamento antecipado dos testes melhora a qualidade e ajuda a achar ambiguidades nos requisitos cedo. Desvantagem: herda a rigidez da cascata, porque continua sequencial.</p>
+
+<h2>6. Modelo incremental</h2>
+<p>No incremental, o sistema é dividido em <b>incrementos</b>. Cada incremento passa por análise, projeto, código e teste, e é <b>entregue ao cliente como uma versão operacional</b>, que ele já pode usar. Pressman descreve o incremental como uma combinação de fluxos lineares e paralelos: cada incremento é um "mini-cascata", e eles podem se sobrepor no tempo.</p>
+<p>O <b>primeiro incremento</b> costuma ser o <b>núcleo do produto</b> (core product): os requisitos básicos são atendidos, mas recursos complementares ficam para depois. O cliente usa esse núcleo, avalia, e o resultado orienta o plano do próximo incremento.</p>
+<div class="box exemplo"><span class="bt">Exemplo</span>Um app de controle de gastos. Incremento 1: cadastro de despesas e saldo do mês (núcleo). Incremento 2: gráficos por categoria. Incremento 3: exportação para Excel e metas de economia. Desde o primeiro mês o usuário já usa o app de verdade, e as sugestões dele mudam o que entra no incremento 2.</div>
 <ul>
-  <li><b>Vantagens:</b> o cliente recebe valor cedo; o feedback é mais rápido; é mais fácil testar partes menores; o risco de "falha total" diminui.</li>
-  <li><b>Desvantagens:</b> exige uma boa arquitetura desde o início, para os incrementos se encaixarem; pode ser difícil definir o que entra em cada incremento.</li>
+  <li><b>Vantagens (Sommerville):</b> o custo de acomodar mudanças é menor que na cascata; é mais fácil obter feedback do cliente sobre o que já foi feito; o cliente recebe valor cedo, mesmo sem ter tudo; partes menores são mais fáceis de testar; os recursos mais importantes são entregues e testados primeiro.</li>
+  <li><b>Problemas:</b> o processo fica menos visível para os gerentes (é difícil medir o progresso só com documentos); sem cuidado, a estrutura do sistema tende a se degradar a cada incremento, e as mudanças ficam cada vez mais caras; exige uma arquitetura bem pensada desde o início para os incrementos se encaixarem.</li>
 </ul>
-<div class="box dica"><span class="bt">Iterativo × incremental</span><b>Incremental</b> = construir em <i>pedaços</i>, e cada pedaço novo soma funcionalidades. <b>Iterativo</b> = construir em <i>ciclos de refinamento</i>, refazendo e melhorando o que já existe. Os modelos modernos (RUP, ágeis) são os dois ao mesmo tempo: <b>iterativos e incrementais</b>.</div>
+<div class="box dica"><span class="bt">Iterativo × incremental</span><b>Incremental</b> = construir em <i>pedaços</i>; cada pedaço novo <b>soma</b> funcionalidades.<br><b>Iterativo</b> = construir em <i>ciclos de refinamento</i>; cada ciclo <b>melhora</b> o que já existe.<br>Imagine pintar um quadro: incremental é pintar um canto pronto de cada vez; iterativo é rascunhar o quadro inteiro e ir refinando. Os modelos modernos (RUP e métodos ágeis) são <b>iterativos e incrementais</b> ao mesmo tempo.</div>
 
-<h2>4. Prototipação</h2>
-<p>Constrói-se rapidamente um <b>protótipo</b>, uma versão simplificada (telas, fluxo), para o cliente experimentar. O objetivo principal é <b>esclarecer requisitos</b> quando o cliente não sabe explicar exatamente o que quer.</p>
-<p>Ciclo típico: comunicação → plano rápido → modelagem rápida → construção do protótipo → avaliação pelo cliente → ajuste → repete.</p>
-<ul>
-  <li><b>Protótipo descartável:</b> serve só para aprender e depois é jogado fora; o sistema real é feito do zero.</li>
-  <li><b>Protótipo evolutivo:</b> é refinado aos poucos até virar o produto final.</li>
-</ul>
-<div class="box atencao"><span class="bt">Risco clássico</span>O cliente vê o protótipo funcionando e acha que o sistema "já está quase pronto", pressionando para colocar em produção algo que foi feito às pressas, sem qualidade.</div>
+<h2>7. Modelos evolucionários: prototipação e espiral</h2>
+<p>Os modelos <b>evolucionários</b> partem da ideia de que o software evolui ao longo do tempo e de que nem sempre é possível conhecer todos os requisitos no começo. Eles produzem versões cada vez mais completas a cada ciclo.</p>
+<h3>7.1 Prototipação</h3>
+<p>Constrói-se rapidamente um <b>protótipo</b>, uma versão simplificada (telas, fluxo principal, simulações), para o cliente experimentar. O objetivo principal é <b>esclarecer requisitos</b> quando o cliente define objetivos gerais mas não sabe detalhar entradas, processamento e saídas, ou quando a equipe não tem certeza sobre a eficiência de um algoritmo ou a forma da interface.</p>
+<p>O ciclo típico (Pressman) é: <b>comunicação → plano rápido → modelagem rápida → construção do protótipo → entrega e feedback do cliente</b>, repetindo até que os requisitos estejam claros.</p>
+<div class="tbl"><table>
+  <tr><th>Protótipo descartável</th><th>Protótipo evolutivo</th></tr>
+  <tr><td>Serve só para aprender; depois é jogado fora e o sistema real é feito do zero, com qualidade</td><td>É refinado aos poucos até se tornar o produto final</td></tr>
+  <tr><td>Pode ser feito com ferramentas rápidas (Figma, papel, planilhas)</td><td>Precisa ser construído com cuidado desde o início</td></tr>
+</table></div>
+<div class="box atencao"><span class="bt">Riscos clássicos da prototipação</span>1) O cliente vê o protótipo funcionando e acha que o sistema "já está quase pronto", pressionando para colocar em produção algo feito às pressas. 2) O desenvolvedor faz escolhas rápidas (linguagem inadequada, algoritmo ineficiente) para o protótipo e acaba esquecendo de trocá-las. A solução é combinar desde o início que o protótipo é descartável.</div>
+<p>A prototipação pode ser usada sozinha, mas é mais comum como <b>técnica dentro de outros modelos</b>, por exemplo para levantar requisitos (você vai revê-la amanhã) ou para reduzir riscos no espiral.</p>
 
-<h2>5. Modelo espiral (Boehm)</h2>
-<p>Proposto por Barry Boehm, é um modelo <b>evolucionário</b> que junta a natureza iterativa da prototipação com o controle sistemático da cascata. A grande marca do espiral é a <b>análise de riscos</b> em cada volta.</p>
+<h3>7.2 Modelo espiral (Boehm)</h3>
+<p>Proposto por <b>Barry Boehm</b> (1986/1988), o espiral combina a natureza iterativa da prototipação com os aspectos controlados e sistemáticos da cascata. Sua grande marca é ser <b>orientado a riscos</b>: em cada volta, a equipe identifica o que pode dar errado e age para reduzir esse risco antes de seguir.</p>
 <p>Cada volta da espiral passa por quatro setores (versão de Sommerville):</p>
 <ol>
-  <li><b>Definição de objetivos</b>: metas e restrições da etapa.</li>
-  <li><b>Avaliação e redução de riscos</b>: identificar o que pode dar errado e agir (por exemplo, fazendo um protótipo).</li>
-  <li><b>Desenvolvimento e validação</b>: escolher o modelo de desenvolvimento para aquela volta e construir.</li>
-  <li><b>Planejamento</b>: revisar com o cliente e planejar a próxima volta.</li>
+  <li><b>Definição de objetivos</b>: metas daquela fase, restrições do processo e do produto, plano de gerenciamento; identificam-se os riscos e estratégias alternativas.</li>
+  <li><b>Avaliação e redução de riscos</b>: para cada risco, faz-se uma análise detalhada e tomam-se medidas. Ex.: se há risco de os requisitos estarem errados, constrói-se um protótipo.</li>
+  <li><b>Desenvolvimento e validação</b>: escolhe-se o modelo de desenvolvimento adequado para aquela volta (pode ser prototipação, cascata etc.) e constrói-se.</li>
+  <li><b>Planejamento</b>: o projeto é revisado com o cliente, e decide-se se continua para a próxima volta; se sim, planeja-se a próxima fase.</li>
 </ol>
-<p>Cada volta representa uma fase do processo. As primeiras voltas podem gerar só um conceito ou protótipo; as últimas, versões cada vez mais completas.</p>
-<div class="box prova"><span class="bt">Na prova</span>"Falou em <b>risco</b>, pense em <b>espiral</b>." Ele é indicado para projetos grandes, caros e com muita incerteza. Desvantagem: depende de equipe experiente em análise de riscos e pode ficar caro para projetos pequenos.</div>
+<p>Cada volta representa uma fase do processo. As voltas mais internas podem gerar apenas a especificação ou um protótipo; as mais externas, versões cada vez mais completas do sistema. No desenho original, a dimensão <b>radial</b> (distância do centro) representa o <b>custo acumulado</b>, e a dimensão <b>angular</b> representa o <b>progresso</b> em cada volta. Pressman ainda cita os <b>marcos de ancoragem</b>: combinações de produtos e condições que são atingidas ao longo das voltas.</p>
+<div class="box prova"><span class="bt">Na prova</span>"Falou em <b>risco</b>, pense em <b>espiral</b>." Indicado para projetos <b>grandes, caros, complexos e com muita incerteza</b>. Desvantagens: depende de uma equipe experiente em análise de riscos; pode ser difícil convencer clientes (principalmente em contratos) de que o processo é controlável; e fica caro para projetos pequenos.</div>
 
-<h2>6. Processo Unificado (UP / RUP)</h2>
-<p>O Processo Unificado (e sua versão comercial da IBM, o <b>RUP</b>) tem três características que caem muito:</p>
+<h3>7.3 Outros modelos citados pela banca</h3>
 <ul>
-  <li><b>Iterativo e incremental;</b></li>
-  <li><b>dirigido por casos de uso</b> (os casos de uso guiam todo o desenvolvimento);</li>
-  <li><b>centrado na arquitetura</b> (a arquitetura é definida e testada cedo).</li>
+  <li><b>Modelo concorrente</b> (de engenharia simultânea): as atividades existem ao mesmo tempo em estados diferentes (em desenvolvimento, aguardando mudanças, em revisão, concluída), e eventos fazem as atividades mudarem de estado.</li>
+  <li><b>Desenvolvimento baseado em componentes</b>: foca no <b>reúso</b> de componentes prontos (bibliotecas, serviços, pacotes comerciais), e a atividade principal passa a ser selecionar, adaptar e integrar.</li>
+  <li><b>Métodos formais</b>: usam especificação matemática para provar a correção do software; caros, usados em sistemas críticos.</li>
 </ul>
-<p>Ele se organiza em <b>4 fases</b>, cada uma com várias iterações e terminando em um marco:</p>
-<div class="tbl"><table>
-  <tr><th>Fase</th><th>Foco</th><th>Marco ao final</th></tr>
-  <tr><td><b>Concepção</b> (iniciação)</td><td>Visão do produto, escopo, viabilidade, principais riscos</td><td>Objetivos do ciclo de vida</td></tr>
-  <tr><td><b>Elaboração</b></td><td>Detalhar requisitos e definir/validar a <b>arquitetura</b>; atacar os maiores riscos</td><td>Arquitetura do ciclo de vida</td></tr>
-  <tr><td><b>Construção</b></td><td>Desenvolver a maior parte do código e testar</td><td>Capacidade operacional inicial (versão beta)</td></tr>
-  <tr><td><b>Transição</b></td><td>Entregar ao usuário: implantação, treinamento, ajustes</td><td>Release do produto</td></tr>
-</table></div>
-<p>Além das fases (dimensão do <i>tempo</i>), o RUP tem <b>disciplinas</b> (dimensão do <i>conteúdo</i>): modelagem de negócio, requisitos, análise e design, implementação, teste e implantação, mais as de apoio: gerência de configuração e mudança, gerência de projeto e ambiente. Todas as disciplinas acontecem em todas as fases, com intensidades diferentes.</p>
-<div class="box dica"><span class="bt">Mnemônico</span><b>C-E-C-T</b>: "<b>C</b>omeça, <b>E</b>strutura, <b>C</b>onstrói, <b>T</b>ransfere". A <b>arquitetura</b> é o coração da <b>Elaboração</b>.</div>
 
-<h2>7. Modelos tradicionais × ágeis (visão geral)</h2>
-<p>Os modelos acima são chamados de <b>prescritivos</b> ou <b>dirigidos a plano</b>: tentam prever e planejar quase tudo antes. Os <b>métodos ágeis</b> (Scrum, XP, Kanban, que você verá em detalhe mais à frente) partem do contrário: aceitam que a mudança vai acontecer e trabalham em ciclos curtos, com entregas frequentes e muito contato com o cliente.</p>
+<h2>8. Processo Unificado (UP / RUP)</h2>
+<p>O <b>Processo Unificado</b> foi criado pelos mesmos autores da UML (Jacobson, Booch e Rumbaugh). O <b>RUP</b> (Rational Unified Process) é a versão comercial detalhada, mantida pela IBM. Ele é o modelo "tradicional moderno" mais cobrado, e tem três características que você precisa decorar:</p>
+<ul>
+  <li><b>Iterativo e incremental</b>: o sistema é construído em várias iterações, cada uma gerando um incremento executável.</li>
+  <li><b>Dirigido por casos de uso</b>: os casos de uso (as interações dos usuários com o sistema) guiam o projeto, a implementação e os testes.</li>
+  <li><b>Centrado na arquitetura</b>: a arquitetura é definida, testada e estabilizada cedo, e serve de base para o resto.</li>
+</ul>
+<h3>8.1 As quatro fases e seus marcos</h3>
+<p>As fases representam a dimensão do <b>tempo</b>. Cada uma tem uma ou mais iterações e termina num marco, um ponto de decisão em que se avalia se o projeto pode seguir:</p>
+<div class="tbl"><table>
+  <tr><th>Fase</th><th>Foco</th><th>Principais resultados</th><th>Marco ao final</th></tr>
+  <tr><td><b>Concepção</b> (iniciação)</td><td>Entender o negócio, definir o escopo, avaliar a viabilidade e os principais riscos</td><td>Documento de visão, casos de uso principais, estimativas iniciais, caso de negócio</td><td>Objetivos do ciclo de vida</td></tr>
+  <tr><td><b>Elaboração</b></td><td>Detalhar os requisitos e definir e validar a <b>arquitetura</b>; eliminar os maiores riscos técnicos</td><td>Arquitetura executável (um "esqueleto" que funciona), maioria dos casos de uso descritos, plano da construção</td><td>Arquitetura do ciclo de vida</td></tr>
+  <tr><td><b>Construção</b></td><td>Desenvolver a maior parte do código, integrar e testar</td><td>Produto funcionando em versão beta, manuais de usuário</td><td>Capacidade operacional inicial</td></tr>
+  <tr><td><b>Transição</b></td><td>Entregar ao usuário: implantação, testes beta, treinamento, migração de dados, ajustes finais</td><td>Produto em produção</td><td>Release (lançamento) do produto</td></tr>
+</table></div>
+<h3>8.2 Disciplinas</h3>
+<p>Além das fases, o RUP tem <b>disciplinas</b> (antes chamadas de fluxos de trabalho), que representam a dimensão do <b>conteúdo</b>. São 9: seis <b>de engenharia</b> (modelagem de negócio; requisitos; análise e design; implementação; teste; implantação) e três <b>de suporte</b> (gerência de configuração e mudança; gerência de projeto; ambiente).</p>
+<p>Todas as disciplinas acontecem em todas as fases, mas com intensidades diferentes. No famoso "gráfico de baleias" do RUP, a disciplina de requisitos é intensa na concepção e na elaboração e diminui depois; a implementação cresce na construção; a implantação cresce na transição.</p>
+<h3>8.3 Boas práticas do RUP</h3>
+<p>O RUP se apoia em seis boas práticas: <b>desenvolver iterativamente</b>; <b>gerenciar requisitos</b>; <b>usar arquiteturas baseadas em componentes</b>; <b>modelar visualmente</b> (com UML); <b>verificar a qualidade continuamente</b>; e <b>controlar as mudanças</b>.</p>
+<div class="box dica"><span class="bt">Mnemônico das fases</span><b>C-E-C-T</b>: "<b>C</b>omeça, <b>E</b>strutura, <b>C</b>onstrói, <b>T</b>ransfere". A <b>arquitetura</b> é o coração da <b>Elaboração</b>. Cuidado: "implementação" e "implantação" são <b>disciplinas</b>, não fases.</div>
+
+<h2>9. Tradicionais × ágeis e como escolher o modelo</h2>
+<p>Os modelos acima são chamados de <b>prescritivos</b> ou <b>dirigidos a planos</b>: tentam prever e planejar quase tudo antes. Em 2001, o <b>Manifesto Ágil</b> propôs valorizar <b>indivíduos e interações</b> mais que processos e ferramentas, <b>software em funcionamento</b> mais que documentação abrangente, <b>colaboração com o cliente</b> mais que negociação de contratos e <b>responder a mudanças</b> mais que seguir um plano. Os métodos ágeis (Scrum, XP, Kanban) serão estudados em detalhe mais à frente.</p>
 <div class="tbl"><table>
   <tr><th></th><th>Tradicional (preditivo)</th><th>Ágil (adaptativo)</th></tr>
-  <tr><td>Planejamento</td><td>Detalhado no início</td><td>Contínuo, a cada ciclo</td></tr>
-  <tr><td>Mudanças</td><td>Evitadas, custam caro</td><td>Bem-vindas, mesmo tarde</td></tr>
-  <tr><td>Entregas</td><td>Normalmente no fim</td><td>Frequentes (semanas)</td></tr>
-  <tr><td>Documentação</td><td>Extensa</td><td>Suficiente</td></tr>
-  <tr><td>Indicado quando</td><td>Requisitos estáveis, contexto regulado</td><td>Requisitos incertos, mudam com frequência</td></tr>
+  <tr><td>Planejamento</td><td>Detalhado no início</td><td>Contínuo, a cada ciclo curto</td></tr>
+  <tr><td>Mudanças</td><td>Evitadas, controladas formalmente, custam caro</td><td>Bem-vindas, mesmo tarde</td></tr>
+  <tr><td>Entregas</td><td>Normalmente no fim (ou em grandes marcos)</td><td>Frequentes (semanas)</td></tr>
+  <tr><td>Documentação</td><td>Extensa, aprovada por fase</td><td>Suficiente, sem excesso</td></tr>
+  <tr><td>Cliente</td><td>Participa no início e no fim</td><td>Participa o tempo todo</td></tr>
+  <tr><td>Indicado quando</td><td>Requisitos estáveis, contexto regulado, sistemas críticos, contratos fechados</td><td>Requisitos incertos, que mudam com frequência; necessidade de entregar valor cedo</td></tr>
 </table></div>
+<h3>Fatores para escolher o modelo</h3>
+<ul>
+  <li><b>Estabilidade dos requisitos</b>: estáveis → cascata/V; instáveis → incremental, evolucionário, ágil.</li>
+  <li><b>Risco e incerteza técnica</b>: alto → espiral.</li>
+  <li><b>Clareza do que o cliente quer</b>: baixa → prototipação.</li>
+  <li><b>Necessidade de entregar valor cedo</b>: alta → incremental, ágil.</li>
+  <li><b>Tamanho, criticidade e exigência de documentação</b>: alto → cascata, V, RUP.</li>
+</ul>
 
 <h2>Mapa-resumo</h2>
 <div class="tbl"><table>
@@ -102,6 +184,8 @@
   <tr><td>Espiral</td><td><b>Risco</b> em cada volta</td><td>Projeto grande e incerto</td></tr>
   <tr><td>UP/RUP</td><td>4 fases; casos de uso; arquitetura</td><td>Projeto médio/grande, iterativo e documentado</td></tr>
 </table></div>
+
+<div class="box dica"><span class="bt">Não esqueça</span><b>Manutenção</b>: corretiva (erro), adaptativa (ambiente mudou), perfectiva (usuário quer mais), preventiva (evitar problemas futuros). <b>Pressman</b>: 5 atividades metodológicas + atividades guarda-chuva (riscos, qualidade, configuração, medição, revisões…).</div>
 
 <h2>Exercícios de fixação</h2>
 <p class="muted small">Questões inéditas no estilo FGV, escritas para esta apostila. Resolva antes de abrir o gabarito.</p>
@@ -146,6 +230,16 @@
 <ol class="alts"><li class="alt" data-l="A">os métodos ágeis dispensam qualquer planejamento.</li><li class="alt" data-l="B">as abordagens tradicionais tratam mudanças tardias de requisitos como algo natural e barato.</li><li class="alt" data-l="C">os métodos ágeis trabalham com ciclos curtos e entregas frequentes de software funcionando.</li><li class="alt" data-l="D">o modelo cascata é o mais indicado para requisitos instáveis.</li><li class="alt" data-l="E">o modelo espiral é uma metodologia ágil.</li></ol>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Ágil planeja o tempo todo (A errada); mudança tardia é cara no tradicional (B errada); cascata é para requisitos estáveis (D errada); espiral é um modelo evolucionário, não ágil (E errada).</p></div></details></div>
 
+<div class="q"><div class="q-n">Questão 9 · inédita</div>
+<p class="q-stem">Uma nova regra do eSocial obrigou a equipe a alterar o formato do arquivo enviado pelo sistema de folha de pagamento, sem que houvesse erro no sistema. Esse tipo de manutenção é classificado como</p>
+<ol class="alts"><li class="alt" data-l="A">corretiva.</li><li class="alt" data-l="B">adaptativa.</li><li class="alt" data-l="C">perfectiva.</li><li class="alt" data-l="D">preventiva.</li><li class="alt" data-l="E">emergencial.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> O sistema não tinha defeito; foi o ambiente externo (uma norma) que mudou. Adaptar o sistema a mudanças no ambiente é manutenção adaptativa.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 10 · inédita</div>
+<p class="q-stem">Segundo Pressman, são atividades de apoio ("guarda-chuva") do processo de software, <b>exceto</b>:</p>
+<ol class="alts"><li class="alt" data-l="A">gestão de riscos.</li><li class="alt" data-l="B">garantia da qualidade de software.</li><li class="alt" data-l="C">gerência de configuração.</li><li class="alt" data-l="D">comunicação.</li><li class="alt" data-l="E">medição.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> Comunicação é uma das cinco atividades metodológicas (com planejamento, modelagem, construção e entrega), não uma atividade de apoio.</p></div></details></div>
+
 <h2>Questões reais para resolver</h2>
 <p>Estas caíram em provas de verdade. Abra o caderno pelo link, resolva a questão indicada e confira o gabarito oficial no site da banca.</p>
 <ul class="reais">
@@ -163,4 +257,5 @@
   <li>Sei associar espiral a risco e prototipação a requisitos incertos.</li>
   <li>Sei as 4 fases do UP, na ordem, e o que acontece na Elaboração.</li>
   <li>Sei quando a cascata é uma boa escolha.</li>
+  <li>Sei os 4 tipos de manutenção e as atividades guarda-chuva de Pressman.</li>
 </ul>

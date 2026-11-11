@@ -1,90 +1,165 @@
 <h1>Requisitos I — levantamento, análise, especificação e validação</h1>
-<p class="lead">Engenharia de requisitos é um dos temas preferidos da FGV em provas de Analista de Sistemas. Hoje você aprende o processo completo, as técnicas de levantamento e, principalmente, a separar <b>requisito funcional</b> de <b>não funcional</b>, que é o tipo de questão que mais cai.</p>
+<p class="lead">Engenharia de requisitos é um dos temas preferidos da FGV em provas de Analista de Sistemas. Hoje você vai estudar o processo completo, as tarefas de Pressman, a classificação detalhada dos requisitos não funcionais, as técnicas de levantamento com prós e contras, o que é uma boa especificação e como validar. A parte mais cobrada é separar <b>requisito funcional</b> de <b>não funcional</b>, e ela recebe atenção especial.</p>
 <div class="meta-row"><span class="chip-i">Engenharia de Requisitos</span><span class="chip-i">Dia 2 de 61</span><span class="chip-i">⏱ 1 hora</span></div>
 
 <div class="roteiro">
-  <div><b>0–35 min</b>Teoria: seções 1 a 6 (dê atenção especial à seção 3)</div>
-  <div><b>35–55 min</b>Exercícios de fixação + questões reais</div>
-  <div><b>55–60 min</b>Resumo: faça sua própria tabela RF × RNF</div>
+  <div><b>0–40 min</b>Teoria completa (seção 4 é a mais importante)</div>
+  <div><b>40–55 min</b>Exercícios de fixação</div>
+  <div><b>55–60 min</b>Monte sua tabela RF × RNF com 3 exemplos de cada</div>
 </div>
 
 <h2>1. O que é um requisito</h2>
-<p>Um <b>requisito</b> é a descrição de algo que o sistema <b>deve fazer</b> ou de uma <b>condição</b> que ele deve respeitar. Ele nasce da necessidade de alguém: usuário, cliente, gestor, uma lei.</p>
-<p>Sommerville separa dois níveis de detalhe:</p>
-<ul>
-  <li><b>Requisitos de usuário</b>: escritos em linguagem natural, com diagramas simples, para o cliente entender. Ex.: "O sistema deve permitir que o servidor solicite férias."</li>
-  <li><b>Requisitos de sistema</b>: versão detalhada e técnica, base para o projeto e o contrato. Ex.: "A solicitação de férias deve registrar matrícula, período (máximo de 3 frações) e enviar notificação ao chefe imediato."</li>
-</ul>
-<p>Quem tem interesse no sistema é chamado de <b>stakeholder</b> (parte interessada): usuários finais, gestores, área jurídica, equipe de TI, órgãos de controle.</p>
+<p>Segundo a definição clássica do IEEE, um <b>requisito</b> é uma <b>condição ou capacidade</b> de que um usuário precisa para resolver um problema ou alcançar um objetivo, ou que o sistema deve ter para satisfazer um contrato, padrão ou especificação. Em palavras simples: é a descrição de algo que o sistema <b>deve fazer</b> ou de uma <b>condição</b> que ele deve respeitar.</p>
+<p>Os requisitos são a base de tudo o que vem depois: projeto, código, testes, contrato e prazo. Por isso, erros aqui são os mais caros, porque se espalham por todas as fases seguintes.</p>
+<h3>1.1 Requisitos de usuário × de sistema</h3>
+<p>Sommerville separa dois níveis de detalhe para o mesmo assunto:</p>
+<div class="tbl"><table>
+  <tr><th>Requisito de usuário</th><th>Requisito de sistema</th></tr>
+  <tr><td>Linguagem natural, com diagramas simples, para clientes e gestores entenderem</td><td>Descrição detalhada e técnica do que o sistema faz; base para o projeto e, muitas vezes, para o contrato</td></tr>
+  <tr><td>"O sistema deve permitir que o servidor solicite férias."</td><td>"A solicitação de férias deve registrar matrícula, período de até 3 frações, data de início não inferior a 30 dias da solicitação e enviar notificação por e-mail ao chefe imediato."</td></tr>
+</table></div>
+<h3>1.2 Stakeholders</h3>
+<p>Quem tem interesse no sistema é chamado de <b>stakeholder</b> (parte interessada). Não são só os usuários: gestores que pagam o projeto, a área jurídica, a equipe de TI que vai manter, órgãos de controle, até sistemas que vão se integrar. Esquecer um stakeholder importante é uma das causas mais comuns de requisitos faltando.</p>
 
 <h2>2. O processo de engenharia de requisitos</h2>
-<p>É um processo <b>iterativo</b>: as atividades se repetem e se realimentam, não acontecem uma única vez.</p>
+<p>O processo é <b>iterativo</b>: as atividades se repetem e se realimentam ao longo do projeto, não acontecem uma única vez. Sommerville descreve as atividades principais:</p>
 <ol>
-  <li><b>Levantamento (elicitação)</b>: descobrir as necessidades junto aos stakeholders.</li>
-  <li><b>Análise</b>: organizar, classificar, priorizar e resolver conflitos entre requisitos.</li>
+  <li><b>Estudo de viabilidade</b>: vale a pena construir esse sistema? Ele contribui para os objetivos da organização, é possível com a tecnologia e o orçamento disponíveis?</li>
+  <li><b>Elicitação (levantamento) e análise</b>: descobrir as necessidades junto aos stakeholders. Inclui as subatividades de <b>descoberta</b>, <b>classificação e organização</b>, <b>priorização e negociação</b> e <b>documentação</b>.</li>
   <li><b>Especificação</b>: documentar os requisitos de forma clara e padronizada.</li>
   <li><b>Validação</b>: conferir com os stakeholders se os requisitos documentados são os que eles realmente querem.</li>
 </ol>
-<p>Ao lado dessas atividades corre o <b>gerenciamento de requisitos</b> (controle de mudanças, rastreabilidade), que você estuda amanhã. Sommerville também cita o <b>estudo de viabilidade</b> no começo: vale a pena construir esse sistema?</p>
+<p>Ao lado dessas atividades corre o <b>gerenciamento de requisitos</b> (controle de mudanças, rastreabilidade), que você estuda amanhã.</p>
+<h3>2.1 As sete tarefas de Pressman</h3>
+<p>Pressman detalha a engenharia de requisitos em sete tarefas, que a FGV também cobra:</p>
+<div class="tbl"><table>
+  <tr><th>Tarefa</th><th>O que acontece</th></tr>
+  <tr><td><b>Concepção</b></td><td>Entendimento básico do problema, de quem precisa da solução e da natureza da solução desejada</td></tr>
+  <tr><td><b>Levantamento</b></td><td>Perguntar aos interessados quais são os objetivos, o que precisam e como o sistema se encaixa no negócio</td></tr>
+  <tr><td><b>Elaboração</b></td><td>Refinar e expandir as informações em um modelo de requisitos (cenários, casos de uso, classes de análise)</td></tr>
+  <tr><td><b>Negociação</b></td><td>Conciliar conflitos entre interessados e priorizar o que entra, com base em custo e risco</td></tr>
+  <tr><td><b>Especificação</b></td><td>Produzir o documento ou modelo final (texto, cenários, modelos gráficos, protótipo)</td></tr>
+  <tr><td><b>Validação</b></td><td>Avaliar a qualidade dos produtos: ambiguidades, omissões, inconsistências, requisitos irreais</td></tr>
+  <tr><td><b>Gestão</b></td><td>Acompanhar e controlar as mudanças nos requisitos ao longo do projeto</td></tr>
+</table></div>
+<div class="box dica"><span class="bt">Mnemônico</span>"<b>C</b>om <b>L</b>ápis, <b>E</b>u <b>N</b>unca <b>E</b>rro <b>V</b>alores <b>G</b>randes": Concepção, Levantamento, Elaboração, Negociação, Especificação, Validação, Gestão.</div>
 
-<h2>3. Funcionais × não funcionais</h2>
+<h2>3. Por que levantar requisitos é difícil</h2>
+<p>Sommerville lista os problemas mais comuns, e a FGV gosta de pedir qual técnica resolve cada um:</p>
+<ul>
+  <li>Os stakeholders muitas vezes <b>não sabem exatamente o que querem</b>, ou pedem coisas impossíveis ou caras demais.</li>
+  <li>Eles expressam os requisitos <b>na linguagem da área deles</b>, com conhecimento implícito que o analista não tem.</li>
+  <li><b>Stakeholders diferentes têm requisitos conflitantes</b>.</li>
+  <li><b>Fatores políticos</b> influenciam os requisitos (um gestor quer um recurso para ganhar poder no setor).</li>
+  <li>O <b>ambiente muda</b> durante o projeto: novos stakeholders, novas leis, novas prioridades.</li>
+</ul>
+
+<h2>4. Funcionais × não funcionais</h2>
 <p>Esta é a seção mais importante do dia.</p>
 <div class="tbl"><table>
   <tr><th>Requisito funcional (RF)</th><th>Requisito não funcional (RNF)</th></tr>
-  <tr><td>Diz <b>o que</b> o sistema faz: serviços, funções, reações a entradas</td><td>Diz <b>como</b> o sistema deve ser: qualidades e restrições</td></tr>
+  <tr><td>Diz <b>o que</b> o sistema faz: serviços, funções, como reage a entradas e como se comporta em situações específicas</td><td>Diz <b>como</b> o sistema deve ser: qualidades, restrições sobre os serviços e o processo de desenvolvimento</td></tr>
   <tr><td>"O sistema deve emitir o contracheque em PDF."</td><td>"O contracheque deve ser gerado em até 3 segundos."</td></tr>
   <tr><td>"O usuário deve poder redefinir a senha por e-mail."</td><td>"As senhas devem ser armazenadas com hash e salt."</td></tr>
   <tr><td>"O sistema deve permitir filtrar processos por data."</td><td>"O sistema deve funcionar nos navegadores Chrome e Firefox."</td></tr>
+  <tr><td>"O sistema deve calcular o adicional noturno."</td><td>"O sistema deve estar disponível 99,5% do tempo no mês."</td></tr>
 </table></div>
-<div class="box dica"><span class="bt">Truque para a prova</span>Pergunte: "Isso é uma <b>ação/função</b> que o usuário pode pedir ao sistema?" Se sim, é RF. Se a frase fala de <b>velocidade, segurança, disponibilidade, usabilidade, compatibilidade, lei, padrão, tecnologia</b>, é RNF.</div>
-
-<h3>Classificação dos RNF (Sommerville)</h3>
+<div class="box dica"><span class="bt">Truque para a prova</span>Pergunte: "Isso é uma <b>ação ou função</b> que o usuário pode pedir ao sistema?" Se sim, é RF. Se a frase fala de <b>velocidade, segurança, disponibilidade, usabilidade, compatibilidade, lei, padrão, linguagem de programação, tecnologia</b>, é RNF.</div>
+<p>Dois detalhes que costumam cair:</p>
 <ul>
-  <li><b>Requisitos de produto</b>: comportamento do software. Eficiência (desempenho, uso de memória), confiabilidade, proteção/segurança, usabilidade.</li>
-  <li><b>Requisitos organizacionais</b>: vêm de políticas da organização. Ex.: "deve ser desenvolvido em C#/.NET", "deve usar o login único do órgão".</li>
-  <li><b>Requisitos externos</b>: vêm de fora. Regulatórios, legais e éticos. Ex.: "deve cumprir a LGPD".</li>
+  <li>RNF frequentemente são <b>mais críticos</b> que RF isolados: se um sistema de aviação não for confiável, ele é inútil, mesmo que tenha todas as funções. Um RNF não atendido pode inutilizar o sistema inteiro.</li>
+  <li>Um RNF pode <b>gerar</b> requisitos funcionais. O RNF "somente usuários autorizados podem acessar os dados" dá origem aos RF de login, cadastro de perfis e controle de permissões.</li>
 </ul>
-<p>Há ainda os <b>requisitos de domínio</b>, que vêm do domínio de aplicação (área de negócio) e podem ser funcionais ou não funcionais. Ex.: num sistema bancário, "o cálculo de juros deve seguir a regra do Banco Central".</p>
 
-<h3>RNF bom é RNF mensurável</h3>
-<p>"O sistema deve ser rápido" é um requisito <b>ruim</b>: não dá para testar. A versão boa traz uma métrica:</p>
-<div class="box exemplo"><span class="bt">Ruim → bom</span>"Deve ser rápido" → "95% das consultas devem responder em até 2 segundos com 500 usuários simultâneos."<br>"Deve ser fácil de usar" → "Um usuário novo deve conseguir abrir um chamado em até 3 minutos, sem treinamento."<br>"Deve estar sempre no ar" → "Disponibilidade mínima de 99,5% no mês."</div>
-
-<h3>Qualidade de software: ISO/IEC 25010</h3>
-<p>A norma de qualidade de produto (versão de 2011, a mais cobrada) lista 8 características, ótimas para classificar RNF: <b>adequação funcional, eficiência de desempenho, compatibilidade, usabilidade, confiabilidade, segurança, manutenibilidade e portabilidade</b>.</p>
-
-<h2>4. Técnicas de levantamento</h2>
+<h3>4.1 Classificação dos RNF (Sommerville)</h3>
 <div class="tbl"><table>
-  <tr><th>Técnica</th><th>Como funciona</th><th>Bom para…</th></tr>
-  <tr><td><b>Entrevista</b></td><td>Conversa com o stakeholder; pode ser <i>fechada</i> (perguntas prontas) ou <i>aberta</i> (livre)</td><td>Entender o trabalho e as dores de cada pessoa</td></tr>
-  <tr><td><b>Questionário</b></td><td>Perguntas enviadas a muitas pessoas</td><td>Público grande e disperso</td></tr>
-  <tr><td><b>Workshop / JAD</b></td><td>Sessão em grupo, com facilitador, usuários e TI juntos</td><td>Chegar a consenso rápido e resolver conflitos</td></tr>
-  <tr><td><b>Brainstorming</b></td><td>Gerar muitas ideias sem julgar, depois filtrar</td><td>Funcionalidades novas, inovação</td></tr>
-  <tr><td><b>Observação / etnografia</b></td><td>O analista acompanha o trabalho real do usuário</td><td>Descobrir requisitos implícitos, que ninguém lembra de falar</td></tr>
-  <tr><td><b>Prototipação</b></td><td>Mostrar telas/modelos para o usuário reagir</td><td>Interfaces e requisitos incertos</td></tr>
-  <tr><td><b>Cenários e casos de uso</b></td><td>Descrever interações passo a passo</td><td>Detalhar fluxos e exceções</td></tr>
-  <tr><td><b>Análise de documentos</b></td><td>Ler leis, normas, formulários, manuais</td><td>Requisitos legais e regras existentes</td></tr>
-  <tr><td><b>Engenharia reversa</b></td><td>Estudar o sistema legado (código, banco, telas)</td><td>Substituir um sistema antigo sem documentação</td></tr>
+  <tr><th>Grupo</th><th>Origem</th><th>Subtipos e exemplos</th></tr>
+  <tr><td><b>Requisitos de produto</b></td><td>Comportamento do software em execução</td><td>Eficiência (desempenho e espaço), confiabilidade, proteção (security), usabilidade, dependabilidade. Ex.: "responder em até 2 s"</td></tr>
+  <tr><td><b>Requisitos organizacionais</b></td><td>Políticas e procedimentos da organização do cliente e do desenvolvedor</td><td>Ambientais, operacionais, de desenvolvimento. Ex.: "deve ser feito em C#/.NET", "deve usar o login único do órgão", "o processo deve seguir o padrão interno de documentação"</td></tr>
+  <tr><td><b>Requisitos externos</b></td><td>Fatores de fora do sistema e do processo</td><td>Regulatórios, legais (contábeis, de proteção/safety), éticos. Ex.: "deve cumprir a LGPD", "deve seguir a norma do Banco Central"</td></tr>
 </table></div>
-<div class="box atencao"><span class="bt">Por que levantar requisitos é difícil</span>Os stakeholders muitas vezes não sabem o que querem, usam a linguagem da área deles, têm interesses em conflito, e os requisitos mudam durante o projeto. A FGV gosta de pedir a técnica certa para cada um desses problemas.</div>
+<p>Há ainda os <b>requisitos de domínio</b>, que vêm do domínio de aplicação (a área de negócio) e podem ser funcionais ou não funcionais. Ex.: num sistema bancário, "o cálculo de juros deve seguir a fórmula definida pelo Banco Central". O risco é que, por serem óbvios para os especialistas, muitas vezes ninguém os explica.</p>
 
-<h2>5. Especificação</h2>
-<p>O resultado é o <b>documento de requisitos</b> (também chamado SRS, especificação de requisitos de software). As normas de referência são a antiga IEEE 830 e a atual ISO/IEC/IEEE 29148. Características de um bom requisito:</p>
+<h3>4.2 RNF bom é RNF mensurável</h3>
+<p>"O sistema deve ser rápido" é um requisito <b>ruim</b>: não dá para testar. Sommerville propõe métricas para tornar os RNF verificáveis:</p>
+<div class="tbl"><table>
+  <tr><th>Propriedade</th><th>Métricas possíveis</th></tr>
+  <tr><td>Velocidade</td><td>Transações processadas por segundo; tempo de resposta a um evento; tempo de atualização da tela</td></tr>
+  <tr><td>Tamanho</td><td>Megabytes; espaço em memória</td></tr>
+  <tr><td>Facilidade de uso</td><td>Tempo de treinamento; número de telas de ajuda</td></tr>
+  <tr><td>Confiabilidade</td><td>Tempo médio entre falhas (MTTF); probabilidade de indisponibilidade; taxa de falhas; disponibilidade</td></tr>
+  <tr><td>Robustez</td><td>Tempo de reinício após falha; percentual de eventos que causam falha; probabilidade de corromper dados numa falha</td></tr>
+  <tr><td>Portabilidade</td><td>Percentual de código dependente da plataforma; número de plataformas suportadas</td></tr>
+</table></div>
+<div class="box exemplo"><span class="bt">Ruim → bom</span>"Deve ser rápido" → "95% das consultas devem responder em até 2 segundos com 500 usuários simultâneos."<br>"Deve ser fácil de usar" → "Um usuário novo deve conseguir abrir um chamado em até 3 minutos, sem treinamento."<br>"Deve estar sempre no ar" → "Disponibilidade mínima de 99,5% no mês, medida por monitoramento externo."</div>
+
+<h3>4.3 Qualidade de software: ISO/IEC 25010</h3>
+<p>A norma de qualidade de produto (versão de 2011, a mais cobrada em provas) lista 8 características, ótimas para classificar RNF:</p>
+<div class="tbl"><table>
+  <tr><th>Característica</th><th>Em uma frase</th></tr>
+  <tr><td><b>Adequação funcional</b></td><td>O software faz as funções certas, completas e corretas</td></tr>
+  <tr><td><b>Eficiência de desempenho</b></td><td>Tempo de resposta, uso de recursos, capacidade</td></tr>
+  <tr><td><b>Compatibilidade</b></td><td>Convive e troca informações com outros sistemas (interoperabilidade)</td></tr>
+  <tr><td><b>Usabilidade</b></td><td>Fácil de aprender, operar, com proteção contra erros do usuário, acessível</td></tr>
+  <tr><td><b>Confiabilidade</b></td><td>Maturidade, disponibilidade, tolerância a falhas, recuperabilidade</td></tr>
+  <tr><td><b>Segurança</b></td><td>Confidencialidade, integridade, não repúdio, responsabilização, autenticidade</td></tr>
+  <tr><td><b>Manutenibilidade</b></td><td>Fácil de modificar, testar, reutilizar e analisar</td></tr>
+  <tr><td><b>Portabilidade</b></td><td>Fácil de instalar e adaptar a outros ambientes</td></tr>
+</table></div>
+
+<h2>5. Técnicas de levantamento</h2>
+<div class="tbl"><table>
+  <tr><th>Técnica</th><th>Como funciona</th><th>Pontos fortes</th><th>Limitações</th></tr>
+  <tr><td><b>Entrevista</b></td><td>Conversa com o stakeholder; pode ser <i>fechada</i> (perguntas prontas) ou <i>aberta</i> (livre, explorando o tema)</td><td>Entende o trabalho e as dores de cada pessoa</td><td>As pessoas omitem o que acham óbvio; depende da habilidade do entrevistador</td></tr>
+  <tr><td><b>Questionário</b></td><td>Perguntas enviadas a muitas pessoas</td><td>Alcança público grande e disperso; dados comparáveis</td><td>Pouca profundidade; sem chance de aprofundar respostas</td></tr>
+  <tr><td><b>Workshop / JAD</b></td><td>Sessão em grupo com <b>facilitador</b>, escriba, patrocinador, usuários e TI juntos</td><td>Consenso rápido; resolve conflitos na hora</td><td>Difícil reunir todos; pessoas dominantes podem abafar as outras</td></tr>
+  <tr><td><b>Brainstorming</b></td><td>Gerar muitas ideias sem julgar; depois filtrar e priorizar</td><td>Inovação, funcionalidades novas</td><td>Gera ideias pouco viáveis, que precisam de filtro</td></tr>
+  <tr><td><b>Observação / etnografia</b></td><td>O analista acompanha o trabalho real do usuário no ambiente dele</td><td>Revela requisitos <b>implícitos</b> e como o trabalho é feito de verdade</td><td>Demorada; as pessoas podem mudar o comportamento ao serem observadas</td></tr>
+  <tr><td><b>Prototipação</b></td><td>Mostrar telas e modelos para o usuário reagir</td><td>Ótima para interfaces e requisitos incertos</td><td>Usuário pode achar que o sistema está pronto</td></tr>
+  <tr><td><b>Cenários e casos de uso</b></td><td>Descrever interações passo a passo, com fluxos alternativos e exceções</td><td>Detalha fluxos e situações de erro</td><td>Pouco úteis para RNF</td></tr>
+  <tr><td><b>Análise de documentos</b></td><td>Ler leis, normas, formulários, manuais, relatórios</td><td>Requisitos legais e regras existentes</td><td>Documentos podem estar desatualizados</td></tr>
+  <tr><td><b>Engenharia reversa</b></td><td>Estudar o sistema legado: código, banco de dados, telas</td><td>Substituir sistema antigo sem documentação</td><td>Pode copiar também os defeitos do sistema antigo</td></tr>
+</table></div>
+<div class="box prova"><span class="bt">Técnica certa para cada problema</span>"Ninguém lembra de contar" → <b>observação</b>. "Diretorias em conflito" → <b>JAD/workshop</b>. "Não sei explicar, mas sei quando vir" → <b>protótipo</b>. "Sistema antigo sem documentação" → <b>engenharia reversa</b>. "Mil usuários em vários estados" → <b>questionário</b>. "Regras definidas em lei" → <b>análise de documentos</b>.</div>
+
+<h2>6. Análise: classificar, priorizar e negociar</h2>
+<p>Depois de levantar, é preciso organizar: agrupar requisitos relacionados, eliminar duplicados, identificar conflitos e decidir prioridades. Quando dois stakeholders querem coisas incompatíveis, o analista promove a <b>negociação</b>, normalmente avaliando custo, risco e valor de cada pedido. A priorização (por exemplo, pelo método MoSCoW) é vista em detalhe amanhã.</p>
+
+<h2>7. Especificação</h2>
+<p>O resultado é o <b>documento de requisitos</b>, também chamado de SRS (Software Requirements Specification). As normas de referência são a antiga <b>IEEE 830</b> e a atual <b>ISO/IEC/IEEE 29148</b>. Uma estrutura típica tem: introdução (propósito, escopo, glossário), descrição geral (perspectiva do produto, usuários, restrições, premissas) e requisitos específicos (funcionais e não funcionais).</p>
+<h3>7.1 Formas de escrever requisitos</h3>
 <ul>
-  <li><b>Correto</b> e <b>necessário</b>: representa uma necessidade real;</li>
-  <li><b>Não ambíguo</b>: só uma interpretação possível;</li>
-  <li><b>Completo</b> e <b>consistente</b>: não falta nada e nenhum requisito contradiz outro;</li>
-  <li><b>Verificável</b> (testável): dá para provar que foi atendido;</li>
-  <li><b>Rastreável</b>: dá para saber de onde veio e onde foi implementado;</li>
-  <li><b>Priorizado</b>: indica importância ou urgência.</li>
+  <li><b>Linguagem natural</b>: frases livres; fácil de ler, mas ambígua.</li>
+  <li><b>Linguagem natural estruturada</b>: formulários ou modelos padronizados (identificador, descrição, entradas, saídas, pré e pós-condições).</li>
+  <li><b>Notações gráficas</b>: diagramas UML (casos de uso, sequência).</li>
+  <li><b>Especificações matemáticas</b>: precisas, mas difíceis para o cliente entender.</li>
 </ul>
-<div class="box exemplo"><span class="bt">Ambíguo × claro</span>"O sistema deve exibir os processos <i>recentes</i>." (recente quanto?)<br>→ "O sistema deve exibir os processos cadastrados nos <b>últimos 30 dias</b>, do mais novo para o mais antigo."</div>
+<h3>7.2 Características de um bom requisito (IEEE 830)</h3>
+<ul>
+  <li><b>Correto</b>: representa uma necessidade real;</li>
+  <li><b>Não ambíguo</b>: só uma interpretação possível;</li>
+  <li><b>Completo</b>: não falta nada importante;</li>
+  <li><b>Consistente</b>: nenhum requisito contradiz outro;</li>
+  <li><b>Classificado</b> por importância e estabilidade;</li>
+  <li><b>Verificável</b> (testável): dá para provar que foi atendido;</li>
+  <li><b>Modificável</b>: a estrutura do documento permite alterá-lo com facilidade;</li>
+  <li><b>Rastreável</b>: dá para saber de onde veio e onde foi implementado.</li>
+</ul>
+<div class="box exemplo"><span class="bt">Ambíguo × claro</span>"O sistema deve exibir os processos <i>recentes</i>." (recente quanto?)<br>→ "O sistema deve exibir os processos cadastrados nos <b>últimos 30 dias</b>, do mais novo para o mais antigo."<br><br>"O sistema deve processar os pedidos <i>e/ou</i> enviar e-mail." (e/ou é ambíguo)<br>→ separe em dois requisitos, cada um com um "deve".</div>
+<p>Boas práticas de redação: usar <b>"deve"</b> para obrigatórios e "pode"/"deveria" para desejáveis, de forma consistente; <b>um requisito por frase</b>; evitar jargão técnico em requisitos de usuário; manter um <b>glossário</b>; e destacar as partes-chave.</p>
 
-<h2>6. Validação</h2>
-<p>A validação verifica se o documento descreve o sistema que o cliente <b>realmente quer</b>. Erros de requisito descobertos tarde (em produção) custam muitas vezes mais do que se fossem achados aqui.</p>
-<p><b>O que se confere:</b> validade (é a necessidade certa?), consistência, completude, realismo (é possível fazer com o orçamento e a tecnologia?) e verificabilidade.</p>
-<p><b>Técnicas:</b> revisões e inspeções do documento, prototipação e <b>geração de casos de teste</b> (se não dá para escrever um teste, o requisito está mal escrito).</p>
-<div class="box prova"><span class="bt">Verificação × validação (Boehm)</span><b>Validação</b>: "Estamos construindo o <b>produto certo</b>?" (atende ao cliente?)<br><b>Verificação</b>: "Estamos construindo o <b>produto certo da forma certa</b>?" (está de acordo com a especificação?)</div>
+<h2>8. Validação</h2>
+<p>A validação verifica se o documento descreve o sistema que o cliente <b>realmente quer</b>. É diferente da verificação feita depois, no código.</p>
+<p><b>O que se confere (Sommerville):</b></p>
+<ul>
+  <li><b>Validade</b>: os requisitos atendem às necessidades reais? (pode haver necessidades diferentes das imaginadas no início)</li>
+  <li><b>Consistência</b>: há requisitos conflitantes?</li>
+  <li><b>Completude</b>: estão todas as funções e restrições?</li>
+  <li><b>Realismo</b>: é possível implementar com a tecnologia, o prazo e o orçamento disponíveis?</li>
+  <li><b>Verificabilidade</b>: dá para escrever testes que demonstrem o atendimento?</li>
+</ul>
+<p><b>Técnicas:</b> <b>revisões de requisitos</b> (análise sistemática por uma equipe, inclusive inspeções formais), <b>prototipação</b> (mostrar um modelo executável aos usuários) e <b>geração de casos de teste</b> (se não dá para escrever um teste, o requisito está mal escrito).</p>
+<div class="box prova"><span class="bt">Verificação × validação (Boehm)</span><b>Validação</b>: "Estamos construindo o <b>produto certo</b>?" (atende ao que o cliente precisa?)<br><b>Verificação</b>: "Estamos construindo o <b>produto do jeito certo</b>?" (está de acordo com a especificação?)</div>
 
 <h2>Mapa-resumo</h2>
 <ul>
@@ -94,6 +169,8 @@
   <li>Técnica certa para cada problema: observação para o que ninguém fala; JAD para consenso; protótipo para incerteza; engenharia reversa para legado.</li>
   <li>Bom requisito: não ambíguo, completo, consistente, verificável, rastreável.</li>
 </ul>
+
+<div class="box dica"><span class="bt">Não esqueça</span><b>Pressman</b>: concepção, levantamento, elaboração, negociação, especificação, validação, gestão. <b>Métricas de RNF</b>: velocidade (tempo de resposta), confiabilidade (MTTF, disponibilidade), usabilidade (tempo de treinamento), portabilidade (% de código dependente da plataforma).</div>
 
 <h2>Exercícios de fixação</h2>
 <p class="muted small">Questões inéditas no estilo FGV, escritas para esta apostila.</p>
@@ -138,6 +215,16 @@
 <ol class="alts"><li class="alt" data-l="A">questionário anônimo.</li><li class="alt" data-l="B">análise de documentos.</li><li class="alt" data-l="C">workshop no formato JAD.</li><li class="alt" data-l="D">engenharia reversa.</li><li class="alt" data-l="E">observação passiva.</li></ol>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O JAD (Joint Application Design) reúne todos numa sessão facilitada, ideal para negociar e fechar decisões.</p></div></details></div>
 
+<div class="q"><div class="q-n">Questão 9 · inédita</div>
+<p class="q-stem">Segundo Pressman, a tarefa da engenharia de requisitos em que se conciliam conflitos entre os interessados e se priorizam os requisitos, considerando custo e risco, é a</p>
+<ol class="alts"><li class="alt" data-l="A">concepção.</li><li class="alt" data-l="B">elaboração.</li><li class="alt" data-l="C">negociação.</li><li class="alt" data-l="D">especificação.</li><li class="alt" data-l="E">gestão.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Na negociação, o analista ajuda os interessados a resolver conflitos e decidir prioridades. A elaboração refina os requisitos em modelos; a gestão controla as mudanças.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 10 · inédita</div>
+<p class="q-stem">Para tornar verificável um requisito de confiabilidade, a métrica mais adequada é</p>
+<ol class="alts"><li class="alt" data-l="A">número de transações processadas por segundo.</li><li class="alt" data-l="B">tempo médio entre falhas (MTTF).</li><li class="alt" data-l="C">tempo necessário para treinar um usuário novo.</li><li class="alt" data-l="D">percentual de código dependente da plataforma.</li><li class="alt" data-l="E">tamanho do sistema em megabytes.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> MTTF, disponibilidade e taxa de falhas medem confiabilidade. A mede velocidade; C, facilidade de uso; D, portabilidade; E, tamanho.</p></div></details></div>
+
 <h2>Questões reais para resolver</h2>
 <ul class="reais">
   <li><span class="src">FGV · TJ-RJ 2026 · Analista Judiciário – TI – Analista de Sistemas · questão 38</span> — classificar requisitos funcionais e não funcionais a partir de uma entrevista.<br><a href="https://arquivos.qconcursos.com/prova/arquivo_prova/145547/fgv-2026-tj-rj-analista-judiciario-tecnologia-da-informacao-analista-de-sistemas-prova.pdf" target="_blank" rel="noopener">Abrir caderno de prova</a></li>
@@ -154,4 +241,5 @@
   <li>Sei transformar um RNF vago em um RNF mensurável.</li>
   <li>Sei escolher a técnica de levantamento para cada situação.</li>
   <li>Sei a diferença entre verificação e validação.</li>
+  <li>Sei as 7 tarefas de Pressman e algumas métricas para RNF.</li>
 </ul>

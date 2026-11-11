@@ -58,6 +58,22 @@ window.Reader = (() => {
       last.after(ic);
     }
   }
+  // se a apostila foi atualizada, reencontra cada marcação pelo texto marcado
+  function reanchor() {
+    let changed = false;
+    const blocks = [...st.art.querySelectorAll("[data-b]")];
+    st.data.highlights = st.data.highlights.filter(h => {
+      const bl = st.art.querySelector(`[data-b="${h.b}"]`);
+      if (bl && bl.textContent.slice(h.s, h.e) === h.text) return true;
+      for (const cand of blocks) {
+        const i = h.text ? cand.textContent.indexOf(h.text) : -1;
+        if (i >= 0) { h.b = +cand.dataset.b; h.s = i; h.e = i + h.text.length; changed = true; return true; }
+      }
+      changed = true; return false; // trecho não existe mais
+    });
+    if (changed) save();
+  }
+
   function paint() {
     clearMarks();
     const groups = {};
@@ -267,6 +283,9 @@ window.Reader = (() => {
     // agrupa segmentos vindos do servidor (id "abc-1" pertence ao grupo "abc")
     st.data.highlights.forEach(h => { h.gid = h.id.split("-")[0]; });
     indexBlocks(st.art);
+    clearMarks();
+    reanchor();
+    if (st.data.bookmark && !st.art.querySelector(`[data-b="${st.data.bookmark.b}"]`)) st.data.bookmark = null;
     paint();
 
     view.querySelector("#rdBack").onclick = onBack;
