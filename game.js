@@ -29,7 +29,7 @@ function achievementDefs(labels) {
     { code: "q500", icon: "🏃", title: "Maratonista", desc: "500 questões resolvidas" },
     { code: "mira_esp", icon: "🎯", title: "Mira afiada", desc: `70% de acerto em ${labels.ESP} (com 50 questões ou mais)` },
     ...MATS.map(m => ({ code: `cob_${m}`, icon: "📚", title: `${labels[m]} 100%`, desc: `Todos os tópicos de ${labels[m]} cobertos` })),
-    { code: "meta_7", icon: "🎯", title: "Meta é meta", desc: "Bater a meta diária de questões 7 dias seguidos" },
+    { code: "meta_7", icon: "🎯", title: "Meta é meta", desc: "Bater a meta diária de questões (todas as matérias) 7 dias seguidos" },
     { code: "simulado", icon: "📝", title: "Primeiro simulado", desc: "Fazer o primeiro simulado" },
     { code: "em_dia", icon: "✅", title: "Em dia", desc: "14 dias concluídos e nenhum atrasado" },
   ];
@@ -101,17 +101,26 @@ function compute(db, user, today) {
     .map(([k, q]) => ({ key: k, done: q.done, correct: q.correct, pct: q.correct / q.done }))
     .sort((a, b) => a.pct - b.pct).slice(0, 6);
 
-  // ---------- meta diária de questões (resolvidas no app + lançadas) ----------
-  const goal = user.daily_q_goal || 20;
-  const perDate = {};
-  for (const r of db.prepare("SELECT local_date, COUNT(*) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date").all(uid, ed)) perDate[r.local_date] = r.n;
-  for (const r of db.prepare("SELECT local_date, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date").all(uid, ed)) perDate[r.local_date] = (perDate[r.local_date] || 0) + r.n;
-  const metDays = Object.keys(perDate).filter(k => perDate[k] >= goal && k <= today).sort();
+  // ---------- meta diária de questões, dividida entre as matérias pelo peso no edital ----------
+  // matérias ativas = as que já têm aula concluída (antes disso, todas)
+  const goal = user.daily_q_goal || 40;
+  let active = MATS.filter(m => plan.some(x => x.m === m && done[x.key]));
+  if (!active.length) active = MATS.slice();
+  const wsum = active.reduce((t, m) => t + cfg.pontos[m], 0);
+  const goalByM = Object.fromEntries(active.map(m => [m, Math.max(3, Math.round(goal * cfg.pontos[m] / wsum))]));
+  const perDate = {};   // data -> { ESP: n, POR: n, ... }
+  const bump = (k, m, n) => { (perDate[k] ||= {}); perDate[k][m] = (perDate[k][m] || 0) + n; };
+  for (const r of db.prepare("SELECT local_date, materia, COUNT(*) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
+  for (const r of db.prepare("SELECT local_date, materia, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
+  const dayMet = k => active.every(m => (perDate[k]?.[m] || 0) >= goalByM[m]);
+  const metDays = Object.keys(perDate).filter(k => k <= today && dayMet(k)).sort();
   const met = new Set(metDays);
   let metaStreak = 0, md = met.has(today) ? today : addDays(today, -1);
   while (met.has(md)) { metaStreak++; md = addDays(md, -1); }
   let metaBest = 0, mrun = 0, mprev = null;
   for (const k of metDays) { mrun = mprev && addDays(mprev, 1) === k ? mrun + 1 : 1; metaBest = Math.max(metaBest, mrun); mprev = k; }
+  const todayTot = Object.values(perDate[today] || {}).reduce((t, n) => t + n, 0);
+  const goalTot = active.reduce((t, m) => t + goalByM[m], 0);
 
   // ---------- semanas perfeitas ----------
   const weeks = {};
@@ -150,7 +159,8 @@ function compute(db, user, today) {
   return {
     today,
     xp: { total: xp, days: xpDays, questions: xpQ, achievements: xpA, meta: xpM, rules: XP },
-    meta: { goal, today: perDate[today] || 0, met: met.has(today), streak: metaStreak, best: metaBest, daysMet: metDays.length },
+    meta: { goal: goalTot, today: todayTot, met: met.has(today), streak: metaStreak, best: metaBest, daysMet: metDays.length,
+      byM: Object.fromEntries(active.map(m => [m, { goal: goalByM[m], done: perDate[today]?.[m] || 0 }])) },
     level: levelInfo(xp),
     streak, bestStreak: best,
     done, late,

@@ -207,16 +207,21 @@
     if (!S.user) return;
     Reader.close();
     const full = (location.hash || "#inicio").slice(1);
-    const r = full.startsWith("apostila/") ? "apostila" : full.startsWith("questoes/") ? "quiz" : full;
+    const r = full.startsWith("apostila/") ? "apostila" : full.startsWith("questoes/") ? "quiz" : full.startsWith("banco/") ? "assunto" : full.startsWith("treino") ? "treino" : full;
     const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
-    const navOf = { quiz: "questoes", treino: "questoes", erros: "questoes", apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
+    const navOf = { quiz: "inicio", assunto: "questoes", treino: "questoes", erros: "questoes", apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
     document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (navOf[r] || r)));
     const v = document.getElementById("view");
     if (!v) return;
     v.onclick = null;
     updateTopbar();
     if (r === "apostila") return viewApostila(v, full.slice(9));
-    if (r === "quiz" || r === "treino" || r === "erros") { window.scrollTo(0, 0); return viewQuiz(v, r === "quiz" ? { kind: "day", key: full.slice(9) } : { kind: r }); }
+    if (["quiz", "assunto", "treino", "erros"].includes(r)) {
+      window.scrollTo(0, 0);
+      const src = r === "quiz" ? { kind: "day", key: full.slice(9) } : r === "assunto" ? { kind: "assunto", key: full.slice(6) }
+        : r === "treino" ? { kind: "treino", materia: full.split("/")[1] || null } : { kind: "erros" };
+      return viewQuiz(v, src);
+    }
     ({ inicio: viewHome, questoes: viewQuestions, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile, conquistas: viewAchievements, atrasados: viewLate }[r] || viewHome)(v);
     window.scrollTo(0, 0);
   }
@@ -306,8 +311,8 @@
       </div>
 
       <div class="section-title">Questões do dia <span class="muted small">meta ${Math.min(g.meta.today, g.meta.goal)}/${g.meta.goal}${g.meta.met ? " ✅" : ""}${qd.done ? ` · ${pct(qd.correct, qd.done)}% de acerto` : ""} · <a href="#questoes">abrir aba Questões →</a></span></div>
-      ${bk ? bankBlock(t, bk) : ""}
-      <div class="card" id="qCard">${bk ? `<details class="q-manual"><summary>Lançar questões feitas fora do app</summary>${questionForm(t)}</details>` : questionForm(t)}</div>
+      ${bk?.n ? bankBlock(t, bk) : ""}
+      <div class="card" id="qCard">${bk?.n ? `<details class="q-manual"><summary>Lançar questões feitas fora do app</summary>${questionForm(t)}</details>` : questionForm(t)}</div>
 
       <div class="rings" style="margin-top:14px">
         <div class="card ring-card"><div class="lbl">Edital coberto</div>${ring(cov.all ? cov.done / cov.all : 0, "#3f8a72", `${pct(cov.done, cov.all)}%`, `${cov.done} de ${cov.all} tópicos`)}</div>
@@ -406,27 +411,30 @@
     return s.replace(/[ \t]{2,}/g, " ").trim();
   }
 
-  // src = { kind: "day", key } | { kind: "treino" } | { kind: "erros" }
+  // src = { kind: "day", key } (aula: 20 questões) | { kind: "assunto", key } (banco inteiro do tema)
+  //     | { kind: "treino", materia? } | { kind: "erros" }
   async function viewQuiz(v, src) {
-    const isDay = src.kind === "day", day = isDay ? findDay(src.key) : null, lab = ED().labels;
-    const back = isDay ? "#questoes" : "#questoes";
+    const isDay = src.kind === "day" || src.kind === "assunto", day = isDay ? findDay(src.key) : null, lab = ED().labels;
+    const back = src.kind === "day" ? "#inicio" : "#questoes";
     v.innerHTML = `<div class="loading">Carregando questões…</div>`;
     let qs;
-    const load = async () => (isDay ? await Api.bankDay(src.key) : await Api.bankSession(src.kind, todayKey(), S.user.dailyQGoal)).questions;
+    const mg = src.materia && S.g.meta.byM[src.materia];
+    const nTreino = src.materia ? Math.max(10, mg ? mg.goal - mg.done : 10) : S.user.dailyQGoal;
+    const load = async () => (isDay ? await Api.bankDay(src.key, src.kind === "assunto") : await Api.bankSession(src.kind, todayKey(), nTreino, src.materia)).questions;
     try { qs = await load(); } catch (x) { v.innerHTML = `<div class="card empty">${esc(x.message)}</div>`; return; }
-    const emptyMsg = { day: "Este assunto ainda não tem questões importadas.", treino: "Você já resolveu todas as questões dos assuntos desbloqueados. 🎉<br>Novos assuntos abrem conforme o cronograma avança.", erros: "Nenhuma questão para revisar hoje. ✅" };
+    const emptyMsg = { day: "Esta aula ainda não tem questões importadas.", assunto: "Este tema ainda não tem questões importadas.", treino: (src.materia ? `Nenhuma questão nova de ${esc(lab[src.materia])} nas aulas concluídas. 🎉` : "Nenhuma questão nova nas aulas concluídas. 🎉") + "<br>Conclua mais aulas no cronograma para liberar novos conteúdos.", erros: "Nenhuma questão para revisar hoje. ✅" };
     if (!qs.length) { v.innerHTML = `<div class="card empty" style="text-align:center;padding:32px">${emptyMsg[src.kind]}<br><br><a class="btn btn-ghost" href="${back}">Voltar</a></div>`; return; }
     let idx = isDay ? Math.max(0, qs.findIndex(q => !q.answer)) : 0, pick = null, retry = false;
     if (isDay && qs.every(q => q.answer)) idx = qs.length;
     const fresh = q => src.kind === "erros" ? q._done : q.answer;   // na revisão, a resposta antiga não conta
     const title = isDay ? `<span class="tag">${esc(lab[day?.m] || "")}</span> <b>${esc(day?.t || src.key)}</b>`
-      : src.kind === "treino" ? `<b>🎯 Treino do dia</b>` : `<b>🔁 Revisão de erros</b>`;
+      : src.kind === "treino" ? (src.materia ? `<span class="tag">${esc(lab[src.materia])}</span> <b>🎯 Treino</b>` : `<b>🎯 Treino misto</b>`) : `<b>🔁 Revisão de erros</b>`;
 
     const draw = () => {
       const done = qs.filter(fresh), right = done.filter(q => src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect).length;
       const mt = S.g.meta;
       const head = `<div class="qz-top"><a href="${back}" class="link-btn">← Questões</a>
-        <div class="qz-title t-${day?.m || "ESP"}">${title}</div>
+        <div class="qz-title t-${day?.m || src.materia || "ESP"}">${title}${src.kind === "assunto" ? ` <span class="muted small">· banco do tema</span>` : ""}</div>
         <div class="qz-score">${done.length}/${qs.length} respondidas · <b>${right} ${right === 1 ? "acerto" : "acertos"}</b> · meta de hoje ${Math.min(mt.today, mt.goal)}/${mt.goal}${mt.met ? " ✅" : ""}</div>
         <div class="qz-dots">${qs.map((q, i) => `<button data-go="${i}" class="${i === idx ? "cur " : ""}${fresh(q) ? ((src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect) ? "ok" : "bad") : ""}" aria-label="Questão ${i + 1}">${i + 1}</button>`).join("")}
           <button data-go="${qs.length}" class="end ${idx === qs.length ? "cur" : ""}" aria-label="Resumo">${Icon("trophy", 14)}</button></div></div>`;
@@ -440,7 +448,8 @@
           <p class="muted">${left >= 0 ? `Faltam ${qs.length - done.length} questões.` : src.kind === "erros" ? "Cada acerto empurra a questão para mais longe; os erros voltam amanhã." : p >= 70 ? "Mandou bem! Esse tema está no caminho certo." : "Os erros foram para o caderno de erros e voltam para revisão amanhã."}</p>
           <div class="actions">${left >= 0 ? `<button class="btn btn-pink" data-go="${left}">Continuar</button>` : ""}
             ${src.kind === "treino" && left < 0 ? `<button class="btn btn-pink" id="qzMore">Mais um treino</button>` : ""}
-            ${isDay && day && !day.legacy && !isDone ? `<button class="btn btn-dark" id="qzDone">${Icon("check", 16)} Concluir dia</button>` : ""}
+            ${src.kind === "day" && S.bank[src.key]?.pool?.n > S.bank[src.key]?.n ? `<span class="muted small" style="flex-basis:100%">Concluindo a aula, as outras ${S.bank[src.key].pool.n - S.bank[src.key].n} questões do tema vão para a aba Questões.</span>` : ""}
+            ${src.kind === "day" && day && !day.legacy && !isDone ? `<button class="btn btn-dark" id="qzDone">${Icon("check", 16)} Concluir dia</button>` : ""}
             <a class="btn btn-ghost" href="${back}">Voltar</a></div></div>`;
         v.querySelector("#qzDone")?.addEventListener("click", () => completeDay(src.key, true, draw));
         v.querySelector("#qzMore")?.addEventListener("click", () => viewQuiz(v, src));
@@ -448,7 +457,7 @@
       }
 
       const q = qs[idx], a = retry || !fresh(q) ? null : q.answer;
-      const qday = !isDay ? findDay(q.dayKey) : null;
+      const qday = !isDay || src.kind === "assunto" ? findDay(q.dayKey) : null;
       const meta = [q.banca, q.orgao, q.ano].filter(Boolean).join(" · ");
       const revTxt = r => r.graduated ? "🎓 Dominada! Saiu do caderno de erros." : r.review ? (r.correct ? `🔁 Volta para revisão em ${REVIEW_DAYS[r.review.step]} dias.` : "🔁 Foi para o caderno de erros: volta amanhã.") : "";
       v.innerHTML = `${head}<article class="card qz">
@@ -502,7 +511,7 @@
 
   // atalhos no modo questões: letras escolhem, Enter responde / avança
   document.addEventListener("keydown", e => {
-    if (!/^#(questoes\/|treino|erros)/.test(location.hash) || e.target.matches("input, textarea, select") || e.metaKey || e.ctrlKey) return;
+    if (!/^#(questoes\/|banco\/|treino|erros)/.test(location.hash) || e.target.matches("input, textarea, select") || e.metaKey || e.ctrlKey) return;
     const k = e.key.toUpperCase();
     const alt = document.querySelector(`.qz-alt[data-pick="${k}"]:not([disabled])`);
     if (alt) { alt.click(); return; }
@@ -514,42 +523,52 @@
   // =================================================================
   const isOpen = k => S.unlocked.has(k);
   function viewQuestions(v) {
-    const lab = ED().labels, g = S.g, mt = g.meta, tk = todayKey();
+    const lab = ED().labels, g = S.g, mt = g.meta;
     const days = S.plan.filter(d => S.bank[d.key]);
-    const total = days.reduce((s, d) => s + S.bank[d.key].n, 0);
     const openDays = days.filter(d => isOpen(d.key));
-    const pendentes = openDays.reduce((s, d) => s + S.bank[d.key].n - S.bank[d.key].answered, 0);
+    const poolOf = d => S.bank[d.key].pool || S.bank[d.key];
+    const total = openDays.reduce((s, d) => s + poolOf(d).n, 0);
+    const openBy = m => openDays.filter(d => d.m === m);
     const f = S.qFilter || "ALL";
-    const list = days.filter(d => f === "ALL" || d.m === f);
-    const mats = MATS.filter(m => days.some(d => d.m === m));
+    const mats = MATS.filter(m => openBy(m).length);
+    const list = openDays.filter(d => f === "ALL" || d.m === f);
+    const locked = days.filter(d => !isOpen(d.key) && (f === "ALL" || d.m === f));
     v.innerHTML = `
       <div class="page-title">Questões</div>
       <div class="qs-hero">
         <div class="card ring-card">${ring(mt.today / mt.goal, mt.met ? "#3f8a72" : "#ef7254", `${Math.min(mt.today, 999)}<span style="font-size:13px">/${mt.goal}</span>`, mt.met ? "batida ✅" : "meta de hoje")}
-          <p class="muted small" style="margin:6px 0 0;text-align:center">${mt.streak ? `🔥 ${mt.streak === 1 ? "Meta batida hoje" : `${mt.streak} dias seguidos batendo a meta`}` : `Bater a meta vale +${g.xp.rules.meta} XP`}</p></div>
-        <div class="qs-actions">
-          <a class="card qs-act" href="#treino"><span class="qs-ic">🎯</span><div><b>Treino do dia</b><span>${pendentes ? `${Math.min(pendentes, S.user.dailyQGoal)} questões: tema mais recente + revisão dos desbloqueados, com mais peso nos que você erra` : "Tudo resolvido nos assuntos abertos 🎉"}</span></div>${Icon("chevron", 18)}</a>
-          <a class="card qs-act ${S.due ? "" : "off"}" href="#erros"><span class="qs-ic">🔁</span><div><b>Caderno de erros</b><span>${S.due ? `${S.due} ${S.due === 1 ? "questão para revisar" : "questões para revisar"} hoje` : S.inReview ? `${S.inReview} em revisão · nada para hoje` : "Os erros voltam aqui em 1, 3 e 7 dias"}</span></div>${Icon("chevron", 18)}</a>
-          <div class="card qs-stat"><div><b>${total}</b><span>questões no banco</span></div><div><b>${openDays.length}/${days.length}</b><span>assuntos abertos</span></div><div><b>${g.questions.total.done ? pct(g.questions.total.correct, g.questions.total.done) + "%" : "–"}</b><span>de acerto</span></div></div>
+          <p class="muted small" style="margin:6px 0 0;text-align:center">${mt.streak > 1 ? `🔥 ${mt.streak} dias seguidos batendo a meta` : mt.met ? "Meta batida hoje 🎉" : `Bater a meta vale +${g.xp.rules.meta} XP`}</p></div>
+        <div class="card qs-meta">
+          <div class="qs-meta-h"><b>Meta de hoje por matéria</b><span class="muted small">dividida pelo peso no edital · <a href="#perfil">ajustar total</a></span></div>
+          ${Object.entries(mt.byM).map(([m, x]) => { const has = openBy(m).length, ok = x.done >= x.goal; return `
+          <div class="qs-mrow t-${m}"><span class="tag">${esc(lab[m])}</span>
+            <div class="xpbar"><i style="width:${Math.min(100, pct(x.done, x.goal))}%;${ok ? "background:#3f8a72" : ""}"></i></div>
+            <span class="qs-mn">${Math.min(x.done, 999)}/${x.goal}${ok ? " ✅" : ""}</span>
+            ${has ? `<a class="btn btn-sm ${ok ? "btn-ghost" : "btn-pink"}" href="#treino/${m}">Treinar</a>` : `<span class="muted small qs-nolock">conclua uma aula</span>`}</div>`; }).join("")}
         </div>
       </div>
-      <div class="section-title">Assuntos <span class="muted small">abrem no dia do cronograma</span></div>
-      <div class="chips" id="qFilt">${[["ALL", "Todos"], ...mats.map(m => [m, lab[m]])].map(([k, l]) => `<button class="chip ${f === k ? "on" : ""}" data-f="${k}">${esc(l)}</button>`).join("")}</div>
-      <div class="qs-list">${list.filter(d => isOpen(d.key)).map(d => qsRow(d)).join("") || `<div class="card empty">Nenhum assunto aberto nesse filtro ainda.</div>`}</div>
-      ${list.some(d => !isOpen(d.key)) ? `<details class="qs-locked"><summary>🔒 Próximos assuntos (${list.filter(d => !isOpen(d.key)).length})</summary>
-        <div class="qs-list">${list.filter(d => !isOpen(d.key)).map(d => qsRow(d)).join("")}</div></details>` : ""}`;
-    v.querySelector("#qFilt").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; S.qFilter = b.dataset.f; viewQuestions(v); };
+      <div class="qs-actions2">
+        <a class="card qs-act ${openDays.length ? "" : "off"}" href="#treino"><span class="qs-ic">🎯</span><div><b>Treino misto</b><span>${openDays.length ? `${S.user.dailyQGoal} questões de tudo que você já estudou, com mais peso no que você erra` : "Conclua aulas no cronograma para liberar"}</span></div>${Icon("chevron", 18)}</a>
+        <a class="card qs-act ${S.due ? "" : "off"}" href="#erros"><span class="qs-ic">🔁</span><div><b>Caderno de erros</b><span>${S.due ? `${S.due} ${S.due === 1 ? "questão para revisar" : "questões para revisar"} hoje` : S.inReview ? `${S.inReview} em revisão · nada para hoje` : "Os erros voltam aqui em 1, 3 e 7 dias"}</span></div>${Icon("chevron", 18)}</a>
+      </div>
+      <div class="section-title">Conteúdos liberados <span class="muted small">${openDays.length} ${openDays.length === 1 ? "aula concluída" : "aulas concluídas"} · ${total} questões</span></div>
+      ${openDays.length ? `<div class="chips" id="qFilt">${[["ALL", "Todos"], ...mats.map(m => [m, lab[m]])].map(([k, l]) => `<button class="chip ${f === k ? "on" : ""}" data-f="${k}">${esc(l)}</button>`).join("")}</div>
+      <div class="qs-list">${list.map(qsRow).join("")}</div>`
+      : `<div class="card empty" style="padding:28px">📚 Os conteúdos entram aqui quando você <b>conclui a aula</b> no cronograma.<br>Cada aula tem 20 questões dentro dela; o resto do banco do tema fica aqui para treinar e revisar.</div>`}
+      ${locked.length ? `<details class="qs-locked"><summary>🔒 Ainda não liberados (${locked.length})</summary>
+        <div class="qs-list">${locked.map(qsRow).join("")}</div></details>` : ""}`;
+    const qf = v.querySelector("#qFilt");
+    if (qf) qf.onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; S.qFilter = b.dataset.f; viewQuestions(v); };
   }
   function qsRow(d) {
-    const lab = ED().labels, tk = todayKey();
-    return [d].map(d => {
-        const b = S.bank[d.key], open = isOpen(d.key), p = dParts(d.key), acc = b.answered ? pct(b.correct, b.answered) : null;
-        return `<${open ? `a href="#questoes/${d.key}"` : "div"} class="card qs-row t-${d.m} ${open ? "" : "locked"} ${d.key === tk ? "is-today" : ""}">
-          <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
-          <div class="qs-info"><span class="tag">${esc(lab[d.m])}</span><div class="t">${esc(d.t)}</div>
-            ${open ? `<div class="qs-prog"><div class="xpbar"><i style="width:${pct(b.answered, b.n)}%"></i></div><span>${b.answered}/${b.n}${acc !== null ? ` · <b class="${acc >= 70 ? "ok" : acc < 50 ? "bad" : ""}">${acc}%</b>` : ""}</span></div>`
-              : `<div class="muted small">🔒 Abre em ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} · ${b.n} questões</div>`}</div>
-          ${open ? Icon("chevron", 18) : ""}</${open ? "a" : "div"}>`; })[0];
+    const lab = ED().labels, b = S.bank[d.key].pool || S.bank[d.key], open = isOpen(d.key), p = dParts(d.key);
+    const acc = b.answered ? pct(b.correct, b.answered) : null;
+    return `<${open ? `a href="#banco/${d.key}"` : "div"} class="card qs-row t-${d.m} ${open ? "" : "locked"}">
+      <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
+      <div class="qs-info"><span class="tag">${esc(lab[d.m])}</span><div class="t">${esc(d.t)}</div>
+        ${open ? `<div class="qs-prog"><div class="xpbar"><i style="width:${pct(b.answered, b.n)}%"></i></div><span>${b.answered}/${b.n}${acc !== null ? ` · <b class="${acc >= 70 ? "ok" : acc < 50 ? "bad" : ""}">${acc}%</b>` : ""}</span></div>`
+          : `<div class="muted small">Conclua a aula de ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} para liberar · ${b.n} questões</div>`}</div>
+      ${open ? Icon("chevron", 18) : ""}</${open ? "a" : "div"}>`;
   }
 
   // ---------- concluir / recuperar dia ----------
@@ -606,14 +625,14 @@
         <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
           <div class="ttl">${esc(d.t)}</div>
-          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key] ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
+          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key]?.n ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
           <span class="chev">${Icon("chevron", 20)}</span>
         </div>
         <div class="day-body">${dayCardBody(d)}
           <div class="day-actions">
             ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
             ${d.legacy ? "" : `<button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>`}
-            ${S.bank[d.key] ? (isOpen(d.key) ? `<a class="btn btn-ghost btn-sm" href="#questoes/${d.key}">📝 Questões</a>` : `<span class="badge-time">🔒 questões abrem no dia</span>`) : ""}
+            ${S.bank[d.key]?.n ? `<a class="btn btn-ghost btn-sm" href="#questoes/${d.key}">📝 Questões</a>` : ""}
             ${doneBtn}
           </div>
         </div>
@@ -981,7 +1000,7 @@
           <form id="pf" style="margin-top:12px">
             <div class="field"><label>Nome</label><input name="name" value="${esc(u.name)}" maxlength="60" required></div>
             <div class="field"><label>Meta diária de estudo</label><select name="dailyGoal">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${m === u.dailyGoal ? "selected" : ""}>${m} minutos</option>`).join("")}</select></div>
-            <div class="field"><label>Meta diária de questões</label><select name="dailyQGoal">${[10, 15, 20, 30, 40, 50, 60, 80, 100].map(m => `<option value="${m}" ${m === u.dailyQGoal ? "selected" : ""}>${m} questões</option>`).join("")}</select></div>
+            <div class="field"><label>Meta diária de questões (total, dividido entre as matérias pelo peso)</label><select name="dailyQGoal">${[20, 30, 40, 50, 60, 80, 100, 120, 150].map(m => `<option value="${m}" ${m === u.dailyQGoal ? "selected" : ""}>${m} questões por dia</option>`).join("")}</select></div>
             <button class="btn btn-purple btn-block">Salvar</button>
           </form>
         </div>
