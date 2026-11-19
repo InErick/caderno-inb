@@ -238,16 +238,102 @@ const FINAL = [
 return { W, FINAL };
 }
 
+// =====================================================================
+// Assistente Administrativo — cronograma DIÁRIO (19/11/2026 → 09/01/2027)
+// Mesma rotina do Analista; no domingo entra Raciocínio Lógico (peso 1) + revisão.
+// Reaproveita o conteúdo do cronograma original, agora com subtópicos do edital.
+// =====================================================================
+function dataAssistenteDiario() {
+const D = dataAssistente();
+const S_ESP = [
+ ["Conceito de administração","Teorias clássica e científica (Fayol e Taylor)","Funções administrativas (PODC)","Eficiência, eficácia e efetividade"],
+ ["Planejamento estratégico, tático e operacional","Análise SWOT, missão, visão e valores","Metas SMART","Tipos de controle e indicadores"],
+ ["Estrutura linear, funcional e linha-staff","Estrutura matricial e por projetos","Organograma","Estrutura formal e informal"],
+ ["Tipos de departamentalização","Divisão do trabalho e especialização","Autoridade e responsabilidade","Centralização, descentralização e delegação","Amplitude de controle"],
+ ["Qualidade total (TQM), Deming e Juran","Ciclo PDCA","Kaizen e melhoria contínua","ISO 9001"],
+ ["Diagrama de Ishikawa","Gráfico de Pareto","5W2H","Programa 5S","Matriz GUT, folha de verificação, histograma e fluxograma"],
+ ["Rotinas do departamento pessoal","Admissão e eSocial","Jornada de trabalho e horas extras","Férias, 13º salário e FGTS","Rescisão do contrato de trabalho"],
+ ["Remuneração e benefícios","Recrutamento e seleção","Treinamento e desenvolvimento","Avaliação de desempenho","Motivação (Maslow, Herzberg) e liderança"],
+ ["Elementos e barreiras da comunicação","Comunicação assertiva, verbal e não verbal","Empatia e relacionamento interpessoal"],
+ ["Qualidade no atendimento","Cliente interno e externo","Tratamento de reclamações","Atendimento telefônico","Ouvidoria e Lei 13.460/2017"],
+ ["Fluxograma e organograma","Manuais e formulários","Cronograma e gráfico de Gantt","Planilhas e gráficos"],
+ ["Manual de Redação da Presidência","Atributos da redação oficial","Padrão ofício","Pronomes de tratamento e fechos"],
+ ["Tipos de documentos (ofício, ata, relatório, requerimento)","Correspondência oficial e empresarial","Circular e comunicado","E-mail corporativo","Organização de reuniões"],
+ ["Gestão de documentos (Lei 8.159/1991)","Teoria das três idades","Protocolo e tramitação","Classificação de documentos"],
+ ["Métodos de arquivamento","Regras de alfabetação","Tabela de temporalidade","Conservação, consulta e empréstimo"],
+ ["Classificação de materiais","Curva ABC","Processo de compras","Recebimento provisório e definitivo","Armazenagem (PEPS e UEPS)"],
+ ["Estoque mínimo e de segurança","Ponto de pedido e lote econômico","Giro de estoque","Inventário","Controle patrimonial e depreciação"],
+ ["Receitas e despesas","Tipos de orçamento","Ciclo orçamentário","Custos fixos e variáveis"],
+ ["Fluxo de caixa","Controles financeiros e conciliação bancária","Contas a pagar e a receber","Juros simples e compostos","Desconto simples"],
+ ["Gestor e fiscal de contrato","Fiscalização de contratos","Contratos de estatais (Lei 13.303/2016)","Termo aditivo, prazos e vigência","Obrigações das partes e documentação"],
+ ["Windows e atalhos de teclado","Explorador de arquivos","Navegadores, cookies e cache","E-mail (CC, CCO, anexos) e phishing"],
+ ["Formatação de texto e parágrafo","Estilos e sumário","Cabeçalho, rodapé e quebras","Mala direta"],
+ ["Referências relativas e absolutas","SOMA, MÉDIA, MÁXIMO e MÍNIMO","Função SE","PROCV e PROCX","CONT.SE e SOMASE","Filtros e gráficos"],
+ ["PowerPoint: layouts e slide mestre","Transições e animações","Backup","Vírus e malware"],
+ ["Ética e moral","Ética profissional e postura","Assédio moral","Sigilo profissional e código de conduta"]
+];
+const S_RLM = [
+ ["Proposições e conectivos","Tabela-verdade","Associação lógica"],
+ ["Equivalências lógicas","Negações e leis de De Morgan","Quantificadores"],
+ ["Conjuntos e diagrama de Venn","Frações, MMC e MDC","Porcentagem"],
+ ["Grandezas proporcionais","Regra de três simples e composta","Juros simples e compostos","Conversão de medidas"],
+ ["Princípio fundamental da contagem","Permutação, arranjo e combinação","Probabilidade"],
+ ["Áreas e perímetros","Triângulos e Pitágoras","Polígonos e ângulos","Plano cartesiano"],
+ ["Média, moda e mediana","Gráficos e tabelas","Sequências lógicas","Raciocínio espacial, temporal e verbal"]
+];
+const S_POR = [
+ ["Interpretação de texto","Coesão","Coerência","Intertextualidade"],
+ ["Tipos textuais e modos de organização","Textos informativo, normativo e didático","Literário e não literário","Funções da linguagem e registros"],
+ ["Substantivo, adjetivo, artigo e numeral","Pronomes (relativos e demonstrativos)"],
+ ["Verbos (tempos e modos)","Advérbios","Conjunções e valor semântico","Modalizadores"],
+ ["Termos da oração","Orações coordenadas e subordinadas","Ordem direta e inversa e tipos de discurso","Pontuação (vírgula, ponto e vírgula, dois-pontos)"],
+ ["Reescrita de frases","Paralelismo e problemas estruturais","Concordância verbal e nominal","Regência e crase","Colocação pronominal"],
+ ["Sinônimos, antônimos, parônimos e homônimos","Hiperônimos, polissemia e ambiguidade","Formação de palavras e vocabulário","Dicionários e verbetes","Ortografia e acentuação"]
+];
+const S_NOR = [
+ ["Princípios da Administração Pública (art. 37 CF)","Empresa pública e sociedade de economia mista","Acumulação de cargos","Responsabilidade dos empregados públicos"],
+ ["Processo administrativo (Lei 9.784/1999)","Delegação e avocação","Prazos e recursos"],
+ ["LGPD (Lei 13.709/2018)","Dados pessoais e sensíveis","Bases legais e agentes de tratamento","Segurança da informação (CID)"],
+ ["Lei Anticorrupção (12.846/2013)","Programa de integridade (Decreto 11.129/2022)","Conflito de interesses","Governança corporativa (Lei 13.303/2016)"],
+ ["Improbidade administrativa (Lei 14.230/2021)","Lei de Acesso à Informação (12.527/2011)"],
+ ["CNEN e ANSN","Princípios da proteção radiológica","Radioproteção na prática","Salvaguardas de materiais nucleares"],
+ ["NR-01 (GRO e PGR)","Política Nacional do Meio Ambiente (Lei 6.938/1981)","Licenciamento (LP, LI, LO)","Resíduos industriais","Sustentabilidade e PDCA"]
+];
+const pick = (x, s) => ({ a: x.a, t: x.t, f: x.f, k: x.k.slice(0, 4), s });
+const ESP = D.ESP.map((x, i) => pick(x, S_ESP[i]));
+const RLM = D.RLM.map((x, i) => pick(x, S_RLM[i]));
+const NOR = D.NOR.map((x, i) => pick(x, S_NOR[i]));
+// Português: sintaxe e pontuação viram um só dia para caber nas 7 quartas
+const P = D.POR;
+const POR = [P[0], P[1], P[2], P[3],
+  { a: "Sintaxe e pontuação", t: "Sintaxe (termos e orações) e pontuação", k: [...P[4].k.slice(0, 2), ...P[5].k.slice(0, 2)], f: P[5].f },
+  P[6], P[7]].map((x, i) => pick(x, S_POR[i]));
+const REV = (t, f) => ({ a: "Revisão", t, s: [], rev: true, k: ["questões FGV assistente administrativo", "questões FGV nível médio noções de administração"], f });
+ESP.push(
+  REV("Revisão dos piores assuntos I", "Abra <b>Desempenho</b>: comece pelos dias com <b>menor % de acerto</b>."),
+  REV("Revisão dos piores assuntos II", "Continue a revisão dos piores assuntos e refaça as questões que errou."),
+  REV("Revisão geral — questões mistas de Específicos", "Resolva <b>20 questões</b> mistas de Específicos e anote os erros.")
+);
+const W = [];
+for (let i = 0; i < 7; i++) W.push({ ESP: ESP.slice(i * 4, i * 4 + 4), POR: POR[i], NOR: NOR[i], ING: RLM[i] });
+const FINAL = [
+ {m:"FIN",kind:"SIM",a:"Simulado",t:"Simulado 1 — prova antiga da FGV de nível médio, cronometrado (3h) + revisão dos erros",s:[],k:["prova FGV assistente administrativo pdf","prova FGV nível médio pdf"],f:"Faça uma prova completa da FGV em <b>3 horas</b>, sem consulta. Lance os acertos <b>por matéria</b> como simulado."},
+ {m:"FIN",kind:"SIM",a:"Simulado",t:"Simulado 2 — outra prova da FGV de nível médio, cronometrado (3h) + revisão dos erros",s:[],k:["prova FGV técnico administrativo pdf"],f:"Compare com o simulado 1. Revise só o que errou."},
+ {m:"FIN",kind:"VES",a:"Véspera",t:"Véspera — descanso leve e checklist do dia da prova",s:[],k:["cartão de confirmação FGV INB"],f:"Revisão leve dos erros. Separe <b>documento com foto</b>, caneta preta de corpo transparente e confira o local. Portões fecham <b>15h30</b>. Durma cedo."}
+];
+return { W, FINAL };
+}
+
 // Duração das fases do cronômetro "Dia" por tipo de dia
-function phasesFor(d) {
-  if (d.kind === "SIM") return [{ mode: "questoes", label: "Simulado", min: 240 }];
+function phasesFor(d, edital) {
+  if (d.kind === "SIM") return [{ mode: "questoes", label: "Simulado", min: edital === "assistente" ? 180 : 240 }];
   if (d.kind === "VES") return [{ mode: "teoria", label: "Revisão leve", min: 30 }];
-  if (d.m === "ING") return [{ mode: "teoria", label: "Inglês", min: 30 }, { mode: "questoes", label: "Revisão dos erros", min: 30 }];
+  if (d.m === "ING") return [{ mode: "teoria", label: edital === "assistente" ? "Raciocínio lógico" : "Inglês", min: 30 }, { mode: "questoes", label: "Revisão dos erros", min: 30 }];
   return [{ mode: "teoria", label: "Teoria (videoaula)", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
 }
 
-function buildAnalistaDiario() {
-  const { W, FINAL } = dataAnalistaDiario();
+function buildDiario(edital) {
+  const { W, FINAL } = edital === "assistente" ? dataAssistenteDiario() : dataAnalistaDiario();
   const start = new Date(...DIARIO_START), end = new Date(...END), simStart = new Date(...SIM_START);
   const days = []; let iF = 0;
   // dia da semana → matéria da rotina fixa
@@ -266,7 +352,7 @@ function buildAnalistaDiario() {
     const key = keyOf(d);
     const sub = (it.s || []).map((n2, j) => ({ id: `${key}#${j}`, n: n2 }));
     const day = { ...it, sub, key, dow: w, index: n + 1, yt: true };
-    day.phases = phasesFor(day);
+    day.phases = phasesFor(day, edital);
     days.push(day);
   }
   return days;
@@ -275,8 +361,8 @@ function buildAnalistaDiario() {
 const pad = n => String(n).padStart(2, "0");
 const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-// Cronograma rotativo original (61 dias). Hoje só é seguido pelo Assistente;
-// no Analista serve para mostrar a "fase anterior" (10/11 a 18/11).
+// Cronograma rotativo original (61 dias, a partir de 10/11). Hoje serve só para
+// mostrar a "fase anterior" (10/11 a 18/11) dos dois cargos.
 function buildRotativo(edital) {
   const isAdm = edital === "assistente";
   const D = isAdm ? dataAssistente() : dataAnalista();
@@ -305,14 +391,13 @@ function buildRotativo(edital) {
 }
 
 function build(edital) {
-  return edital === "analista" ? buildAnalistaDiario() : buildRotativo(edital);
+  return buildDiario(edital);
 }
 
-// Dias da fase anterior do Analista (antes do cronograma diário), só para consulta
+// Dias da fase anterior (antes do cronograma diário), só para consulta
 function legacy(edital) {
-  if (edital !== "analista") return [];
   const first = keyOf(new Date(...DIARIO_START));
-  return buildRotativo("analista").filter(d => d.key < first).map(d => ({ ...d, legacy: true }));
+  return buildRotativo(edital).filter(d => d.key < first).map(d => ({ ...d, legacy: true }));
 }
 
 const EDITAIS = {
