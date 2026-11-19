@@ -5,6 +5,7 @@
 //   node scripts/importar-questoes.js                 → completa todos os dias até a meta de cada matéria
 //   node scripts/importar-questoes.js --por-dia 20    → mesma meta (20) para todos os dias
 //   node scripts/importar-questoes.js --materia POR   → só os dias de Português
+//   node scripts/importar-questoes.js --max-creditos 6000 → gasta no máximo 6.000 créditos
 //   node scripts/importar-questoes.js --dias 2026-11-19 --edital analista
 //   node scripts/importar-questoes.js --simular       → só mostra o plano e o saldo, sem gastar
 //
@@ -16,7 +17,7 @@ require("../load-env");
 const db = require("../db");
 const Bank = require("../bank");
 const Plans = require("../public/js/plans.js");
-const MAP = require("../questoes-map");
+const Plano = require("../questoes-plano");
 
 const API = "https://api.quest.api.br";
 const KEY = process.env.QUEST_API_KEY;
@@ -27,14 +28,11 @@ const BANCAS = ["FGV", "CESGRANRIO", "FCC", "VUNESP", "Instituto AOCP", "IBFC", 
 // ---------- argumentos ----------
 const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf(`--${name}`); return i < 0 ? def : (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true); };
-// meta de questões por dia, por matéria (ING no Assistente = Raciocínio lógico)
-const TARGET = {
-  analista: { ESP: 60, POR: 150, NOR: 100, ING: 80 },
-  assistente: { ESP: 60, POR: 150, NOR: 100, ING: 120 },
-};
+// meta de questões de cada dia: questoes-plano.js (pode trocar com --por-dia)
 const PER_DAY = opt("por-dia", null) ? Math.max(1, parseInt(opt("por-dia"), 10)) : null;
 const MATERIA = opt("materia", null);
-const goalOf = t => PER_DAY || TARGET[t.ed][t.m] || 60;
+const goalOf = t => PER_DAY || t.alvo;
+const MAX_CRED = opt("max-creditos", null) ? parseInt(opt("max-creditos"), 10) : Infinity;   // teto de gasto nesta rodada
 const EDITAL = opt("edital", "todos");
 const DIAS = opt("dias", null) ? String(opt("dias")).split(",") : null;
 const RESERVA = parseInt(opt("reserva", "0"), 10);
@@ -57,20 +55,10 @@ async function api(path) {
 
 // ---------- dias a preencher (em ordem de data, os 2 editais intercalados) ----------
 function targets() {
-  const eds = EDITAL === "todos" ? Object.keys(MAP) : [EDITAL];
-  const list = [];
-  for (const ed of eds) {
-    if (!MAP[ed]) throw new Error(`Edital desconhecido: ${ed}`);
-    const plan = new Map(Plans.build(ed).map(d => [d.key, d]));
-    for (const [key, fontes] of Object.entries(MAP[ed])) {
-      if (DIAS && !DIAS.includes(key)) continue;
-      const day = plan.get(key);
-      if (!day) { log(`⚠️  ${ed} ${key}: dia não existe no cronograma, pulei.`); continue; }
-      if (MATERIA && day.m !== MATERIA) continue;
-      list.push({ ed, key, fontes, title: day.t, m: day.m });
-    }
-  }
-  return list.sort((a, b) => a.key.localeCompare(b.key) || a.ed.localeCompare(b.ed));
+  const eds = EDITAL === "todos" ? Plano.EDITAIS : [EDITAL];
+  return eds.flatMap(ed => Plano.dias(ed))
+    .filter(t => (!DIAS || DIAS.includes(t.key)) && (!MATERIA || t.m === MATERIA))
+    .sort((a, b) => a.key.localeCompare(b.key) || a.ed.localeCompare(b.ed));
 }
 
 const countDay = (ed, key) => db.prepare("SELECT COUNT(*) n FROM bank_day WHERE edital = ? AND day_key = ?").get(ed, key).n;
@@ -110,8 +98,8 @@ async function main() {
   if (!KEY) throw new Error("Defina QUEST_API_KEY no arquivo .env");
 
   const quota = await api("/quota");
-  let saldo = quota.unlimited ? Infinity : quota.remaining - RESERVA;
-  log(`Saldo: ${quota.remaining} créditos (plano ${quota.planCode}). ${days.length} dias; meta por dia: ${PER_DAY || "Específicos 60 · Português 150 · Normas 100 · Inglês 80 · Raciocínio lógico 120"}.`);
+  let saldo = Math.min(quota.unlimited ? Infinity : quota.remaining - RESERVA, MAX_CRED);
+  log(`Saldo: ${quota.remaining} créditos (plano ${quota.planCode}). ${days.length} dias; meta por dia: ${PER_DAY || "Específicos 60 · Português 150 · Normas 100 · Inglês 140 · Raciocínio lógico 210"}.${MAX_CRED < Infinity ? ` Teto desta rodada: ${MAX_CRED} créditos.` : ""}`);
   const falta = days.reduce((s, t) => s + Math.max(0, goalOf(t) - countDay(t.ed, t.key)), 0);
   log(`Faltam até ${falta} questões ≈ ${falta * COST} créditos (temas com poucas questões ficam abaixo da meta e gastam menos).${falta * COST > saldo ? " O saldo pode não cobrir tudo: os primeiros dias são preenchidos antes." : ""}`);
   if (SIMULAR) return;

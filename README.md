@@ -5,8 +5,9 @@ App de estudos para o concurso **INB 2026 (banca FGV)** com:
 - **Login e cadastro**: cada pessoa tem o próprio tempo e progresso salvos.
 - **Dois cronogramas**. Você escolhe um ao criar a conta e pode trocar no Perfil.
   - Os dois seguem um cronograma **diário** de 19/11/2026 a 09/01/2027, 1 h de teoria por dia (videoaula), com os subtópicos do edital e termos de busca no YouTube. Os dias de 10 a 18/11 ficam como "fase anterior".
-  - **Analista de Sistemas** (nível superior): Seg/Ter/Qui/Sáb = TI, Qua = Português, Sex = Normas, Dom = Inglês + revisão dos erros. Simulados de 4 h em 07 e 08/01.
-  - **Assistente Administrativo** (nível médio): Seg/Ter/Qui/Sáb = Específicos, Qua = Português, Sex = Normas, Dom = Raciocínio lógico + revisão dos erros. Simulados de 3 h em 07 e 08/01.
+  - Rotina pelo peso do edital: Seg/Ter/Qui/Sáb = Específicos, Qua = Português, Sex = Normas, e o domingo alterna Inglês/Raciocínio lógico e Português (30 min + 30 min de revisão dos erros). Total: Específicos 28 dias, Português 10, Normas 7, Inglês/RLM 4.
+  - **Analista de Sistemas** (nível superior): 26 aulas de TI cobrindo os 13 itens do edital + 2 revisões. Simulados de 4 h em 07 e 08/01.
+  - **Assistente Administrativo** (nível médio): 25 aulas de Específicos cobrindo os 13 itens do edital + 3 revisões. Simulados de 3 h em 07 e 08/01.
 - **Tela Hoje**: tarefa do dia, cronômetro de 1 h de teoria (modo "Dia" do foco), 20 questões da aula e botão **Concluir dia**.
 - **Gamificação**: XP (+50 por dia no prazo, +30 por dia recuperado, +3 por acerto, +100 por conquista), níveis, sequência 🔥 e conquistas.
 - **Questões do dia**: lance quantas fez e quantas acertou; o app mostra o % de acerto por dia, por matéria e no total.
@@ -102,6 +103,8 @@ Na aba **Questões**: meta diária (padrão 20, ajustável no Perfil, +20 XP ao 
 2. `npm run importar -- --simular` mostra o saldo e quanto vai gastar
 3. `npm run importar` completa cada dia até a meta (Específicos 60 · Português 150 · Normas 100 · Inglês 80 · Raciocínio lógico 120)
    - `--materia POR`, `--dias 2026-11-19`, `--edital analista`, `--por-dia 30` para importar só uma parte
+
+Depois de mudar o cronograma ou o `questoes-map.js`, rode `node scripts/remapear-questoes.js` (mostra o que muda) e `node scripts/remapear-questoes.js --aplicar` (faz backup e redistribui as questões já baixadas pelos dias novos, sem gastar créditos). Para limitar o gasto de uma importação: `npm run importar -- --max-creditos 6000`.
 
 Cada questão com gabarito custa 6 créditos. O script reaproveita de graça questões que já estão no banco (por exemplo, Português entre os dois cronogramas), para quando o saldo acaba e guarda onde parou cada busca, então rodar de novo nunca paga a mesma questão.
 

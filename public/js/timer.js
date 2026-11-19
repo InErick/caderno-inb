@@ -255,7 +255,7 @@ window.Timer = (() => {
       const t = f.querySelector('[data-a="toggle"]'); if (t) t.innerHTML = Icon(running ? "pause" : "play", 32);
       f.classList.toggle("paused", !running);
       // na fase de questões, atalho direto para as questões da aula (o cronômetro continua minimizado)
-      const hint = f.querySelector(".f-hint"), hk = st.mode === "questoes" && st.dayKey ? "q" : "n";
+      const hint = f.querySelector(".f-hint"), hk = st.mode === "questoes" && st.dayKey && (window.CadernoHasLesson?.(st.dayKey) ?? true) ? "q" : "n";
       if (hint && hint.dataset.k !== hk) {
         hint.dataset.k = hk;
         hint.innerHTML = hk === "q" ? `<button class="f-qbtn" data-a="questoes">📝 Abrir as questões da aula</button><br><span>O cronômetro continua no canto da tela.</span>`
