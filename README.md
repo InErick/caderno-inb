@@ -3,9 +3,15 @@
 App de estudos para o concurso **INB 2026 (banca FGV)** com:
 
 - **Login e cadastro**: cada pessoa tem o próprio tempo e progresso salvos.
-- **Dois cronogramas** de 61 dias (10/11/2026 → 09/01/2027). Você escolhe um ao criar a conta e pode trocar no Perfil.
-  - Analista de Sistemas (nível superior)
-  - Assistente Administrativo (nível médio)
+- **Dois cronogramas**. Você escolhe um ao criar a conta e pode trocar no Perfil.
+  - **Analista de Sistemas** (nível superior): cronograma **diário** de 19/11/2026 a 09/01/2027, 1 h por dia (40 min de videoaula + 20 min de questões FGV). Seg/Ter/Qui/Sáb = TI, Qua = Português, Sex = Normas, Dom = Inglês + revisão dos erros. Cada dia traz os subtópicos do edital e termos de busca no YouTube. Os dias de 10 a 18/11 ficam como "fase anterior".
+  - **Assistente Administrativo** (nível médio): cronograma de 61 dias (10/11/2026 → 09/01/2027).
+- **Tela Hoje**: tarefa do dia, cronômetro de 40 + 20 min (modo "Dia" do foco) e botão **Concluir dia**.
+- **Gamificação**: XP (+50 por dia no prazo, +30 por dia recuperado, +3 por acerto, +100 por conquista), níveis, sequência 🔥 e conquistas.
+- **Questões do dia**: lance quantas fez e quantas acertou; o app mostra o % de acerto por dia, por matéria e no total.
+- **Termômetro de aprovação**: estima a nota com base no seu % de acerto por matéria e avisa se ficar abaixo dos mínimos do edital.
+- **Calendário** com dias concluídos, recuperados, atrasados e futuros, e lista de **atrasados** para recuperar.
+- **Progresso do edital**: % de tópicos cobertos, no geral e por matéria.
 - **Modo foco**: ao iniciar, a tela **cresce e ocupa a tela inteira**. Há três modos: Meta do dia, Pomodoro (25 min) e Livre.
 - **Janela flutuante (Chrome/Edge no PC)**: o cronômetro fica por cima de qualquer aba ou programa, mesmo fora da página.
 - **Apostilas diárias** com teoria, exemplos, exercícios com gabarito e questões reais referenciadas, abertas num leitor com **marca-texto** (4 cores), **notas**, **"parei aqui"** e botão para **baixar em PDF**.

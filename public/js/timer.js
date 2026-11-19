@@ -6,7 +6,11 @@ window.Timer = (() => {
     meta: { label: "Meta do dia", countdown: true },
     pomodoro: { label: "Pomodoro", countdown: true, minutes: 25 },
     livre: { label: "Cronômetro livre", countdown: false },
+    dia: { label: "Dia (teoria + questões)", countdown: true },
+    teoria: { label: "Teoria", countdown: true },
+    questoes: { label: "Questões", countdown: true },
   };
+  const DEFAULT_PHASES = [{ mode: "teoria", label: "Teoria (videoaula)", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
   const R = 92, CIRC = 2 * Math.PI * R;
 
   let user = null, opts = {};
@@ -51,10 +55,13 @@ window.Timer = (() => {
   // compact = true: não abre a tela cheia; o cronômetro fica no canto (ex.: lendo a apostila)
   async function start(topic, mode, goalMin, originEl, compact = false) {
     if (st) { compact ? showMini() : expand(originEl); return; }
-    const target = mode === "pomodoro" ? 25 * 60 : mode === "meta" ? goalMin * 60 : null;
+    // modo "dia": fases em sequência (ex.: 40 min de teoria + 20 min de questões)
+    const phases = mode === "dia" ? (topic?.phases?.length ? topic.phases : DEFAULT_PHASES) : null;
+    const target = phases ? phases[0].min * 60 : mode === "pomodoro" ? 25 * 60 : mode === "meta" ? goalMin * 60 : null;
     st = {
       dayKey: topic?.key || null, title: topic?.t || "Estudo livre", m: topic?.m || "REV", area: topic?.a || "",
-      mode, target, startedAt: new Date().toISOString(), runningSince: Date.now(), elapsedBefore: 0,
+      mode: phases ? phases[0].mode : mode, target, startedAt: new Date().toISOString(), runningSince: Date.now(), elapsedBefore: 0,
+      phases, phase: 0, acc: 0,
     };
     save();
     unlockAudio();
@@ -83,15 +90,28 @@ window.Timer = (() => {
       dayKey: done.dayKey, seconds: secs, mode: done.mode, localDate: localDate(new Date(done.startedAt)),
       startedAt: done.startedAt, endedAt: new Date().toISOString(),
     };
+    // ainda há fase pela frente: salva esta e já começa a próxima, sem fechar a tela de foco
+    if (st.phases && st.phase < st.phases.length - 1) {
+      const next = st.phases[st.phase + 1];
+      st = { ...st, phase: st.phase + 1, mode: next.mode, target: next.min * 60, acc: (st.acc || 0) + (secs >= 5 ? secs : 0),
+        startedAt: new Date().toISOString(), runningSince: Date.now(), elapsedBefore: 0 };
+      save(); render();
+      if (secs >= 5) { try { await Api.saveSession(session); } catch { queuePending(session); } }
+      beep(); notify(`Agora: ${next.label} 🎯`, `${next.min} minutos · ${done.title}`);
+      opts.toast?.(`Fase concluída! Agora: ${next.label} (${next.min} min)`);
+      return;
+    }
+    const total = (done.acc || 0) + secs;
     stopTick(); closePip();
     await shrink();
     st = null; save(); $mini().hidden = true; document.title = baseTitle;
     exitFullscreen();
-    if (secs < 5) { opts.toast?.("Sessão muito curta, não foi salva."); return; }
-    try { await Api.saveSession(session); }
-    catch (e) { queuePending(session); opts.toast?.("Sem conexão: a sessão será enviada depois."); }
-    if (auto) { beep(); notify("Tempo concluído! 🎉", `${fmt(secs)} de estudo em ${done.title}`); }
-    opts.onSaved?.(done, secs);
+    if (secs >= 5) {
+      try { await Api.saveSession(session); }
+      catch (e) { queuePending(session); opts.toast?.("Sem conexão: a sessão será enviada depois."); }
+    } else if (!total) { opts.toast?.("Sessão muito curta, não foi salva."); return; }
+    if (auto) { beep(); notify("Tempo concluído! 🎉", `${fmt(total)} de estudo em ${done.title}`); }
+    opts.onSaved?.(done, total);
   }
 
   async function discard() {
@@ -136,7 +156,7 @@ window.Timer = (() => {
       <div class="f-ctrls">
         <button class="f-btn" data-a="discard" title="Descartar sessão">${Icon("close", 26)}</button>
         <button class="f-btn primary" data-a="toggle" title="Pausar / continuar"></button>
-        <button class="f-btn" data-a="finish" title="Finalizar e salvar">${Icon("stop", 24)}</button>
+        <button class="f-btn" data-a="finish" title="${st.phases ? "Encerrar esta fase e seguir" : "Finalizar e salvar"}">${Icon("stop", 24)}</button>
       </div>
       <p class="f-hint">${pipSupported() ? "Use o botão de janela flutuante para ver o cronômetro por cima de qualquer aba ou programa." : "Você pode minimizar: o tempo continua contando."}</p>`;
     f.onclick = e => {
@@ -223,7 +243,8 @@ window.Timer = (() => {
     const shown = cd ? remaining() : el;
     const frac = cd ? Math.min(1, el / st.target) : (el % 3600) / 3600;
     const running = !!st.runningSince;
-    const sub = `${MODES[st.mode].label} · ${cd ? "restante" : "decorrido"}${running ? "" : " · pausado"}`;
+    const ph = st.phases ? `${st.phases[st.phase].label} · fase ${st.phase + 1}/${st.phases.length}` : MODES[st.mode].label;
+    const sub = `${ph} · ${cd ? "restante" : "decorrido"}${running ? "" : " · pausado"}`;
 
     const f = $focus();
     if (!f.hidden || f.innerHTML) {

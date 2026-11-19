@@ -52,6 +52,38 @@ CREATE TABLE IF NOT EXISTS notes (
   updated_at TEXT    NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, edital, day_key)
 );
+
+-- Questões lançadas manualmente (feitas e acertos), por dia e matéria
+CREATE TABLE IF NOT EXISTS question_logs (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital     TEXT    NOT NULL,
+  day_key    TEXT,                 -- dia do cronograma (nulo = avulso)
+  local_date TEXT    NOT NULL,     -- data local em que resolveu
+  materia    TEXT    NOT NULL CHECK (materia IN ('ESP','POR','NOR','ING')),
+  source     TEXT    NOT NULL DEFAULT 'diario' CHECK (source IN ('diario','simulado','revisao')),
+  done       INTEGER NOT NULL CHECK (done > 0),
+  correct    INTEGER NOT NULL CHECK (correct >= 0 AND correct <= done),
+  created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_qlogs_user ON question_logs(user_id, edital, local_date);
+
+-- Conquistas desbloqueadas (a data fica registrada; XP é calculado)
+CREATE TABLE IF NOT EXISTS achievements (
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital      TEXT    NOT NULL,
+  code        TEXT    NOT NULL,
+  unlocked_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, edital, code)
+);
 `);
+
+// ---------- migrações de colunas (idempotentes) ----------
+function addColumn(table, col, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
+  if (!cols.includes(col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${ddl}`);
+}
+addColumn("progress", "done_local", "TEXT");                       // data local em que o dia foi concluído
+addColumn("progress", "late", "INTEGER NOT NULL DEFAULT 0");       // 1 = recuperado depois da data
 
 module.exports = db;
