@@ -17,6 +17,7 @@ window.Icon = (() => {
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     close: '<path d="M6 6l12 12M18 6 6 18"/>',
     fire: '<path d="M12 22c4 0 7-2.7 7-7 0-4.5-4-7-4-11-2 1-5 4-5 7-1-1-1.5-2-1.5-3C6 10 5 12.5 5 15c0 4.3 3 7 7 7z"/>',
+    edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-4-4L4 16z"/><path d="M14 6l4 4"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/>',

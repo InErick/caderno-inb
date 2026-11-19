@@ -112,6 +112,18 @@ CREATE TABLE IF NOT EXISTS bank_answers (
   updated_at    TEXT    NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, edital, question_id)
 );
+-- Cada tentativa (inclui refazer e revisão): conta para a meta diária de questões
+CREATE TABLE IF NOT EXISTS bank_attempts (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital      TEXT    NOT NULL,
+  question_id TEXT    NOT NULL,
+  local_date  TEXT    NOT NULL,
+  correct     INTEGER NOT NULL,
+  mode        TEXT    NOT NULL DEFAULT 'dia',
+  created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_bank_attempts ON bank_attempts(user_id, edital, local_date);
 -- Onde parou cada busca na API (para nunca pagar duas vezes pela mesma questão)
 CREATE TABLE IF NOT EXISTS bank_cursors (
   qkey      TEXT PRIMARY KEY,
@@ -128,5 +140,8 @@ function addColumn(table, col, ddl) {
 }
 addColumn("progress", "done_local", "TEXT");                       // data local em que o dia foi concluído
 addColumn("progress", "late", "INTEGER NOT NULL DEFAULT 0");       // 1 = recuperado depois da data
+addColumn("users", "daily_q_goal", "INTEGER NOT NULL DEFAULT 20");   // meta diária de questões
+addColumn("bank_answers", "review_step", "INTEGER");                // caderno de erros: null = fora; 0..2 = etapa
+addColumn("bank_answers", "review_due", "TEXT");                    // data da próxima revisão
 
 module.exports = db;

@@ -45,7 +45,7 @@ function setSession(res, user) {
 }
 
 function publicUser(u) {
-  return { id: u.id, name: u.name, email: u.email, edital: u.edital, dailyGoal: u.daily_goal, createdAt: u.created_at };
+  return { id: u.id, name: u.name, email: u.email, edital: u.edital, dailyGoal: u.daily_goal, dailyQGoal: u.daily_q_goal ?? 20, createdAt: u.created_at };
 }
 
 function auth(req, res, next) {
@@ -113,8 +113,10 @@ app.patch("/api/me", auth, (req, res) => {
   const goal = req.body.dailyGoal !== undefined ? parseInt(req.body.dailyGoal, 10) : u.daily_goal;
   if (name.length < 2 || name.length > 60) return fail(res, 400, "Nome inválido.");
   if (!EDITAIS.includes(edital)) return fail(res, 400, "Cronograma inválido.");
+  const qGoal = req.body.dailyQGoal !== undefined ? parseInt(req.body.dailyQGoal, 10) : u.daily_q_goal;
   if (!(goal >= 10 && goal <= 600)) return fail(res, 400, "Meta diária deve ficar entre 10 e 600 minutos.");
-  db.prepare("UPDATE users SET name = ?, edital = ?, daily_goal = ? WHERE id = ?").run(name, edital, goal, u.id);
+  if (!(qGoal >= 5 && qGoal <= 200)) return fail(res, 400, "Meta de questões deve ficar entre 5 e 200 por dia.");
+  db.prepare("UPDATE users SET name = ?, edital = ?, daily_goal = ?, daily_q_goal = ? WHERE id = ?").run(name, edital, goal, qGoal, u.id);
   res.json({ user: publicUser(db.prepare("SELECT * FROM users WHERE id = ?").get(u.id)) });
 });
 
@@ -198,52 +200,116 @@ app.delete("/api/questions/:id", auth, (req, res) => {
 
 // ---------- banco de questões (resolver no app, com correção automática) ----------
 const planCache = {};
-const planDay = (ed, key) => (planCache[ed] ||= new Map([...Plans.build(ed), ...Plans.legacy(ed)].map(d => [d.key, d]))).get(key);
+const planOf = ed => (planCache[ed] ||= Plans.build(ed));
+const dayMap = {};
+const planDay = (ed, key) => (dayMap[ed] ||= new Map([...Plans.build(ed), ...Plans.legacy(ed)].map(d => [d.key, d]))).get(key);
+const addDaysISO = (k, n) => { const d = new Date(k + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const todayOf = req => DATE_RE.test(req.query.today || req.body?.localDate || "") ? (req.query.today || req.body.localDate) : new Date().toISOString().slice(0, 10);
+const REVIEW = [1, 3, 7];   // caderno de erros: volta em 1, 3 e 7 dias; 3 acertos seguidos e sai
 
-// quantas questões cada dia tem (e quantas o usuário já respondeu)
+// assunto desbloqueado = chegou o dia dele (o 1º dia já nasce aberto) ou o dia foi concluído
+function unlockedKeys(user, today) {
+  const plan = planOf(user.edital);
+  const done = new Set(db.prepare("SELECT day_key FROM progress WHERE user_id = ? AND edital = ?").all(user.id, user.edital).map(r => r.day_key));
+  const lim = today < plan[0].key ? plan[0].key : today;
+  return new Set(plan.filter(d => d.key <= lim || done.has(d.key)).map(d => d.key));
+}
+
+function toClient(r, withAnswer = true) {
+  return {
+    id: r.id, dayKey: r.day_key, enunciado: r.enunciado, alternativas: JSON.parse(r.alternativas), textos: JSON.parse(r.textos),
+    tipo: r.tipo, banca: r.banca, orgao: r.orgao, cargo: r.cargo, ano: r.ano,
+    answer: withAnswer && r.chosen ? { chosen: r.chosen, correct: !!r.last_correct, firstCorrect: !!r.first_correct, attempts: r.attempts, gabarito: r.gabarito } : null,
+    review: r.review_step != null ? { step: r.review_step, due: r.review_due } : null,
+  };
+}
+const Q_SELECT = `SELECT q.*, d.day_key, a.chosen, a.correct AS last_correct, a.first_correct, a.attempts, a.review_step, a.review_due
+  FROM bank_day d JOIN bank_questions q ON q.id = d.question_id
+  LEFT JOIN bank_answers a ON a.question_id = q.id AND a.user_id = ? AND a.edital = d.edital`;
+
+// resumo: questões por dia, desbloqueados, revisões pendentes e meta de hoje
 app.get("/api/bank", auth, (req, res) => {
-  const ed = req.user.edital;
+  const ed = req.user.edital, uid = req.user.id, today = todayOf(req);
   const rows = db.prepare(`SELECT d.day_key, COUNT(*) n, COUNT(a.question_id) answered, COALESCE(SUM(a.first_correct),0) correct
     FROM bank_day d LEFT JOIN bank_answers a ON a.question_id = d.question_id AND a.user_id = ? AND a.edital = d.edital
-    WHERE d.edital = ? GROUP BY d.day_key`).all(req.user.id, ed);
-  res.json({ days: Object.fromEntries(rows.map(r => [r.day_key, { n: r.n, answered: r.answered, correct: r.correct }])) });
+    WHERE d.edital = ? GROUP BY d.day_key`).all(uid, ed);
+  const due = db.prepare("SELECT COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_due IS NOT NULL AND review_due <= ?").get(uid, ed, today).n;
+  const inReview = db.prepare("SELECT COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_step IS NOT NULL").get(uid, ed).n;
+  res.json({
+    days: Object.fromEntries(rows.map(r => [r.day_key, { n: r.n, answered: r.answered, correct: r.correct }])),
+    unlocked: [...unlockedKeys(req.user, today)],
+    due, inReview,
+  });
 });
 
-// questões de um dia; o gabarito só vem nas que o usuário já respondeu
+// questões de um assunto (dia); o gabarito só vem nas que o usuário já respondeu
 app.get("/api/bank/day/:dayKey", auth, (req, res) => {
   const key = req.params.dayKey;
   if (!DATE_RE.test(key)) return fail(res, 400, "Dia inválido.");
-  const rows = db.prepare(`SELECT q.*, a.chosen, a.correct AS last_correct, a.first_correct, a.attempts
-    FROM bank_day d JOIN bank_questions q ON q.id = d.question_id
-    LEFT JOIN bank_answers a ON a.question_id = q.id AND a.user_id = ? AND a.edital = d.edital
-    WHERE d.edital = ? AND d.day_key = ? ORDER BY d.pos, q.id`).all(req.user.id, req.user.edital, key);
-  res.json({ questions: rows.map(r => ({
-    id: r.id, enunciado: r.enunciado, alternativas: JSON.parse(r.alternativas), textos: JSON.parse(r.textos),
-    tipo: r.tipo, banca: r.banca, orgao: r.orgao, cargo: r.cargo, ano: r.ano,
-    answer: r.chosen ? { chosen: r.chosen, correct: !!r.last_correct, firstCorrect: !!r.first_correct, attempts: r.attempts, gabarito: r.gabarito } : null,
-  })) });
+  const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND d.day_key = ? ORDER BY d.pos, q.id`).all(req.user.id, req.user.edital, key);
+  res.json({ questions: rows.map(r => toClient(r)) });
 });
 
-// responde uma questão: corrige, grava e devolve o gabarito
+// sessões montadas pelo servidor: treino do dia (inéditas) ou revisão de erros
+app.get("/api/bank/session", auth, (req, res) => {
+  const ed = req.user.edital, uid = req.user.id, today = todayOf(req);
+  const n = Math.min(50, Math.max(5, parseInt(req.query.n, 10) || 20));
+  if (req.query.mode === "erros") {
+    const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.review_due IS NOT NULL AND a.review_due <= ? ORDER BY a.review_due, random() LIMIT ?`).all(uid, ed, today, n);
+    return res.json({ questions: rows.map(r => toClient(r, false)) });
+  }
+  // treino: ~60% dos assuntos mais recentes, o resto sorteado entre os desbloqueados (pesando os de pior acerto)
+  const open = unlockedKeys(req.user, today);
+  const cand = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.question_id IS NULL ORDER BY d.pos`).all(uid, ed).filter(r => open.has(r.day_key));
+  const acc = Object.fromEntries(db.prepare("SELECT day_key, AVG(first_correct) acc FROM bank_answers WHERE user_id = ? AND edital = ? GROUP BY day_key").all(uid, ed).map(r => [r.day_key, r.acc]));
+  const byDay = new Map();
+  for (const r of cand) { if (!byDay.has(r.day_key)) byDay.set(r.day_key, []); byDay.get(r.day_key).push(r); }
+  const recent = [...byDay.keys()].sort().reverse().slice(0, 3);
+  const pick = [], used = new Set();
+  const recentGoal = Math.round(n * 0.6);
+  for (let i = 0; pick.length < recentGoal; i++) {
+    let any = false;
+    for (const k of recent) { const r = byDay.get(k)[i]; if (r && pick.length < recentGoal) { pick.push(r); used.add(r.id); any = true; } }
+    if (!any) break;
+  }
+  const rest = cand.filter(r => !used.has(r.id))
+    .map(r => ({ r, k: Math.random() ** (1 / (1 + 2 * (1 - (acc[r.day_key] ?? 0.5)))) }))
+    .sort((a, b) => b.k - a.k).slice(0, n - pick.length).map(x => x.r);
+  const all = [...pick, ...rest];
+  for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+  res.json({ questions: all.map(r => toClient(r)) });
+});
+
+// responde uma questão: corrige, grava, atualiza o caderno de erros e devolve o gabarito
 app.post("/api/bank/answer", auth, (req, res) => {
-  const b = req.body || {}, ed = req.user.edital;
-  const link = db.prepare("SELECT d.day_key, q.gabarito, q.alternativas FROM bank_day d JOIN bank_questions q ON q.id = d.question_id WHERE d.edital = ? AND d.question_id = ?").get(ed, String(b.questionId || ""));
+  const b = req.body || {}, ed = req.user.edital, uid = req.user.id, qid = String(b.questionId || "");
+  const link = db.prepare("SELECT d.day_key, q.gabarito, q.alternativas FROM bank_day d JOIN bank_questions q ON q.id = d.question_id WHERE d.edital = ? AND d.question_id = ?").get(ed, qid);
   if (!link) return fail(res, 404, "Questão não encontrada.");
   const chosen = String(b.chosen || "").toUpperCase();
   if (!JSON.parse(link.alternativas).some(a => a.letra === chosen)) return fail(res, 400, "Escolha uma alternativa.");
-  const localDate = DATE_RE.test(b.localDate || "") ? b.localDate : new Date().toISOString().slice(0, 10);
+  const localDate = todayOf(req);
   const correct = chosen === link.gabarito ? 1 : 0;
+  const mode = ["dia", "treino", "erros"].includes(b.mode) ? b.mode : "dia";
   const day = planDay(ed, link.day_key);
   const materia = Game.MATS.includes(day?.m) ? day.m : "ESP";
-  const prev = db.prepare("SELECT first_correct FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(req.user.id, ed, String(b.questionId));
-  if (prev) {
-    db.prepare("UPDATE bank_answers SET chosen = ?, correct = ?, attempts = attempts + 1, updated_at = datetime('now') WHERE user_id = ? AND edital = ? AND question_id = ?")
-      .run(chosen, correct, req.user.id, ed, String(b.questionId));
-  } else {
-    db.prepare(`INSERT INTO bank_answers (user_id, edital, question_id, day_key, local_date, materia, first_correct, chosen, correct)
-      VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, ed, String(b.questionId), link.day_key, localDate, materia, correct, chosen, correct);
+  const prev = db.prepare("SELECT first_correct, review_step FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(uid, ed, qid);
+
+  // caderno de erros
+  let step = null, due = null, graduated = false;
+  if (!correct) { step = 0; due = addDaysISO(localDate, REVIEW[0]); }
+  else if (prev && prev.review_step != null) {
+    step = prev.review_step + 1;
+    if (step >= REVIEW.length) { step = null; graduated = true; } else due = addDaysISO(localDate, REVIEW[step]);
   }
-  res.json({ correct: !!correct, gabarito: link.gabarito, first: !prev });
+  if (prev) {
+    db.prepare(`UPDATE bank_answers SET chosen = ?, correct = ?, attempts = attempts + 1, review_step = ?, review_due = ?, updated_at = datetime('now')
+      WHERE user_id = ? AND edital = ? AND question_id = ?`).run(chosen, correct, step, due, uid, ed, qid);
+  } else {
+    db.prepare(`INSERT INTO bank_answers (user_id, edital, question_id, day_key, local_date, materia, first_correct, chosen, correct, review_step, review_due)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid, ed, qid, link.day_key, localDate, materia, correct, chosen, correct, step, due);
+  }
+  db.prepare("INSERT INTO bank_attempts (user_id, edital, question_id, local_date, correct, mode) VALUES (?,?,?,?,?,?)").run(uid, ed, qid, localDate, correct, mode);
+  res.json({ correct: !!correct, gabarito: link.gabarito, first: !prev, review: step != null ? { step, due } : null, graduated });
 });
 
 // ---------- sessões de foco ----------

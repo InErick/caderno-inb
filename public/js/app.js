@@ -2,7 +2,7 @@
 // Caderno INB — telas do app (SPA sem framework)
 // =====================================================================
 (() => {
-  const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [], bank: {} };
+  const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [], bank: {}, unlocked: new Set(), due: 0, inReview: 0, qFilter: "ALL" };
   const MATS = ["ESP", "POR", "NOR", "ING"];
   const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
   const findDay = k => S.plan.find(x => x.key === k) || S.legacy.find(x => x.key === k);
@@ -61,8 +61,8 @@
   async function refreshData() {
     const tk = todayKey();
     const [p, st, ap, g, ql, bk] = await Promise.all([Api.progress(), Api.stats(tk), Api.apostilas().catch(() => ({ days: [] })),
-      Api.dashboard(tk), Api.questions(tk, tk).catch(() => ({ logs: [] })), Api.bank().catch(() => ({ days: {} }))]);
-    S.bank = bk.days || {};
+      Api.dashboard(tk), Api.questions(tk, tk).catch(() => ({ logs: [] })), Api.bank(tk).catch(() => ({ days: {}, unlocked: [] }))]);
+    S.bank = bk.days || {}; S.unlocked = new Set(bk.unlocked || []); S.due = bk.due || 0; S.inReview = bk.inReview || 0;
     S.done = new Set(p.done);
     S.details = p.details || {};
     S.stats = st;
@@ -159,7 +159,7 @@
   // =================================================================
   const NAV = [
     ["inicio", "home", "Hoje"], ["cronograma", "calendar", "Cronograma"], ["foco", "timer", "Foco"],
-    ["estatisticas", "chart", "Desempenho"], ["perfil", "user", "Perfil"],
+    ["questoes", "edit", "Questões"], ["estatisticas", "chart", "Desempenho"], ["perfil", "user", "Perfil"],
   ];
   const daysLeft = () => Math.max(0, Math.ceil((new Date(ED().examISO) - Date.now()) / 864e5));
 
@@ -168,12 +168,12 @@
       <nav class="nav">
         <div class="nav-brand"><span class="brand-symbol"><span></span></span>Caderno INB</div>
         <p class="nav-label">SEU ESPAÇO</p>
-        ${NAV.map(([id, ic, l]) => `<a href="#${id}" data-r="${id}" class="${id === "foco" ? "focus-tab" : ""}">${Icon(ic, id === "foco" ? 26 : 22)}<span>${l}</span></a>`).join("")}
+        ${NAV.map(([id, ic, l]) => `<a href="#${id}" data-r="${id}" class="${id === "foco" ? "focus-tab" : ""} nav-${id}">${Icon(ic, id === "foco" ? 26 : 22)}<span>${l}</span></a>`).join("")}
         <div class="nav-goal" id="navGoal"></div>
       </nav>
       <div class="content">
         <header class="topbar">
-          <div class="av">${esc(initials(S.user.name))}</div>
+          <a class="av" href="#perfil" title="Perfil">${esc(initials(S.user.name))}</a>
           <div class="who"><b>${esc(S.user.name.split(" ")[0])}</b><span>${ED().nome}</span></div>
           <div class="top-chips" id="topChips"></div>
         </header>
@@ -207,17 +207,17 @@
     if (!S.user) return;
     Reader.close();
     const full = (location.hash || "#inicio").slice(1);
-    const r = full.startsWith("apostila/") ? "apostila" : full.startsWith("questoes/") ? "questoes" : full;
+    const r = full.startsWith("apostila/") ? "apostila" : full.startsWith("questoes/") ? "quiz" : full;
     const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
-    const navOf = { questoes: "inicio", apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
+    const navOf = { quiz: "questoes", treino: "questoes", erros: "questoes", apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
     document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (navOf[r] || r)));
     const v = document.getElementById("view");
     if (!v) return;
     v.onclick = null;
     updateTopbar();
     if (r === "apostila") return viewApostila(v, full.slice(9));
-    if (r === "questoes") { window.scrollTo(0, 0); return viewQuiz(v, full.slice(9)); }
-    ({ inicio: viewHome, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile, conquistas: viewAchievements, atrasados: viewLate }[r] || viewHome)(v);
+    if (r === "quiz" || r === "treino" || r === "erros") { window.scrollTo(0, 0); return viewQuiz(v, r === "quiz" ? { kind: "day", key: full.slice(9) } : { kind: r }); }
+    ({ inicio: viewHome, questoes: viewQuestions, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile, conquistas: viewAchievements, atrasados: viewLate }[r] || viewHome)(v);
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", route);
@@ -305,7 +305,7 @@
         </div>
       </div>
 
-      <div class="section-title">Questões do dia <span class="muted small">${qd.done ? `${qd.correct}/${qd.done} · ${pct(qd.correct, qd.done)}% de acerto` : `+${g.xp.rules.correct} XP por acerto`}</span></div>
+      <div class="section-title">Questões do dia <span class="muted small">meta ${Math.min(g.meta.today, g.meta.goal)}/${g.meta.goal}${g.meta.met ? " ✅" : ""}${qd.done ? ` · ${pct(qd.correct, qd.done)}% de acerto` : ""} · <a href="#questoes">abrir aba Questões →</a></span></div>
       ${bk ? bankBlock(t, bk) : ""}
       <div class="card" id="qCard">${bk ? `<details class="q-manual"><summary>Lançar questões feitas fora do app</summary>${questionForm(t)}</details>` : questionForm(t)}</div>
 
@@ -406,48 +406,62 @@
     return s.replace(/[ \t]{2,}/g, " ").trim();
   }
 
-  async function viewQuiz(v, key) {
-    const day = findDay(key);
+  // src = { kind: "day", key } | { kind: "treino" } | { kind: "erros" }
+  async function viewQuiz(v, src) {
+    const isDay = src.kind === "day", day = isDay ? findDay(src.key) : null, lab = ED().labels;
+    const back = isDay ? "#questoes" : "#questoes";
     v.innerHTML = `<div class="loading">Carregando questões…</div>`;
     let qs;
-    try { qs = (await Api.bankDay(key)).questions; } catch (x) { v.innerHTML = `<div class="card empty">${esc(x.message)}</div>`; return; }
-    if (!qs.length) { v.innerHTML = `<div class="card empty">Este dia ainda não tem questões importadas.<br><a href="#inicio">Voltar</a></div>`; return; }
-    let idx = Math.max(0, qs.findIndex(q => !q.answer)), pick = null, retry = false;
-    if (qs.every(q => q.answer)) idx = qs.length;          // tudo respondido: abre no resumo
+    const load = async () => (isDay ? await Api.bankDay(src.key) : await Api.bankSession(src.kind, todayKey(), S.user.dailyQGoal)).questions;
+    try { qs = await load(); } catch (x) { v.innerHTML = `<div class="card empty">${esc(x.message)}</div>`; return; }
+    const emptyMsg = { day: "Este assunto ainda não tem questões importadas.", treino: "Você já resolveu todas as questões dos assuntos desbloqueados. 🎉<br>Novos assuntos abrem conforme o cronograma avança.", erros: "Nenhuma questão para revisar hoje. ✅" };
+    if (!qs.length) { v.innerHTML = `<div class="card empty" style="text-align:center;padding:32px">${emptyMsg[src.kind]}<br><br><a class="btn btn-ghost" href="${back}">Voltar</a></div>`; return; }
+    let idx = isDay ? Math.max(0, qs.findIndex(q => !q.answer)) : 0, pick = null, retry = false;
+    if (isDay && qs.every(q => q.answer)) idx = qs.length;
+    const fresh = q => src.kind === "erros" ? q._done : q.answer;   // na revisão, a resposta antiga não conta
+    const title = isDay ? `<span class="tag">${esc(lab[day?.m] || "")}</span> <b>${esc(day?.t || src.key)}</b>`
+      : src.kind === "treino" ? `<b>🎯 Treino do dia</b>` : `<b>🔁 Revisão de erros</b>`;
 
     const draw = () => {
-      const answered = qs.filter(q => q.answer), right = answered.filter(q => q.answer.firstCorrect).length;
-      const head = `<div class="qz-top"><a href="#inicio" class="link-btn">← Voltar</a>
-        <div class="qz-title t-${day?.m || "ESP"}"><span class="tag">${esc(ED().labels[day?.m] || "")}</span> <b>${esc(day?.t || key)}</b></div>
-        <div class="qz-score">${answered.length}/${qs.length} respondidas · <b>${right} ${right === 1 ? "acerto" : "acertos"}</b></div>
-        <div class="qz-dots">${qs.map((q, i) => `<button data-go="${i}" class="${i === idx ? "cur " : ""}${q.answer ? (q.answer.firstCorrect ? "ok" : "bad") : ""}" aria-label="Questão ${i + 1}">${i + 1}</button>`).join("")}
+      const done = qs.filter(fresh), right = done.filter(q => src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect).length;
+      const mt = S.g.meta;
+      const head = `<div class="qz-top"><a href="${back}" class="link-btn">← Questões</a>
+        <div class="qz-title t-${day?.m || "ESP"}">${title}</div>
+        <div class="qz-score">${done.length}/${qs.length} respondidas · <b>${right} ${right === 1 ? "acerto" : "acertos"}</b> · meta de hoje ${Math.min(mt.today, mt.goal)}/${mt.goal}${mt.met ? " ✅" : ""}</div>
+        <div class="qz-dots">${qs.map((q, i) => `<button data-go="${i}" class="${i === idx ? "cur " : ""}${fresh(q) ? ((src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect) ? "ok" : "bad") : ""}" aria-label="Questão ${i + 1}">${i + 1}</button>`).join("")}
           <button data-go="${qs.length}" class="end ${idx === qs.length ? "cur" : ""}" aria-label="Resumo">${Icon("trophy", 14)}</button></div></div>`;
 
       if (idx >= qs.length) {
-        const p = pct(right, answered.length), isDone = S.done.has(key);
+        const p = pct(right, done.length), isDone = isDay && S.done.has(src.key);
+        const left = qs.findIndex(q => !fresh(q));
         v.innerHTML = `${head}<div class="card qz-end">
-          <div style="font-size:44px">${!answered.length ? "📝" : p >= 70 ? "🏆" : p >= 50 ? "💪" : "📚"}</div>
-          <h2>${answered.length ? `${right} de ${answered.length} (${p}%)` : "Nenhuma respondida ainda"}</h2>
-          <p class="muted">${answered.length < qs.length ? `Faltam ${qs.length - answered.length} questões.` : p >= 70 ? "Mandou bem! Esse tema está no caminho certo." : "Revise os erros: o gabarito fica marcado em cada questão."}</p>
-          <div class="actions">${answered.length < qs.length ? `<button class="btn btn-pink" data-go="${qs.findIndex(q => !q.answer)}">Continuar</button>` : ""}
-            ${day && !day.legacy && !isDone ? `<button class="btn btn-dark" id="qzDone">${Icon("check", 16)} Concluir dia</button>` : ""}
-            <a class="btn btn-ghost" href="#inicio">Voltar para Hoje</a></div></div>`;
-        v.querySelector("#qzDone")?.addEventListener("click", () => completeDay(key, true, draw));
+          <div style="font-size:44px">${!done.length ? "📝" : p >= 70 ? "🏆" : p >= 50 ? "💪" : "📚"}</div>
+          <h2>${done.length ? `${right} de ${done.length} (${p}%)` : "Nenhuma respondida ainda"}</h2>
+          <p class="muted">${left >= 0 ? `Faltam ${qs.length - done.length} questões.` : src.kind === "erros" ? "Cada acerto empurra a questão para mais longe; os erros voltam amanhã." : p >= 70 ? "Mandou bem! Esse tema está no caminho certo." : "Os erros foram para o caderno de erros e voltam para revisão amanhã."}</p>
+          <div class="actions">${left >= 0 ? `<button class="btn btn-pink" data-go="${left}">Continuar</button>` : ""}
+            ${src.kind === "treino" && left < 0 ? `<button class="btn btn-pink" id="qzMore">Mais um treino</button>` : ""}
+            ${isDay && day && !day.legacy && !isDone ? `<button class="btn btn-dark" id="qzDone">${Icon("check", 16)} Concluir dia</button>` : ""}
+            <a class="btn btn-ghost" href="${back}">Voltar</a></div></div>`;
+        v.querySelector("#qzDone")?.addEventListener("click", () => completeDay(src.key, true, draw));
+        v.querySelector("#qzMore")?.addEventListener("click", () => viewQuiz(v, src));
         return;
       }
 
-      const q = qs[idx], a = retry ? null : q.answer;
+      const q = qs[idx], a = retry || !fresh(q) ? null : q.answer;
+      const qday = !isDay ? findDay(q.dayKey) : null;
       const meta = [q.banca, q.orgao, q.ano].filter(Boolean).join(" · ");
+      const revTxt = r => r.graduated ? "🎓 Dominada! Saiu do caderno de erros." : r.review ? (r.correct ? `🔁 Volta para revisão em ${REVIEW_DAYS[r.review.step]} dias.` : "🔁 Foi para o caderno de erros: volta amanhã.") : "";
       v.innerHTML = `${head}<article class="card qz">
-        <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
+        <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${qday ? `<span class="qz-topic t-${qday.m}"><span class="tag">${esc(lab[qday.m])}</span> ${esc(qday.t)}</span>` : ""}${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
         ${q.textos.filter(Boolean).map(tx => `<div class="qz-texto q-html">${tx}</div>`).join("")}
         <div class="q-html qz-enun">${q.enunciado}</div>
         <div class="qz-alts">${q.alternativas.map(al => {
           const cls = a ? (al.letra === a.gabarito ? "right" : al.letra === a.chosen ? "wrong" : "dim") : al.letra === pick ? "sel" : "";
           return `<button class="qz-alt ${cls}" data-pick="${esc(al.letra)}" ${a ? "disabled" : ""}><span class="lt">${esc(al.letra)}</span><span class="q-html">${al.texto}</span></button>`; }).join("")}</div>
         ${a ? `<div class="qz-res ${a.correct ? "ok" : "bad"}">${a.correct ? `✅ Acertou!` : `❌ Não foi dessa vez. Gabarito: <b>${esc(a.gabarito)}</b>`}
-            ${a.attempts > 1 ? `<span class="muted small">· para o desempenho vale a 1ª tentativa (${a.firstCorrect ? "acerto" : "erro"})</span>` : ""}</div>
-          <div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzRetry">Refazer</button><button class="btn btn-pink" id="qzNext">${idx === qs.length - 1 ? "Ver resultado" : "Próxima"} →</button></div>`
+            ${q._r ? `<div class="small" style="margin-top:4px">${revTxt(q._r)}</div>` : ""}
+            ${a.attempts > 1 && src.kind !== "erros" ? `<div class="muted small">Para o desempenho vale a 1ª tentativa (${a.firstCorrect ? "acerto" : "erro"}).</div>` : ""}</div>
+          <div class="qz-actions">${src.kind === "erros" ? "<span></span>" : `<button class="btn btn-ghost btn-sm" id="qzRetry">Refazer</button>`}<button class="btn btn-pink" id="qzNext">${idx === qs.length - 1 ? "Ver resultado" : "Próxima"} →</button></div>`
         : `<div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzSkip">Pular</button><button class="btn btn-pink" id="qzSend" ${pick ? "" : "disabled"}>Responder</button></div>`}
       </article>`;
       v.querySelectorAll("code.formula").forEach(el => { el.textContent = texToText(el.textContent); });
@@ -465,13 +479,15 @@
       const q = qs[idx], before = S.g;
       const btn = v.querySelector("#qzSend"); if (btn) btn.disabled = true;
       try {
-        const r = await Api.bankAnswer({ questionId: q.id, chosen: pick, localDate: todayKey() });
+        const r = await Api.bankAnswer({ questionId: q.id, chosen: pick, localDate: todayKey(), mode: src.kind });
         const prev = q.answer;
         q.answer = { chosen: pick, correct: r.correct, gabarito: r.gabarito, firstCorrect: prev ? prev.firstCorrect : r.correct, attempts: (prev?.attempts || 0) + 1 };
-        retry = false; pick = null; draw();
-        await refreshData(); updateTopbar();
+        q._done = true; q._r = r;
+        retry = false; pick = null;
+        await refreshData(); updateTopbar(); draw();
         const gained = S.g.xp.total - before.xp.total;
-        if (gained > 0) toast(`+${gained} XP`);
+        if (S.g.meta.met && !before.meta.met) toast(`🎯 Meta do dia batida! +${gained} XP`);
+        else if (gained > 0) toast(`+${gained} XP`);
         checkLevelUp(before, S.g);
       } catch (x) { toast(x.message); if (btn) btn.disabled = false; }
     }
@@ -482,15 +498,59 @@
     };
     draw();
   }
+  const REVIEW_DAYS = [1, 3, 7];
 
   // atalhos no modo questões: letras escolhem, Enter responde / avança
   document.addEventListener("keydown", e => {
-    if (!location.hash.startsWith("#questoes/") || e.target.matches("input, textarea, select") || e.metaKey || e.ctrlKey) return;
+    if (!/^#(questoes\/|treino|erros)/.test(location.hash) || e.target.matches("input, textarea, select") || e.metaKey || e.ctrlKey) return;
     const k = e.key.toUpperCase();
     const alt = document.querySelector(`.qz-alt[data-pick="${k}"]:not([disabled])`);
     if (alt) { alt.click(); return; }
     if (e.key === "Enter") (document.querySelector("#qzSend:not([disabled])") || document.querySelector("#qzNext"))?.click();
   });
+
+  // =================================================================
+  // QUESTÕES (meta diária, treino, caderno de erros e assuntos)
+  // =================================================================
+  const isOpen = k => S.unlocked.has(k);
+  function viewQuestions(v) {
+    const lab = ED().labels, g = S.g, mt = g.meta, tk = todayKey();
+    const days = S.plan.filter(d => S.bank[d.key]);
+    const total = days.reduce((s, d) => s + S.bank[d.key].n, 0);
+    const openDays = days.filter(d => isOpen(d.key));
+    const pendentes = openDays.reduce((s, d) => s + S.bank[d.key].n - S.bank[d.key].answered, 0);
+    const f = S.qFilter || "ALL";
+    const list = days.filter(d => f === "ALL" || d.m === f);
+    const mats = MATS.filter(m => days.some(d => d.m === m));
+    v.innerHTML = `
+      <div class="page-title">Questões</div>
+      <div class="qs-hero">
+        <div class="card ring-card">${ring(mt.today / mt.goal, mt.met ? "#3f8a72" : "#ef7254", `${Math.min(mt.today, 999)}<span style="font-size:13px">/${mt.goal}</span>`, mt.met ? "batida ✅" : "meta de hoje")}
+          <p class="muted small" style="margin:6px 0 0;text-align:center">${mt.streak ? `🔥 ${mt.streak === 1 ? "Meta batida hoje" : `${mt.streak} dias seguidos batendo a meta`}` : `Bater a meta vale +${g.xp.rules.meta} XP`}</p></div>
+        <div class="qs-actions">
+          <a class="card qs-act" href="#treino"><span class="qs-ic">🎯</span><div><b>Treino do dia</b><span>${pendentes ? `${Math.min(pendentes, S.user.dailyQGoal)} questões: tema mais recente + revisão dos desbloqueados, com mais peso nos que você erra` : "Tudo resolvido nos assuntos abertos 🎉"}</span></div>${Icon("chevron", 18)}</a>
+          <a class="card qs-act ${S.due ? "" : "off"}" href="#erros"><span class="qs-ic">🔁</span><div><b>Caderno de erros</b><span>${S.due ? `${S.due} ${S.due === 1 ? "questão para revisar" : "questões para revisar"} hoje` : S.inReview ? `${S.inReview} em revisão · nada para hoje` : "Os erros voltam aqui em 1, 3 e 7 dias"}</span></div>${Icon("chevron", 18)}</a>
+          <div class="card qs-stat"><div><b>${total}</b><span>questões no banco</span></div><div><b>${openDays.length}/${days.length}</b><span>assuntos abertos</span></div><div><b>${g.questions.total.done ? pct(g.questions.total.correct, g.questions.total.done) + "%" : "–"}</b><span>de acerto</span></div></div>
+        </div>
+      </div>
+      <div class="section-title">Assuntos <span class="muted small">abrem no dia do cronograma</span></div>
+      <div class="chips" id="qFilt">${[["ALL", "Todos"], ...mats.map(m => [m, lab[m]])].map(([k, l]) => `<button class="chip ${f === k ? "on" : ""}" data-f="${k}">${esc(l)}</button>`).join("")}</div>
+      <div class="qs-list">${list.filter(d => isOpen(d.key)).map(d => qsRow(d)).join("") || `<div class="card empty">Nenhum assunto aberto nesse filtro ainda.</div>`}</div>
+      ${list.some(d => !isOpen(d.key)) ? `<details class="qs-locked"><summary>🔒 Próximos assuntos (${list.filter(d => !isOpen(d.key)).length})</summary>
+        <div class="qs-list">${list.filter(d => !isOpen(d.key)).map(d => qsRow(d)).join("")}</div></details>` : ""}`;
+    v.querySelector("#qFilt").onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; S.qFilter = b.dataset.f; viewQuestions(v); };
+  }
+  function qsRow(d) {
+    const lab = ED().labels, tk = todayKey();
+    return [d].map(d => {
+        const b = S.bank[d.key], open = isOpen(d.key), p = dParts(d.key), acc = b.answered ? pct(b.correct, b.answered) : null;
+        return `<${open ? `a href="#questoes/${d.key}"` : "div"} class="card qs-row t-${d.m} ${open ? "" : "locked"} ${d.key === tk ? "is-today" : ""}">
+          <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
+          <div class="qs-info"><span class="tag">${esc(lab[d.m])}</span><div class="t">${esc(d.t)}</div>
+            ${open ? `<div class="qs-prog"><div class="xpbar"><i style="width:${pct(b.answered, b.n)}%"></i></div><span>${b.answered}/${b.n}${acc !== null ? ` · <b class="${acc >= 70 ? "ok" : acc < 50 ? "bad" : ""}">${acc}%</b>` : ""}</span></div>`
+              : `<div class="muted small">🔒 Abre em ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} · ${b.n} questões</div>`}</div>
+          ${open ? Icon("chevron", 18) : ""}</${open ? "a" : "div"}>`; })[0];
+  }
 
   // ---------- concluir / recuperar dia ----------
   async function completeDay(key, done, rerender) {
@@ -553,7 +613,7 @@
           <div class="day-actions">
             ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
             ${d.legacy ? "" : `<button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>`}
-            ${S.bank[d.key] ? `<a class="btn btn-ghost btn-sm" href="#questoes/${d.key}">📝 Questões</a>` : ""}
+            ${S.bank[d.key] ? (isOpen(d.key) ? `<a class="btn btn-ghost btn-sm" href="#questoes/${d.key}">📝 Questões</a>` : `<span class="badge-time">🔒 questões abrem no dia</span>`) : ""}
             ${doneBtn}
           </div>
         </div>
@@ -921,6 +981,7 @@
           <form id="pf" style="margin-top:12px">
             <div class="field"><label>Nome</label><input name="name" value="${esc(u.name)}" maxlength="60" required></div>
             <div class="field"><label>Meta diária de estudo</label><select name="dailyGoal">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${m === u.dailyGoal ? "selected" : ""}>${m} minutos</option>`).join("")}</select></div>
+            <div class="field"><label>Meta diária de questões</label><select name="dailyQGoal">${[10, 15, 20, 30, 40, 50, 60, 80, 100].map(m => `<option value="${m}" ${m === u.dailyQGoal ? "selected" : ""}>${m} questões</option>`).join("")}</select></div>
             <button class="btn btn-purple btn-block">Salvar</button>
           </form>
         </div>
@@ -945,7 +1006,7 @@
     v.querySelector("#pf").onsubmit = async e => {
       e.preventDefault();
       const fd = Object.fromEntries(new FormData(e.target));
-      try { const { user } = await Api.updateMe({ name: fd.name, dailyGoal: +fd.dailyGoal }); S.user = user; renderShell(); route(); toast("Dados salvos."); }
+      try { const { user } = await Api.updateMe({ name: fd.name, dailyGoal: +fd.dailyGoal, dailyQGoal: +fd.dailyQGoal }); S.user = user; await refreshData(); renderShell(); route(); toast("Dados salvos."); }
       catch (x) { toast(x.message); }
     };
     v.querySelector("#pw").onsubmit = async e => {

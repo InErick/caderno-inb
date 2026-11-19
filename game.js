@@ -7,7 +7,7 @@
 const Plans = require("./public/js/plans.js");
 
 const MATS = ["ESP", "POR", "NOR", "ING"];
-const XP = { day: 50, late: 30, correct: 3, achievement: 100 };
+const XP = { day: 50, late: 30, correct: 3, achievement: 100, meta: 20 };
 const LEVELS = ["Estagiário", "Júnior I", "Júnior II", "Pleno I", "Pleno II", "Sênior", "Tech Lead", "Arquiteto", "Aprovado"];
 
 // XP acumulado para chegar ao nível n (1 = 0, 2 = 100, 3 = 300, 4 = 600, ...)
@@ -29,6 +29,7 @@ function achievementDefs(labels) {
     { code: "q500", icon: "🏃", title: "Maratonista", desc: "500 questões resolvidas" },
     { code: "mira_esp", icon: "🎯", title: "Mira afiada", desc: `70% de acerto em ${labels.ESP} (com 50 questões ou mais)` },
     ...MATS.map(m => ({ code: `cob_${m}`, icon: "📚", title: `${labels[m]} 100%`, desc: `Todos os tópicos de ${labels[m]} cobertos` })),
+    { code: "meta_7", icon: "🎯", title: "Meta é meta", desc: "Bater a meta diária de questões 7 dias seguidos" },
     { code: "simulado", icon: "📝", title: "Primeiro simulado", desc: "Fazer o primeiro simulado" },
     { code: "em_dia", icon: "✅", title: "Em dia", desc: "14 dias concluídos e nenhum atrasado" },
   ];
@@ -100,6 +101,18 @@ function compute(db, user, today) {
     .map(([k, q]) => ({ key: k, done: q.done, correct: q.correct, pct: q.correct / q.done }))
     .sort((a, b) => a.pct - b.pct).slice(0, 6);
 
+  // ---------- meta diária de questões (resolvidas no app + lançadas) ----------
+  const goal = user.daily_q_goal || 20;
+  const perDate = {};
+  for (const r of db.prepare("SELECT local_date, COUNT(*) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date").all(uid, ed)) perDate[r.local_date] = r.n;
+  for (const r of db.prepare("SELECT local_date, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date").all(uid, ed)) perDate[r.local_date] = (perDate[r.local_date] || 0) + r.n;
+  const metDays = Object.keys(perDate).filter(k => perDate[k] >= goal && k <= today).sort();
+  const met = new Set(metDays);
+  let metaStreak = 0, md = met.has(today) ? today : addDays(today, -1);
+  while (met.has(md)) { metaStreak++; md = addDays(md, -1); }
+  let metaBest = 0, mrun = 0, mprev = null;
+  for (const k of metDays) { mrun = mprev && addDays(mprev, 1) === k ? mrun + 1 : 1; metaBest = Math.max(metaBest, mrun); mprev = k; }
+
   // ---------- semanas perfeitas ----------
   const weeks = {};
   for (const day of plan) { (weeks[day.week] ||= []).push(day.key); }
@@ -117,6 +130,7 @@ function compute(db, user, today) {
     mira_esp: qByM.ESP.done >= 50 && qByM.ESP.correct / qByM.ESP.done >= 0.7,
     simulado: hasSim,
     em_dia: doneCount >= 14 && late.length === 0,
+    meta_7: metaBest >= 7,
   };
   for (const m of MATS) cond[`cob_${m}`] = cov[m].all > 0 && cov[m].done === cov[m].all;
 
@@ -130,11 +144,13 @@ function compute(db, user, today) {
   const xpDays = Object.values(done).reduce((s, x) => s + (x.late ? XP.late : XP.day), 0);
   const xpQ = qCorrect * XP.correct;
   const xpA = achievements.filter(a => a.unlockedAt).length * XP.achievement;
-  const xp = xpDays + xpQ + xpA;
+  const xpM = metDays.length * XP.meta;
+  const xp = xpDays + xpQ + xpA + xpM;
 
   return {
     today,
-    xp: { total: xp, days: xpDays, questions: xpQ, achievements: xpA, rules: XP },
+    xp: { total: xp, days: xpDays, questions: xpQ, achievements: xpA, meta: xpM, rules: XP },
+    meta: { goal, today: perDate[today] || 0, met: met.has(today), streak: metaStreak, best: metaBest, daysMet: metDays.length },
     level: levelInfo(xp),
     streak, bestStreak: best,
     done, late,
