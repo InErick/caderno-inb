@@ -94,15 +94,16 @@ Se o PiP não estiver disponível, a aba mostra o tempo no título (`⏱ 24:13 �
 
 ## Banco de questões
 
-Cada dia de Específicos tem questões de provas anteriores sobre o tema do dia, importadas da [Quest API](https://quest.api.br). Elas ficam **só no banco do servidor** (o repositório é público); o mapa tema → matérias da API está em `questoes-map.js`.
+Cada dia do cronograma tem questões de provas anteriores sobre o tema do dia, importadas da [Quest API](https://quest.api.br). Elas ficam **só no banco do servidor** (o repositório é público); o mapa tema → matérias da API está em `questoes-map.js`.
+
+Na aba **Questões**: meta diária (padrão 20, ajustável no Perfil, +20 XP ao bater), **Treino do dia** (≈60% dos assuntos mais recentes + sorteio dos desbloqueados, com mais peso nos de pior acerto), **Caderno de erros** (cada erro volta em 1, 3 e 7 dias; 3 acertos seguidos e sai) e a lista de assuntos, que abrem no dia do cronograma ou ao concluir o dia. A 1ª resposta de cada questão conta para o desempenho e dá +3 XP por acerto.
 
 1. Coloque a chave no `.env` do servidor: `QUEST_API_KEY=qk_...`
-2. Rode `npm run importar` (padrão: 7 questões por dia, FGV primeiro, depois outras bancas)
-   - `npm run importar -- --simular` mostra o saldo e quanto vai gastar, sem gastar
-   - `npm run importar -- --por-dia 20` completa cada dia até 20
-   - `npm run importar -- --dias 2026-11-19 --edital analista` só um dia
+2. `npm run importar -- --simular` mostra o saldo e quanto vai gastar
+3. `npm run importar` completa cada dia até a meta (Específicos 60 · Português 150 · Normas 100 · Inglês 80 · Raciocínio lógico 120)
+   - `--materia POR`, `--dias 2026-11-19`, `--edital analista`, `--por-dia 30` para importar só uma parte
 
-Cada questão com gabarito custa 6 créditos; o script para quando o saldo acaba e guarda onde parou cada busca, então rodar de novo nunca paga a mesma questão. No app, a 1ª resposta de cada questão conta para o desempenho e dá +3 XP por acerto.
+Cada questão com gabarito custa 6 créditos. O script reaproveita de graça questões que já estão no banco (por exemplo, Português entre os dois cronogramas), para quando o saldo acaba e guarda onde parou cada busca, então rodar de novo nunca paga a mesma questão.
 
 ## Apostilas
 

@@ -2,8 +2,9 @@
 // =====================================================================
 // Importa questões da Quest API para os dias de Específicos do cronograma.
 //
-//   node scripts/importar-questoes.js                 → 7 questões por dia, todos os dias, os 2 editais
-//   node scripts/importar-questoes.js --por-dia 20    → completa cada dia até 20 questões
+//   node scripts/importar-questoes.js                 → completa todos os dias até a meta de cada matéria
+//   node scripts/importar-questoes.js --por-dia 20    → mesma meta (20) para todos os dias
+//   node scripts/importar-questoes.js --materia POR   → só os dias de Português
 //   node scripts/importar-questoes.js --dias 2026-11-19 --edital analista
 //   node scripts/importar-questoes.js --simular       → só mostra o plano e o saldo, sem gastar
 //
@@ -26,7 +27,14 @@ const BANCAS = ["FGV", "CESGRANRIO", "FCC", "VUNESP", "Instituto AOCP", "IBFC", 
 // ---------- argumentos ----------
 const args = process.argv.slice(2);
 const opt = (name, def) => { const i = args.indexOf(`--${name}`); return i < 0 ? def : (args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : true); };
-const PER_DAY = Math.max(1, parseInt(opt("por-dia", "7"), 10));
+// meta de questões por dia, por matéria (ING no Assistente = Raciocínio lógico)
+const TARGET = {
+  analista: { ESP: 60, POR: 150, NOR: 100, ING: 80 },
+  assistente: { ESP: 60, POR: 150, NOR: 100, ING: 120 },
+};
+const PER_DAY = opt("por-dia", null) ? Math.max(1, parseInt(opt("por-dia"), 10)) : null;
+const MATERIA = opt("materia", null);
+const goalOf = t => PER_DAY || TARGET[t.ed][t.m] || 60;
 const EDITAL = opt("edital", "todos");
 const DIAS = opt("dias", null) ? String(opt("dias")).split(",") : null;
 const RESERVA = parseInt(opt("reserva", "0"), 10);
@@ -58,7 +66,8 @@ function targets() {
       if (DIAS && !DIAS.includes(key)) continue;
       const day = plan.get(key);
       if (!day) { log(`⚠️  ${ed} ${key}: dia não existe no cronograma, pulei.`); continue; }
-      list.push({ ed, key, fontes, title: day.t });
+      if (MATERIA && day.m !== MATERIA) continue;
+      list.push({ ed, key, fontes, title: day.t, m: day.m });
     }
   }
   return list.sort((a, b) => a.key.localeCompare(b.key) || a.ed.localeCompare(b.ed));
@@ -66,6 +75,18 @@ function targets() {
 
 const countDay = (ed, key) => db.prepare("SELECT COUNT(*) n FROM bank_day WHERE edital = ? AND day_key = ?").get(ed, key).n;
 const linkStmt = db.prepare("INSERT OR IGNORE INTO bank_day (edital, day_key, question_id, pos) VALUES (?,?,?,?)");
+
+// reaproveita (de graça) questões já baixadas que combinam com o tema e ainda não estão neste edital
+function reuse(ed, key, fontes, need) {
+  let added = 0;
+  for (const f of fontes) {
+    if (added >= need) break;
+    const rows = db.prepare(`SELECT id FROM bank_questions q WHERE (q.materia = ? OR q.assunto = ?)
+      AND NOT EXISTS (SELECT 1 FROM bank_day d WHERE d.edital = ? AND d.question_id = q.id) LIMIT ?`).all(f, f, ed, need - added);
+    for (const r of rows) if (linkStmt.run(ed, key, r.id, countDay(ed, key)).changes) added++;
+  }
+  return added;
+}
 
 // grava as questões e liga ao dia; devolve quantas entraram no dia
 function store(ed, key, items) {
@@ -83,23 +104,25 @@ async function main() {
   const days = targets();
   if (ARQUIVO) {
     const items = JSON.parse(require("fs").readFileSync(ARQUIVO, "utf8"));
-    for (const t of days) log(`${t.ed} ${t.key}: +${store(t.ed, t.key, items)} questões do arquivo`);
+    for (const t of days) log(`${t.ed} ${t.key}: +${store(t.ed, t.key, items.slice(0, goalOf(t)))} questões do arquivo`);
     return;
   }
   if (!KEY) throw new Error("Defina QUEST_API_KEY no arquivo .env");
 
   const quota = await api("/quota");
   let saldo = quota.unlimited ? Infinity : quota.remaining - RESERVA;
-  log(`Saldo: ${quota.remaining} créditos (plano ${quota.planCode}). Meta: ${PER_DAY} questões por dia em ${days.length} dias.`);
-  const falta = days.reduce((s, t) => s + Math.max(0, PER_DAY - countDay(t.ed, t.key)), 0);
-  log(`Faltam ${falta} questões ≈ ${falta * COST} créditos.${falta * COST > saldo ? " O saldo não cobre tudo: os primeiros dias são preenchidos antes." : ""}`);
+  log(`Saldo: ${quota.remaining} créditos (plano ${quota.planCode}). ${days.length} dias; meta por dia: ${PER_DAY || "Específicos 60 · Português 150 · Normas 100 · Inglês 80 · Raciocínio lógico 120"}.`);
+  const falta = days.reduce((s, t) => s + Math.max(0, goalOf(t) - countDay(t.ed, t.key)), 0);
+  log(`Faltam até ${falta} questões ≈ ${falta * COST} créditos (temas com poucas questões ficam abaixo da meta e gastam menos).${falta * COST > saldo ? " O saldo pode não cobrir tudo: os primeiros dias são preenchidos antes." : ""}`);
   if (SIMULAR) return;
 
   let gastos = 0, total = 0;
   for (const t of days) {
-    let need = PER_DAY - countDay(t.ed, t.key);
+    let need = goalOf(t) - countDay(t.ed, t.key);
     if (need <= 0) continue;
     const start = need;
+    const reused = reuse(t.ed, t.key, t.fontes, need);
+    need -= reused; total += reused;
     for (const banca of BANCAS) {
       for (const fonte of t.fontes) {
         for (const field of ["materia", "assunto"]) {
@@ -126,7 +149,7 @@ async function main() {
       }
       if (need <= 0) break;
     }
-    log(`${need <= 0 ? "✅" : "🟡"} ${t.ed.padEnd(10)} ${t.key}  +${start - Math.max(0, need)}/${start}  ${t.title}`);
+    log(`${need <= 0 ? "✅" : "🟡"} ${t.ed.padEnd(10)} ${t.key} ${t.m}  +${start - Math.max(0, need)}/${start}${reused ? ` (${reused} reaproveitadas)` : ""}  ${t.title}`);
   }
   finish(gastos, total);
 }
