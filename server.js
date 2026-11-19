@@ -266,11 +266,17 @@ app.get("/api/bank/session", auth, (req, res) => {
   const cand = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.question_id IS NULL ORDER BY d.pos`).all(uid, ed)
     .filter(r => open.has(r.day_key) && (!mat || planDay(ed, r.day_key)?.m === mat));
   const acc = Object.fromEntries(db.prepare("SELECT day_key, AVG(first_correct) acc FROM bank_answers WHERE user_id = ? AND edital = ? GROUP BY day_key").all(uid, ed).map(r => [r.day_key, r.acc]));
+  // ~10% para relembrar: questões acertadas há 7+ dias (as vistas há mais tempo primeiro), fora do caderno de erros
+  const recallN = n >= 5 ? Math.max(1, Math.round(n * 0.1)) : 0;
+  const recall = !recallN ? [] : db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.correct = 1 AND a.review_step IS NULL
+      AND a.updated_at <= datetime('now', '-7 days') ORDER BY a.updated_at`).all(uid, ed)
+    .filter(r => open.has(r.day_key) && (!mat || planDay(ed, r.day_key)?.m === mat)).slice(0, recallN);
+  const nNew = n - recall.length;
   const byDay = new Map();
   for (const r of cand) { if (!byDay.has(r.day_key)) byDay.set(r.day_key, []); byDay.get(r.day_key).push(r); }
   const recent = [...byDay.keys()].sort().reverse().slice(0, 3);
   const pick = [], used = new Set();
-  const recentGoal = Math.round(n * 0.6);
+  const recentGoal = Math.round(nNew * 0.6);
   for (let i = 0; pick.length < recentGoal; i++) {
     let any = false;
     for (const k of recent) { const r = byDay.get(k)[i]; if (r && pick.length < recentGoal) { pick.push(r); used.add(r.id); any = true; } }
@@ -278,10 +284,11 @@ app.get("/api/bank/session", auth, (req, res) => {
   }
   const rest = cand.filter(r => !used.has(r.id))
     .map(r => ({ r, k: Math.random() ** (1 / (1 + 2 * (1 - (acc[r.day_key] ?? 0.5)))) }))
-    .sort((a, b) => b.k - a.k).slice(0, n - pick.length).map(x => x.r);
-  const all = [...pick, ...rest];
+    .sort((a, b) => b.k - a.k).slice(0, nNew - pick.length).map(x => x.r);
+  const all = [...pick, ...rest, ...recall];
   for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
-  res.json({ questions: all.map(r => toClient(r)) });
+  const rec = new Set(recall.map(r => r.id));
+  res.json({ questions: all.map(r => rec.has(r.id) ? { ...toClient(r, false), recall: true } : toClient(r)) });
 });
 
 // responde uma questão: corrige, grava, atualiza o caderno de erros e devolve o gabarito

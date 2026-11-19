@@ -461,6 +461,7 @@
       const meta = [q.banca, q.orgao, q.ano].filter(Boolean).join(" · ");
       const revTxt = r => r.graduated ? "🎓 Dominada! Saiu do caderno de erros." : r.review ? (r.correct ? `🔁 Volta para revisão em ${REVIEW_DAYS[r.review.step]} dias.` : "🔁 Foi para o caderno de erros: volta amanhã.") : "";
       v.innerHTML = `${head}<article class="card qz">
+        ${q.recall ? `<div class="qz-recall">🔁 Para relembrar: você acertou esta questão há algum tempo</div>` : ""}
         <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${qday ? `<span class="qz-topic t-${qday.m}"><span class="tag">${esc(lab[qday.m])}</span> ${esc(qday.t)}</span>` : ""}${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
         ${q.textos.filter(Boolean).map(tx => `<div class="qz-texto q-html">${tx}</div>`).join("")}
         <div class="q-html qz-enun">${q.enunciado}</div>
