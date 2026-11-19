@@ -576,6 +576,7 @@
   // QUESTÕES (meta diária, treino, caderno de erros e assuntos)
   // =================================================================
   const isOpen = k => S.unlocked.has(k);
+  window.CadernoHasLesson = k => !!S.bank[k]?.n;   // usado pelo cronômetro (atalho para as questões da aula)
   function viewQuestions(v) {
     const lab = ED().labels, g = S.g, mt = g.meta;
     const days = S.plan.filter(d => S.bank[d.key]);

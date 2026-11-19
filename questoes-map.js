@@ -1,5 +1,6 @@
 // =====================================================================
 // Tema de cada dia do cronograma (Específicos, Português, Normas e Inglês/RLM) → nomes de matéria/assunto na Quest API.
+// Cada dia é uma lista de nomes, ou { f: [nomes], alvo: N } para mudar a meta de questões do dia.
 // O importador busca cada nome como "materia" e como "assunto" (a API usa
 // os dois campos de forma misturada), primeiro na FGV e depois em outras
 // bancas, até completar as questões do dia. Nomes = valor exato da API
@@ -21,6 +22,20 @@ const P_SEMANT = ["Semântica", "Semântica (significação das palavras)", "Sin
 const P_ORTO = ["Ortografia", "Acentuação gráfica", "Ortografia oficial e acentuação gráfica", "Formação de palavras (prefixos e sufixos)", "Acentuação"];
 const P_NORMA = ["Norma culta ou norma padrão", "Concordância verbal", "Regência verbal", "Crase", "Reescrita de frases e parágrafos do texto"];
 const I_TEXTO = ["Língua Inglesa - Compreensão e Interpretação de Texto", "Língua Inglesa"];
+
+// Português: mesmo conteúdo e mesmos dias nos dois editais (10 aulas: quartas + 3 domingos)
+const POR = {
+  "2026-11-25": [...P_LEITURA, "Pressupostos e subentendidos"],
+  "2026-11-29": ["Tipologias Textuais", "Tipologias e Gêneros Textuais", "Gêneros textuais"],
+  "2026-12-02": ["Funções da Linguagem", "Tipologias e Gêneros Textuais", "Gêneros textuais"],
+  "2026-12-09": P_NORMA,
+  "2026-12-13": ["Pontuação", "Emprego dos sinais de pontuação"],
+  "2026-12-16": ["Sintaxe", "Período composto", "Ordem dos termos da oração", "Discurso direto e indireto", "Orações subordinadas adjetivas"],
+  "2026-12-23": ["Classes de palavras (classes gramaticais)", "Substantivos", "Adjetivos", "Pronomes", "Pronomes relativos"],
+  "2026-12-27": P_SEMANT,
+  "2026-12-30": ["Verbos", "Advérbios", "Conjunções"],
+  "2027-01-06": P_ORTO,
+};
 
 module.exports = {
   analista: {
@@ -47,9 +62,9 @@ module.exports = {
     "2026-12-24": ["JAVASCRIPT", "HTML", "CSS", "Desenvolvimento Web"],
     "2026-12-26": ["Desenvolvimento Web", "JAVASCRIPT"],
     "2026-12-28": ["Desenvolvimento Web", "JAVASCRIPT"],
-    "2026-12-29": ["GIT", "Versionamento de Código-Fonte (Controle de Versão)", "Scrum", "Kanban", "Metodologias de Desenvolvimento Ágeis"],
-    "2026-12-31": ["Inteligência Artificial", "Aprendizado de Máquina"],
-    "2027-01-02": ["Inteligência Artificial", LGPD],
+    "2026-12-29": ["GIT", "Versionamento de Código-Fonte (Controle de Versão)"],
+    "2026-12-31": ["Scrum", "Kanban", "Metodologias de Desenvolvimento Ágeis"],
+    "2027-01-02": { f: ["Inteligência Artificial", "Aprendizado de Máquina"], alvo: 100 },
     // Normas
     "2026-11-20": ["Princípios da Administração Pública", ...PROC_ADM],
     "2026-11-27": [L12846, D11129, ...IMPROB],
@@ -58,21 +73,11 @@ module.exports = {
     "2026-12-18": NUCLEAR,
     "2026-12-25": AMBIENTE,
     "2027-01-01": ["Gestão da Qualidade", "Gestão de Processos", "Gestão por processos", "Ferramentas da Qualidade"],
-    // Português
-    "2026-11-25": P_LEITURA,
-    "2026-12-02": P_TIPOS,
-    "2026-12-09": ["Pontuação", "Emprego dos sinais de pontuação", ...P_NORMA],
-    "2026-12-16": ["Sintaxe", "Período composto", "Ordem dos termos da oração", "Discurso direto e indireto", "Orações subordinadas adjetivas"],
-    "2026-12-23": ["Pronomes", "Conjunções", "Classes de palavras (classes gramaticais)"],
-    "2026-12-30": P_SEMANT,
-    "2027-01-06": P_ORTO,
-    // Inglês
+    // Português (10 aulas) e Inglês (4 domingos)
+    ...POR,
     "2026-11-22": I_TEXTO,
-    "2026-11-29": ["Cognatos", "Falsos cognatos", "Vocabulário", "Word formation (prefix and suffix)", "Língua Inglesa"],
-    "2026-12-06": ["Língua Inglesa - Compreensão e Interpretação de Texto", "Gramática - Língua Inglesa", "Língua Inglesa"],
-    "2026-12-13": I_TEXTO,
+    "2026-12-06": ["Cognatos", "Falsos cognatos", "Vocabulário", "Word formation (prefix and suffix)", "Gramática - Língua Inglesa"],
     "2026-12-20": I_TEXTO,
-    "2026-12-27": ["Gramática - Língua Inglesa", "Língua Inglesa"],
     "2027-01-03": I_TEXTO,
   },
   assistente: {
@@ -109,21 +114,11 @@ module.exports = {
     "2026-12-18": [...IMPROB, ...LAI],
     "2026-12-25": NUCLEAR,
     "2027-01-01": [...AMBIENTE, "Gestão da Qualidade"],
-    // Português
-    "2026-11-25": P_LEITURA,
-    "2026-12-02": P_TIPOS,
-    "2026-12-09": ["Classes de palavras (classes gramaticais)", "Substantivos", "Adjetivos", "Pronomes"],
-    "2026-12-16": ["Verbos", "Advérbios", "Conjunções"],
-    "2026-12-23": ["Sintaxe", "Pontuação", "Período composto", "Emprego dos sinais de pontuação"],
-    "2026-12-30": P_NORMA,
-    "2027-01-06": [...P_SEMANT, ...P_ORTO],
-    // Raciocínio lógico e matemática (no lugar do Inglês)
-    "2026-11-22": ["Proposições", "Conectivos Lógicos ( construção de proposições compostas)", "Tabela-verdade da conjunção", "Lógica Proposicional - (Lógica de Primeira Ordem)", "Raciocínio Lógico"],
-    "2026-11-29": ["Equivalências Lógicas - (Proposições Logicamente equivalentes)", "Negação de Proposições compostas", "Quantificadores Lógicos - Lógica dos predicados ( Lógica de Primeira Ordem)", "Lógica de Argumentação", "Raciocínio Lógico"],
-    "2026-12-06": ["Conjuntos", "Conjuntos Numéricos", "Porcentagem", "Matemática Básica ( questões envolvendo as quatro operações básicas)"],
-    "2026-12-13": ["Razão e Proporção", "Regra de Três", "Juros Simples", "Juros Compostos", "Porcentagem"],
-    "2026-12-20": ["Análise Combinatória", "Probabilidade"],
-    "2026-12-27": ["Geometria Plana", "Geometria", "Plano Cartesiano"],
-    "2027-01-03": ["Estatística Básica", "Estatística", "Sequências", "Raciocínio Sequencial", "Raciocínio Lógico"],
+    // Português (10 aulas) e Raciocínio lógico-matemático (4 domingos)
+    ...POR,
+    "2026-11-22": ["Proposições", "Conectivos Lógicos ( construção de proposições compostas)", "Tabela-verdade da conjunção", "Lógica Proposicional - (Lógica de Primeira Ordem)", "Equivalências Lógicas - (Proposições Logicamente equivalentes)", "Negação de Proposições compostas", "Quantificadores Lógicos - Lógica dos predicados ( Lógica de Primeira Ordem)", "Lógica de Argumentação"],
+    "2026-12-06": ["Conjuntos", "Conjuntos Numéricos", "Porcentagem", "Matemática Básica ( questões envolvendo as quatro operações básicas)", "Razão e Proporção", "Regra de Três", "Juros Simples", "Juros Compostos"],
+    "2026-12-20": ["Análise Combinatória", "Probabilidade", "Estatística Básica", "Estatística"],
+    "2027-01-03": ["Geometria Plana", "Geometria", "Plano Cartesiano", "Sequências", "Raciocínio Sequencial", "Raciocínio Lógico"],
   },
 };
