@@ -112,7 +112,7 @@ function compute(db, user, today) {
   const weighted = Object.fromEntries(active.map(m => [m, Math.max(3, Math.round(goal * cfg.pontos[m] / wsum))]));
   const perDate = {};   // data -> { ESP: n, POR: n, ... }
   const bump = (k, m, n) => { (perDate[k] ||= {}); perDate[k][m] = (perDate[k][m] || 0) + n; };
-  for (const r of db.prepare("SELECT local_date, materia, COUNT(DISTINCT question_id) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
+  for (const r of db.prepare("SELECT local_date, materia, COUNT(DISTINCT question_id) n FROM bank_attempts WHERE user_id = ? AND edital = ? AND mode <> 'extra' GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
   for (const r of db.prepare("SELECT local_date, materia, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
   // a meta de cada matéria nunca passa do que existe para fazer hoje:
   // questões ainda não respondidas das aulas concluídas + revisões do caderno de erros + o que já foi feito hoje
