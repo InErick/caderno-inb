@@ -183,7 +183,7 @@
       <div class="content">
         <header class="topbar">
           <a class="av" href="#perfil" title="Perfil">${esc(initials(S.user.name))}</a>
-          <div class="who"><b>${esc(S.user.name.split(" ")[0])}</b><span>${ED().nome}</span></div>
+          <div class="who"><b>${esc(S.user.name.split(" ")[0])}</b><span>${ED().nome} · ${ED().nivel.toLowerCase()}</span></div>
           <div class="top-chips" id="topChips"></div>
         </header>
         <main class="main" id="view"></main>
@@ -722,7 +722,7 @@
     const lab = ED().labels;
     const filters = [["ALL", "Tudo"], ["ESP", lab.ESP], ["POR", lab.POR], ["NOR", lab.NOR], ["ING", lab.ING], ["REV", "Revisões e reta final"], ["TODO", "Pendentes"], ["LATE", "Atrasados"]];
     v.innerHTML = `
-      <div class="page-title">Cronograma · ${ED().nome}</div>
+      <div class="page-title">Cronograma · ${ED().nome} <span class="muted" style="font-size:.55em;font-weight:500;letter-spacing:0">${ED().nivel}</span></div>
       <div class="seg" id="seg"><button class="${S.planView === "lista" ? "on" : ""}" data-v="lista">Lista</button><button class="${S.planView === "cal" ? "on" : ""}" data-v="cal">Calendário</button></div>
       <div id="pv"></div>`;
     const pv = v.querySelector("#pv");
