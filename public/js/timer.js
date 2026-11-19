@@ -158,13 +158,14 @@ window.Timer = (() => {
         <button class="f-btn primary" data-a="toggle" title="Pausar / continuar"></button>
         <button class="f-btn" data-a="finish" title="${st.phases ? "Encerrar esta fase e seguir" : "Finalizar e salvar"}">${Icon("stop", 24)}</button>
       </div>
-      <p class="f-hint">${pipSupported() ? "Use o botão de janela flutuante para ver o cronômetro por cima de qualquer aba ou programa." : "Você pode minimizar: o tempo continua contando."}</p>`;
+      <p class="f-hint"></p>`;
     f.onclick = e => {
       const a = e.target.closest("[data-a]")?.dataset.a;
       if (a === "toggle") toggle();
       if (a === "finish") finish();
       if (a === "discard") confirmDiscard();
       if (a === "min") minimize();
+      if (a === "questoes" && st?.dayKey) { minimize(); location.hash = "#questoes/" + st.dayKey; }
       if (a === "pip") pipWin ? closePip() : openPip();
       if (a === "fs") document.fullscreenElement ? exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {});
     };
@@ -253,6 +254,13 @@ window.Timer = (() => {
       const p = f.querySelector(".prog"); if (p) p.style.strokeDashoffset = CIRC * (1 - frac);
       const t = f.querySelector('[data-a="toggle"]'); if (t) t.innerHTML = Icon(running ? "pause" : "play", 32);
       f.classList.toggle("paused", !running);
+      // na fase de questões, atalho direto para as questões da aula (o cronômetro continua minimizado)
+      const hint = f.querySelector(".f-hint"), hk = st.mode === "questoes" && st.dayKey ? "q" : "n";
+      if (hint && hint.dataset.k !== hk) {
+        hint.dataset.k = hk;
+        hint.innerHTML = hk === "q" ? `<button class="f-qbtn" data-a="questoes">📝 Abrir as questões da aula</button><br><span>O cronômetro continua no canto da tela.</span>`
+          : pipSupported() ? "Use o botão de janela flutuante para ver o cronômetro por cima de qualquer aba ou programa." : "Você pode minimizar: o tempo continua contando.";
+      }
     }
     const m = $mini();
     if (!m.hidden && m.querySelector(".mt-t")) {

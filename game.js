@@ -102,15 +102,17 @@ function compute(db, user, today) {
     .sort((a, b) => a.pct - b.pct).slice(0, 6);
 
   // ---------- meta diária de questões, dividida entre as matérias pelo peso no edital ----------
+  // (refazer a mesma questão no mesmo dia não conta duas vezes)
   // matérias ativas = as que já têm aula concluída (antes disso, todas)
   const goal = user.daily_q_goal || 40;
-  let active = MATS.filter(m => plan.some(x => x.m === m && done[x.key]));
+  const todayDay = byKey.get(today);
+  let active = MATS.filter(m => plan.some(x => x.m === m && done[x.key]) || todayDay?.m === m);
   if (!active.length) active = MATS.slice();
   const wsum = active.reduce((t, m) => t + cfg.pontos[m], 0);
   const weighted = Object.fromEntries(active.map(m => [m, Math.max(3, Math.round(goal * cfg.pontos[m] / wsum))]));
   const perDate = {};   // data -> { ESP: n, POR: n, ... }
   const bump = (k, m, n) => { (perDate[k] ||= {}); perDate[k][m] = (perDate[k][m] || 0) + n; };
-  for (const r of db.prepare("SELECT local_date, materia, COUNT(*) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
+  for (const r of db.prepare("SELECT local_date, materia, COUNT(DISTINCT question_id) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
   for (const r of db.prepare("SELECT local_date, materia, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
   // a meta de cada matéria nunca passa do que existe para fazer hoje:
   // questões ainda não respondidas das aulas concluídas + revisões do caderno de erros + o que já foi feito hoje
@@ -120,10 +122,18 @@ function compute(db, user, today) {
       WHERE d.edital = ? AND a.question_id IS NULL GROUP BY d.day_key`).all(uid, ed)) {
     const day = byKey.get(r.day_key); if (day && done[r.day_key] && avail[day.m] !== undefined) avail[day.m] += r.n;
   }
+  // + questões da aula (20 primeiras) de aulas ainda não concluídas até hoje (a de hoje e as atrasadas)
+  for (const r of db.prepare(`SELECT d.day_key, COUNT(*) n FROM bank_day d LEFT JOIN bank_answers a
+      ON a.question_id = d.question_id AND a.user_id = ? AND a.edital = d.edital
+      WHERE d.edital = ? AND d.pos < 20 AND a.question_id IS NULL AND d.day_key <= ? GROUP BY d.day_key`).all(uid, ed, today)) {
+    const day = byKey.get(r.day_key); if (day && !done[r.day_key] && avail[day.m] !== undefined) avail[day.m] += r.n;
+  }
   for (const r of db.prepare("SELECT materia, COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_due IS NOT NULL AND review_due <= ? GROUP BY materia").all(uid, ed, today)) avail[r.materia] += r.n;
   const goalByM = Object.fromEntries(active.map(m => [m, Math.min(weighted[m], avail[m] + (perDate[today]?.[m] || 0))]));
   const dayMet = k => active.reduce((t, m) => t + (perDate[k]?.[m] || 0), 0) > 0 && active.every(m => (perDate[k]?.[m] || 0) >= goalByM[m]);
-  const metDays = Object.keys(perDate).filter(k => k <= today && dayMet(k)).sort();
+  // só o dia de hoje é avaliado com a meta atual; os anteriores ficam como foram gravados
+  if (dayMet(today)) db.prepare("INSERT OR IGNORE INTO meta_days (user_id, edital, local_date) VALUES (?,?,?)").run(uid, ed, today);
+  const metDays = db.prepare("SELECT local_date FROM meta_days WHERE user_id = ? AND edital = ? AND local_date <= ? ORDER BY local_date").all(uid, ed, today).map(r => r.local_date);
   const met = new Set(metDays);
   let metaStreak = 0, md = met.has(today) ? today : addDays(today, -1);
   while (met.has(md)) { metaStreak++; md = addDays(md, -1); }

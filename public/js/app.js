@@ -72,6 +72,15 @@
     if (g.newAchievements?.length) setTimeout(() => showAchievements(g.newAchievements), 400);
   }
 
+  // atualização leve depois de responder uma questão (XP, meta e contadores do banco)
+  async function refreshGame() {
+    const tk = todayKey();
+    const [g, bk] = await Promise.all([Api.dashboard(tk), Api.bank(tk).catch(() => null)]);
+    S.g = g;
+    if (bk) { S.bank = bk.days || {}; S.unlocked = new Set(bk.unlocked || []); S.due = bk.due || 0; S.inReview = bk.inReview || 0; }
+    if (g.newAchievements?.length) setTimeout(() => showAchievements(g.newAchievements), 400);
+  }
+
   function planToday() {
     const k = todayKey(), P = S.plan;
     return P.find(d => d.key === k) || (k < P[0].key ? P[0] : P[P.length - 1]);
@@ -265,10 +274,6 @@
   // =================================================================
   // HOJE
   // =================================================================
-  function planToday() {
-    const k = todayKey(), P = S.plan;
-    return P.find(d => d.key === k) || (k < P[0].key ? P[0] : P[P.length - 1]);
-  }
 
   function viewHome(v) {
     const t = planToday(), g = S.g, st = S.stats, goal = S.user.dailyGoal * 60, lab = ED().labels, tk = todayKey();
@@ -411,6 +416,47 @@
     return s.replace(/[ \t]{2,}/g, " ").trim();
   }
 
+  // ---------- arrumação visual das questões (roda na exibição; vale também para as já importadas) ----------
+  const CODE_RE = /^\s*(SELECT|FROM|WHERE|GROUP BY|HAVING|ORDER BY|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|INNER JOIN|LEFT JOIN|RIGHT JOIN|JOIN|UNION|VALUES|SET|BEGIN|END;?|DECLARE|using|namespace|class|interface|public|private|protected|internal|static|void|int|string|bool|var|let|const|function|return|if\s*\(|else|for\s*\(|foreach|while\s*\(|do\b|switch|case\b|try|catch|finally|throw|import|from\s+\w+\s+import|def |print\(|console\.|Console\.|System\.|#include|<\/?[a-z][\w-]*[\s>]|[{}]|\/\/|\w+\s*\(.*\)\s*;)|[;{}]\s*$/;
+  const blankP = p => !p.textContent.replace(/[\s  ]/g, "") && !p.querySelector("img, table, code:not(:empty)");
+  function tidyQuestion(root) {
+    root.querySelectorAll("code.formula").forEach(el => {
+      const t = texToText(el.textContent);
+      if (!t.replace(/[\s ]/g, "")) el.remove(); else { el.textContent = t; el.classList.add("fx"); }
+    });
+    root.querySelectorAll(".q-html").forEach(box => {
+      // espaçador "-" em texto branco (a cor some na limpeza)
+      box.querySelectorAll("p").forEach(p => { if (/^\s*[-–.]\s*$/.test(p.textContent) && !p.querySelector("img")) p.remove(); });
+      // código: sequência de parágrafos com cara de código vira um bloco monoespaçado
+      const kids = [...box.children];
+      for (let i = 0; i < kids.length; i++) {
+        const isCand = el => el && el.tagName === "P" && (blankP(el) || CODE_RE.test(el.textContent) || /text-indent/.test(el.getAttribute("style") || "") || el.querySelector(".ql-font-monospace"));
+        if (!isCand(kids[i]) || blankP(kids[i])) continue;
+        let j = i; while (j + 1 < kids.length && isCand(kids[j + 1])) j++;
+        while (j > i && blankP(kids[j])) j--;
+        const run = kids.slice(i, j + 1), code = run.filter(p => !blankP(p) && (CODE_RE.test(p.textContent) || p.querySelector(".ql-font-monospace")));
+        if (code.length >= 2 && code.length >= run.filter(p => !blankP(p)).length * 0.5) {
+          const pre = document.createElement("pre"); pre.className = "qcode";
+          pre.textContent = run.map(p => { const ind = parseFloat((p.getAttribute("style") || "").match(/text-indent:\s*([\d.]+)em/)?.[1] || 0); return " ".repeat(Math.round(ind * 2)) + p.textContent.replace(/ /g, " ").replace(/\s+$/, ""); }).join("\n");
+          run[0].before(pre); run.forEach(p => p.remove());
+        }
+        i = j;
+      }
+      // itens "I –", "II.", "a)" ganham recuo
+      box.querySelectorAll(":scope > p").forEach(p => { if (/^\s*((I{1,3}|IV|VI{0,3}|IX|X)\s*[.–—\-)]|[a-e]\))\s/.test(p.textContent)) p.classList.add("item"); });
+      // parágrafos vazios: sem sobra no começo/fim e no máximo um espaço entre blocos
+      let prevBlank = true;
+      for (const p of [...box.querySelectorAll(":scope > p")]) {
+        if (blankP(p)) { if (prevBlank) p.remove(); else { p.className = "gap"; p.innerHTML = ""; prevBlank = true; } } else prevBlank = false;
+      }
+      const last = box.lastElementChild; if (last?.classList.contains("gap")) last.remove();
+      // tabelas centralizadas e roláveis no celular
+      box.querySelectorAll("table").forEach(t => { if (!t.parentElement.classList.contains("tbl")) { const w = document.createElement("div"); w.className = "tbl"; t.before(w); w.append(t); } });
+    });
+    // título do texto de apoio ("Texto 1 – ...")
+    root.querySelectorAll(".qz-texto .q-html > p:first-child").forEach(p => { if (/^\s*(Texto|Text)\s*\d*\s*[–—:-]/i.test(p.textContent) || p.textContent.length < 120 && !/[.!?]\s*$/.test(p.textContent)) p.classList.add("tt"); });
+  }
+
   // src = { kind: "day", key } (aula: 20 questões) | { kind: "assunto", key } (banco inteiro do tema)
   //     | { kind: "treino", materia? } | { kind: "erros" }
   async function viewQuiz(v, src) {
@@ -433,7 +479,7 @@
     const draw = () => {
       const done = qs.filter(fresh), right = done.filter(q => src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect).length;
       const mt = S.g.meta;
-      const head = `<div class="qz-top"><a href="${back}" class="link-btn">← Questões</a>
+      const head = `<div class="qz-top"><a href="${back}" class="link-btn">← ${back === "#inicio" ? "Hoje" : "Questões"}</a>
         <div class="qz-title t-${day?.m || src.materia || "ESP"}">${title}${src.kind === "assunto" ? ` <span class="muted small">· banco do tema</span>` : ""}</div>
         <div class="qz-score">${done.length}/${qs.length} respondidas · <b>${right} ${right === 1 ? "acerto" : "acertos"}</b> · meta de hoje ${Math.min(mt.today, mt.goal)}/${mt.goal}${mt.met ? " ✅" : ""}</div>
         <div class="qz-dots">${qs.map((q, i) => `<button data-go="${i}" class="${i === idx ? "cur " : ""}${fresh(q) ? ((src.kind === "erros" ? q.answer.correct : q.answer.firstCorrect) ? "ok" : "bad") : ""}" aria-label="Questão ${i + 1}">${i + 1}</button>`).join("")}
@@ -463,7 +509,7 @@
       v.innerHTML = `${head}<article class="card qz">
         ${q.recall ? `<div class="qz-recall">🔁 Para relembrar: você acertou esta questão há algum tempo</div>` : ""}
         <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${qday ? `<span class="qz-topic t-${qday.m}"><span class="tag">${esc(lab[qday.m])}</span> ${esc(qday.t)}</span>` : ""}${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
-        ${q.textos.filter(Boolean).map(tx => `<div class="qz-texto q-html">${tx}</div>`).join("")}
+        ${q.textos.filter(Boolean).map((tx, ti) => `<details class="qz-texto" ${S.textoOpen === false ? "" : "open"}><summary>📄 ${q.textos.filter(Boolean).length > 1 ? `Texto de apoio ${ti + 1}` : "Texto de apoio"}</summary><div class="q-html">${tx}</div></details>`).join("")}
         <div class="q-html qz-enun">${q.enunciado}</div>
         <div class="qz-alts">${q.alternativas.map(al => {
           const cls = a ? (al.letra === a.gabarito ? "right" : al.letra === a.chosen ? "wrong" : "dim") : al.letra === pick ? "sel" : "";
@@ -474,7 +520,7 @@
           <div class="qz-actions">${src.kind === "erros" ? "<span></span>" : `<button class="btn btn-ghost btn-sm" id="qzRetry">Refazer</button>`}<button class="btn btn-pink" id="qzNext">${idx === qs.length - 1 ? "Ver resultado" : "Próxima"} →</button></div>`
         : `<div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzSkip">Pular</button><button class="btn btn-pink" id="qzSend" ${pick ? "" : "disabled"}>Responder</button></div>`}
       </article>`;
-      v.querySelectorAll("code.formula").forEach(el => { el.textContent = texToText(el.textContent); });
+      tidyQuestion(v.querySelector("article.qz"));
 
       v.querySelector("#qzSend")?.addEventListener("click", send);
       v.querySelector("#qzSkip")?.addEventListener("click", () => go(idx + 1));
@@ -494,7 +540,7 @@
         q.answer = { chosen: pick, correct: r.correct, gabarito: r.gabarito, firstCorrect: prev ? prev.firstCorrect : r.correct, attempts: (prev?.attempts || 0) + 1 };
         q._done = true; q._r = r;
         retry = false; pick = null;
-        await refreshData(); updateTopbar(); draw();
+        await refreshGame(); updateTopbar(); draw();
         const gained = S.g.xp.total - before.xp.total;
         if (S.g.meta.met && !before.meta.met) toast(`🎯 Meta do dia batida! +${gained} XP`);
         else if (gained > 0) toast(`+${gained} XP`);
@@ -509,6 +555,9 @@
     draw();
   }
   const REVIEW_DAYS = [1, 3, 7];
+
+  // lembra se o texto de apoio está aberto ou fechado entre as questões
+  document.addEventListener("toggle", e => { if (e.target.classList?.contains("qz-texto")) S.textoOpen = e.target.open; }, true);
 
   // atalhos no modo questões: letras escolhem, Enter responde / avança
   document.addEventListener("keydown", e => {
@@ -584,19 +633,21 @@
       if (!done) return toast("Dia desmarcado.");
       const gained = S.g.xp.total - before.xp.total;
       const det = S.details[key];
-      celebrate(gained, det?.late, before, S.g);
+      celebrate(gained, det?.late, before, S.g, key);
     } catch (e) { toast(e.message); }
   }
 
-  function celebrate(gained, late, before, after) {
+  function celebrate(gained, late, before, after, key) {
     const up = after.level.n > before.level.n;
+    const pool = S.bank[key]?.pool, left = pool ? pool.n - pool.answered : 0;
     modal(`<div class="celebrate"><div class="big-emoji">${up ? "🏆" : late ? "💪" : "🎉"}</div>
       <h3>${late ? "Dia recuperado!" : "Dia concluído!"}</h3>
       <div class="xp-gain">+${gained} XP</div>
       ${up ? `<p class="lvl-up">Subiu para o nível <b>${after.level.n} · ${esc(after.level.name)}</b></p>` : ""}
-      <p class="muted small">${after.streak ? `🔥 Sequência de ${after.streak} ${after.streak === 1 ? "dia" : "dias"}.` : ""} ${late ? "Recuperar dá XP, mas não refaz a sequência." : ""}</p></div>
-      <div class="actions"><button class="btn btn-pink btn-block" data-x>Continuar</button></div>`,
-      (m, close) => { m.querySelector("[data-x]").onclick = close; });
+      <p class="muted small">${after.streak ? `🔥 Sequência de ${after.streak} ${after.streak === 1 ? "dia" : "dias"}.` : ""} ${late ? "Recuperar dá XP, mas não refaz a sequência." : ""}</p>
+      ${left ? `<p class="unlock-note">📝 <b>${left} questões</b> deste tema liberadas na aba Questões.</p>` : ""}</div>
+      <div class="actions">${left ? `<a class="btn btn-ghost btn-block" href="#banco/${key}" data-x>Treinar este tema</a>` : ""}<button class="btn btn-pink btn-block" data-x>Continuar</button></div>`,
+      (m, close) => m.querySelectorAll("[data-x]").forEach(b => b.addEventListener("click", close)));
   }
   function checkLevelUp(before, after) {
     if (after.level.n > before.level.n) setTimeout(() => toast(`🏆 Nível ${after.level.n}: ${after.level.name}!`), 1200);
@@ -627,7 +678,7 @@
         <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
           <div class="ttl">${esc(d.t)}</div>
-          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key]?.n ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
+          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q && !S.bank[d.key]?.n ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key]?.n ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
           <span class="chev">${Icon("chevron", 20)}</span>
         </div>
         <div class="day-body">${dayCardBody(d)}

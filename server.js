@@ -45,7 +45,7 @@ function setSession(res, user) {
 }
 
 function publicUser(u) {
-  return { id: u.id, name: u.name, email: u.email, edital: u.edital, dailyGoal: u.daily_goal, dailyQGoal: u.daily_q_goal ?? 20, createdAt: u.created_at };
+  return { id: u.id, name: u.name, email: u.email, edital: u.edital, dailyGoal: u.daily_goal, dailyQGoal: u.daily_q_goal ?? 40, createdAt: u.created_at };
 }
 
 function auth(req, res, next) {
@@ -303,14 +303,18 @@ app.post("/api/bank/answer", auth, (req, res) => {
   const mode = ["dia", "treino", "erros"].includes(b.mode) ? b.mode : "dia";
   const day = planDay(ed, link.day_key);
   const materia = Game.MATS.includes(day?.m) ? day.m : "ESP";
-  const prev = db.prepare("SELECT first_correct, review_step FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(uid, ed, qid);
+  const prev = db.prepare("SELECT first_correct, review_step, review_due FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(uid, ed, qid);
 
-  // caderno de erros
+  // caderno de erros: errou → volta amanhã; acerto só avança a etapa se a revisão já venceu
+  // (refazer logo depois de ver o gabarito não conta como revisão)
   let step = null, due = null, graduated = false;
   if (!correct) { step = 0; due = addDaysISO(localDate, REVIEW[0]); }
   else if (prev && prev.review_step != null) {
-    step = prev.review_step + 1;
-    if (step >= REVIEW.length) { step = null; graduated = true; } else due = addDaysISO(localDate, REVIEW[step]);
+    if (prev.review_due && localDate < prev.review_due) { step = prev.review_step; due = prev.review_due; }
+    else {
+      step = prev.review_step + 1;
+      if (step >= REVIEW.length) { step = null; graduated = true; } else due = addDaysISO(localDate, REVIEW[step]);
+    }
   }
   if (prev) {
     db.prepare(`UPDATE bank_answers SET chosen = ?, correct = ?, attempts = attempts + 1, review_step = ?, review_due = ?, updated_at = datetime('now')

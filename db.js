@@ -124,6 +124,13 @@ CREATE TABLE IF NOT EXISTS bank_attempts (
   created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_bank_attempts ON bank_attempts(user_id, edital, local_date);
+-- Dias em que a meta diária de questões foi batida (gravado na hora, para mudar a meta não mexer no passado)
+CREATE TABLE IF NOT EXISTS meta_days (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital     TEXT    NOT NULL,
+  local_date TEXT    NOT NULL,
+  PRIMARY KEY (user_id, edital, local_date)
+);
 -- Onde parou cada busca na API (para nunca pagar duas vezes pela mesma questão)
 CREATE TABLE IF NOT EXISTS bank_cursors (
   qkey      TEXT PRIMARY KEY,
