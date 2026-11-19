@@ -35,8 +35,6 @@ const TARGET = {
 const PER_DAY = opt("por-dia", null) ? Math.max(1, parseInt(opt("por-dia"), 10)) : null;
 const MATERIA = opt("materia", null);
 const goalOf = t => PER_DAY || TARGET[t.ed][t.m] || 60;
-// Analista = prova de nível superior; Assistente = nível médio
-const NIVEL = { analista: "Superior", assistente: "Médio" };
 const EDITAL = opt("edital", "todos");
 const DIAS = opt("dias", null) ? String(opt("dias")).split(",") : null;
 const RESERVA = parseInt(opt("reserva", "0"), 10);
@@ -83,8 +81,8 @@ function reuse(ed, key, fontes, need) {
   let added = 0;
   for (const f of fontes) {
     if (added >= need) break;
-    const rows = db.prepare(`SELECT id FROM bank_questions q WHERE (q.materia = ? OR q.assunto = ?) AND q.nivel = ?
-      AND NOT EXISTS (SELECT 1 FROM bank_day d WHERE d.edital = ? AND d.question_id = q.id) LIMIT ?`).all(f, f, NIVEL[ed], ed, need - added);
+    const rows = db.prepare(`SELECT id FROM bank_questions q WHERE (q.materia = ? OR q.assunto = ?)
+      AND NOT EXISTS (SELECT 1 FROM bank_day d WHERE d.edital = ? AND d.question_id = q.id) LIMIT ?`).all(f, f, ed, need - added);
     for (const r of rows) if (linkStmt.run(ed, key, r.id, countDay(ed, key)).changes) added++;
   }
   return added;
@@ -131,15 +129,9 @@ async function main() {
           if (need <= 0) break;
           const take = Math.min(need, 100, Math.floor(saldo / COST));
           if (take <= 0) { log(`\n💳 Créditos acabaram. Parei em ${t.ed} ${t.key}. Rode de novo depois de recarregar.`); return finish(gastos, total); }
-          const params = { banca, [field]: fonte, nivel_escolaridade: NIVEL[t.ed], tem_gabarito: "true", anulada: "false" };
+          const params = { banca, [field]: fonte, tem_gabarito: "true", anulada: "false" };
           const qkey = JSON.stringify(params);
-          let cur = db.prepare("SELECT cursor, exhausted FROM bank_cursors WHERE qkey = ?").get(qkey);
-          // primeira busca com filtro de nível: começa de onde a busca antiga (sem nível) parou,
-          // assim nunca paga de novo por questões que já vieram antes
-          if (!cur) {
-            const { nivel_escolaridade, ...old } = params;
-            cur = db.prepare("SELECT cursor, exhausted FROM bank_cursors WHERE qkey = ?").get(JSON.stringify(old)) || null;
-          }
+          const cur = db.prepare("SELECT cursor, exhausted FROM bank_cursors WHERE qkey = ?").get(qkey);
           if (cur?.exhausted) continue;
           const qs = new URLSearchParams({ ...params, include_gabarito: "true", include_total: "false", per_page: String(take) });
           if (cur?.cursor) qs.set("after_id", cur.cursor);
