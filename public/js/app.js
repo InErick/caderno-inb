@@ -536,14 +536,15 @@
     v.innerHTML = `
       <div class="page-title">Questões</div>
       <div class="qs-hero">
-        <div class="card ring-card">${ring(mt.today / mt.goal, mt.met ? "#3f8a72" : "#ef7254", `${Math.min(mt.today, 999)}<span style="font-size:13px">/${mt.goal}</span>`, mt.met ? "batida ✅" : "meta de hoje")}
+        <div class="card ring-card">${ring(mt.goal ? mt.today / mt.goal : 0, mt.met ? "#3f8a72" : "#ef7254", `${Math.min(mt.today, 999)}<span style="font-size:13px">/${mt.goal}</span>`, mt.met ? "batida ✅" : "meta de hoje")}
           <p class="muted small" style="margin:6px 0 0;text-align:center">${mt.streak > 1 ? `🔥 ${mt.streak} dias seguidos batendo a meta` : mt.met ? "Meta batida hoje 🎉" : `Bater a meta vale +${g.xp.rules.meta} XP`}</p></div>
         <div class="card qs-meta">
           <div class="qs-meta-h"><b>Meta de hoje por matéria</b><span class="muted small">dividida pelo peso no edital · <a href="#perfil">ajustar total</a></span></div>
+          ${Object.values(mt.byM).some(x => x.goal < x.full) ? `<p class="muted small" style="margin:-4px 0 0">* limitada às questões liberadas: conclua mais aulas para a meta cheia.</p>` : ""}
           ${Object.entries(mt.byM).map(([m, x]) => { const has = openBy(m).length, ok = x.done >= x.goal; return `
           <div class="qs-mrow t-${m}"><span class="tag">${esc(lab[m])}</span>
             <div class="xpbar"><i style="width:${Math.min(100, pct(x.done, x.goal))}%;${ok ? "background:#3f8a72" : ""}"></i></div>
-            <span class="qs-mn">${Math.min(x.done, 999)}/${x.goal}${ok ? " ✅" : ""}</span>
+            <span class="qs-mn" title="${x.goal < x.full ? `Meta cheia seria ${x.full}; limitada ao que está liberado` : ""}">${Math.min(x.done, 999)}/${x.goal}${ok ? " ✅" : x.goal < x.full ? "*" : ""}</span>
             ${has ? `<a class="btn btn-sm ${ok ? "btn-ghost" : "btn-pink"}" href="#treino/${m}">Treinar</a>` : `<span class="muted small qs-nolock">conclua uma aula</span>`}</div>`; }).join("")}
         </div>
       </div>

@@ -107,12 +107,22 @@ function compute(db, user, today) {
   let active = MATS.filter(m => plan.some(x => x.m === m && done[x.key]));
   if (!active.length) active = MATS.slice();
   const wsum = active.reduce((t, m) => t + cfg.pontos[m], 0);
-  const goalByM = Object.fromEntries(active.map(m => [m, Math.max(3, Math.round(goal * cfg.pontos[m] / wsum))]));
+  const weighted = Object.fromEntries(active.map(m => [m, Math.max(3, Math.round(goal * cfg.pontos[m] / wsum))]));
   const perDate = {};   // data -> { ESP: n, POR: n, ... }
   const bump = (k, m, n) => { (perDate[k] ||= {}); perDate[k][m] = (perDate[k][m] || 0) + n; };
   for (const r of db.prepare("SELECT local_date, materia, COUNT(*) n FROM bank_attempts WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
   for (const r of db.prepare("SELECT local_date, materia, SUM(done) n FROM question_logs WHERE user_id = ? AND edital = ? GROUP BY local_date, materia").all(uid, ed)) bump(r.local_date, r.materia, r.n);
-  const dayMet = k => active.every(m => (perDate[k]?.[m] || 0) >= goalByM[m]);
+  // a meta de cada matéria nunca passa do que existe para fazer hoje:
+  // questões ainda não respondidas das aulas concluídas + revisões do caderno de erros + o que já foi feito hoje
+  const avail = Object.fromEntries(MATS.map(m => [m, 0]));
+  for (const r of db.prepare(`SELECT d.day_key, COUNT(*) n FROM bank_day d LEFT JOIN bank_answers a
+      ON a.question_id = d.question_id AND a.user_id = ? AND a.edital = d.edital
+      WHERE d.edital = ? AND a.question_id IS NULL GROUP BY d.day_key`).all(uid, ed)) {
+    const day = byKey.get(r.day_key); if (day && done[r.day_key] && avail[day.m] !== undefined) avail[day.m] += r.n;
+  }
+  for (const r of db.prepare("SELECT materia, COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_due IS NOT NULL AND review_due <= ? GROUP BY materia").all(uid, ed, today)) avail[r.materia] += r.n;
+  const goalByM = Object.fromEntries(active.map(m => [m, Math.min(weighted[m], avail[m] + (perDate[today]?.[m] || 0))]));
+  const dayMet = k => active.reduce((t, m) => t + (perDate[k]?.[m] || 0), 0) > 0 && active.every(m => (perDate[k]?.[m] || 0) >= goalByM[m]);
   const metDays = Object.keys(perDate).filter(k => k <= today && dayMet(k)).sort();
   const met = new Set(metDays);
   let metaStreak = 0, md = met.has(today) ? today : addDays(today, -1);
@@ -160,7 +170,7 @@ function compute(db, user, today) {
     today,
     xp: { total: xp, days: xpDays, questions: xpQ, achievements: xpA, meta: xpM, rules: XP },
     meta: { goal: goalTot, today: todayTot, met: met.has(today), streak: metaStreak, best: metaBest, daysMet: metDays.length,
-      byM: Object.fromEntries(active.map(m => [m, { goal: goalByM[m], done: perDate[today]?.[m] || 0 }])) },
+      byM: Object.fromEntries(active.map(m => [m, { goal: goalByM[m], full: weighted[m], done: perDate[today]?.[m] || 0 }])) },
     level: levelInfo(xp),
     streak, bestStreak: best,
     done, late,
