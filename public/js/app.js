@@ -948,6 +948,9 @@
     const goalDays = st.last14.filter(x => x.seconds >= S.user.dailyGoal * 60).length;
     const cov = g.coverage, qt = g.questions.total;
     const last14 = []; for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); last14.push(Plans.keyOf(d)); }
+    // banco de questões: total, respondidas e liberadas (por matéria)
+    const bk = { n: 0, answered: 0, open: 0, byM: Object.fromEntries(MATS.map(m => [m, { n: 0, answered: 0 }])) };
+    for (const d of S.plan) { const b = S.bank[d.key]?.pool; if (!b) continue; bk.n += b.n; bk.answered += b.answered; if (S.unlocked.has(d.key)) bk.open += b.n; if (bk.byM[d.m]) { bk.byM[d.m].n += b.n; bk.byM[d.m].answered += b.answered; } }
 
     v.innerHTML = `
       <div class="page-title">Desempenho</div>
@@ -955,6 +958,18 @@
         <div class="card stat s1"><div class="si">${Icon("fire", 21)}</div><div><span>Sequência · recorde ${g.bestStreak}</span><b>${g.streak} ${g.streak === 1 ? "dia" : "dias"}</b></div></div>
         <div class="card stat s2"><div class="si">${Icon("target", 21)}</div><div><span>Acerto acumulado</span><b>${qt.done ? pct(qt.correct, qt.done) + "%" : "—"} <small class="muted" style="font-size:12px">${qt.correct}/${qt.done}</small></b></div></div>
         <a class="card stat s3" href="#conquistas" style="text-decoration:none"><div class="si">${Icon("trophy", 21)}</div><div><span>Nível ${g.level.n} · ${esc(g.level.name)}</span><b>${g.xp.total} XP</b></div></a>
+      </div>
+
+      <div class="card bank-stats" style="margin-top:14px">
+        <b class="card-h">📝 Banco de questões</b>
+        <div class="bks">
+          <div><b>${qt.done}</b><span>questões feitas</span></div>
+          <div><b>${bk.answered}</b><span>do banco já respondidas</span></div>
+          <div><b>${bk.open}</b><span>liberadas (aulas concluídas)</span></div>
+          <div><b>${bk.n}</b><span>no banco do seu cronograma</span></div>
+        </div>
+        <div class="xpbar big" title="${pct(bk.answered, bk.n)}% do banco respondido"><i style="width:${pct(bk.answered, bk.n)}%"></i></div>
+        <div class="muted small" style="margin-top:6px">${pct(bk.answered, bk.n)}% do banco respondido${S.due ? ` · ${S.due} no caderno de erros para hoje` : ""} · <a href="#questoes">abrir aba Questões</a></div>
       </div>
 
       <div class="grid-2" style="margin-top:14px">
@@ -970,9 +985,9 @@
       <div class="grid-2" style="margin-top:14px">
         <div class="card">
           <b class="card-h">✏️ Acerto por matéria</b>
-          <div class="tablewrap"><table class="tbl-q"><thead><tr><th>Matéria</th><th>Feitas</th><th>Acertos</th><th>%</th></tr></thead><tbody>
-            ${MATS.map(m => { const q = g.questions.byM[m]; return `<tr class="t-${m}"><td><span class="tag">${lab[m]}</span></td><td>${q.done}</td><td>${q.correct}</td><td><b>${q.done ? pct(q.correct, q.done) + "%" : "—"}</b></td></tr>`; }).join("")}
-            <tr class="tot"><td>Total</td><td>${qt.done}</td><td>${qt.correct}</td><td><b>${qt.done ? pct(qt.correct, qt.done) + "%" : "—"}</b></td></tr>
+          <div class="tablewrap"><table class="tbl-q"><thead><tr><th>Matéria</th><th>Feitas</th><th>Acertos</th><th>%</th><th title="Questões dessa matéria no banco">Banco</th></tr></thead><tbody>
+            ${MATS.map(m => { const q = g.questions.byM[m]; return `<tr class="t-${m}"><td><span class="tag">${lab[m]}</span></td><td>${q.done}</td><td>${q.correct}</td><td><b>${q.done ? pct(q.correct, q.done) + "%" : "—"}</b></td><td class="muted">${bk.byM[m].n}</td></tr>`; }).join("")}
+            <tr class="tot"><td>Total</td><td>${qt.done}</td><td>${qt.correct}</td><td><b>${qt.done ? pct(qt.correct, qt.done) + "%" : "—"}</b></td><td class="muted">${bk.n}</td></tr>
           </tbody></table></div>
         </div>
         <div class="card">
