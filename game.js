@@ -58,7 +58,7 @@ function compute(db, user, today) {
   const late = plan.filter(x => x.key < today && !done[x.key]).map(x => x.key);
 
   // ---------- cobertura do edital ----------
-  const topicsOf = day => day.sub.length ? day.sub.map(s => s.id) : (ed !== "analista" && MATS.includes(day.m) ? [day.key] : []);
+  const topicsOf = day => day.sub.map(s => s.id);
   const cov = Object.fromEntries(MATS.map(m => [m, { done: 0, all: 0 }]));
   for (const day of plan) {
     const t = topicsOf(day).length; if (!t || !cov[day.m]) continue;
