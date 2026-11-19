@@ -67,7 +67,9 @@ function compute(db, user, today) {
   const covTotal = MATS.reduce((a, m) => ({ done: a.done + cov[m].done, all: a.all + cov[m].all }), { done: 0, all: 0 });
 
   // ---------- questões ----------
-  const logs = db.prepare("SELECT day_key, local_date, materia, source, done, correct FROM question_logs WHERE user_id = ? AND edital = ?").all(uid, ed);
+  // lançamentos manuais + questões resolvidas no app (vale a 1ª tentativa de cada uma)
+  const logs = db.prepare(`SELECT day_key, local_date, materia, source, done, correct FROM question_logs WHERE user_id = ? AND edital = ?
+    UNION ALL SELECT day_key, local_date, materia, 'diario', 1, first_correct FROM bank_answers WHERE user_id = ? AND edital = ?`).all(uid, ed, uid, ed);
   const qByM = Object.fromEntries(MATS.map(m => [m, { done: 0, correct: 0 }]));
   const qByDate = {}, qByDay = {};
   let qDone = 0, qCorrect = 0, hasSim = false;

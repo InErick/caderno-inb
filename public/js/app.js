@@ -2,7 +2,7 @@
 // Caderno INB — telas do app (SPA sem framework)
 // =====================================================================
 (() => {
-  const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [] };
+  const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [], bank: {} };
   const MATS = ["ESP", "POR", "NOR", "ING"];
   const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
   const findDay = k => S.plan.find(x => x.key === k) || S.legacy.find(x => x.key === k);
@@ -60,8 +60,9 @@
 
   async function refreshData() {
     const tk = todayKey();
-    const [p, st, ap, g, ql] = await Promise.all([Api.progress(), Api.stats(tk), Api.apostilas().catch(() => ({ days: [] })),
-      Api.dashboard(tk), Api.questions(tk, tk).catch(() => ({ logs: [] }))]);
+    const [p, st, ap, g, ql, bk] = await Promise.all([Api.progress(), Api.stats(tk), Api.apostilas().catch(() => ({ days: [] })),
+      Api.dashboard(tk), Api.questions(tk, tk).catch(() => ({ logs: [] })), Api.bank().catch(() => ({ days: {} }))]);
+    S.bank = bk.days || {};
     S.done = new Set(p.done);
     S.details = p.details || {};
     S.stats = st;
@@ -189,19 +190,10 @@
       <a class="tchip fire ${S.g.streak ? "" : "off"}" href="#conquistas" title="Sequência de dias">🔥 <b>${S.g.streak}</b></a>
       <a class="tchip lvl" href="#conquistas" title="${esc(S.g.level.name)} · ${S.g.xp.total} XP">Nv <b>${S.g.level.n}</b></a>
       <span class="tchip days" title="Dias até a prova">${Icon("clock", 14)}<b>${d > 0 ? d : "Prova!"}</b>${d > 0 ? `<span class="hide-xs"> dias</span>` : ""}</span>`;
+    drawNavGoal();
   }
 
-  function route() {
-    if (!S.user) return;
-    Reader.close();
-    const full = (location.hash || "#inicio").slice(1);
-    const r = full.startsWith("apostila/") ? "apostila" : full;
-    const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
-    const navOf = { apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
-    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (navOf[r] || r)));
-    const v = document.getElementById("view");
-    if (!v) return;
-    updateTopbar();
+  function drawNavGoal() {
     const ng = document.getElementById("navGoal");
     if (ng && S.g) {
       const c = S.g.coverage.total, p = pct(c.done, c.all), lv = S.g.level;
@@ -209,7 +201,22 @@
       ng.innerHTML = `<div class="gh">${Icon("trophy", 16)}<span>${esc(lv.name)}</span><b>Nv ${lv.n}</b></div><div class="track"><i style="width:${lp}%"></i></div><p>${S.g.xp.total} XP · faltam ${lv.next - S.g.xp.total} para o próximo nível</p>
         <div class="gh" style="margin-top:12px">${Icon("target", 16)}<span>Edital coberto</span><b>${p}%</b></div><div class="track"><i style="width:${p}%;background:#5fb596"></i></div>`;
     }
+  }
+
+  function route() {
+    if (!S.user) return;
+    Reader.close();
+    const full = (location.hash || "#inicio").slice(1);
+    const r = full.startsWith("apostila/") ? "apostila" : full.startsWith("questoes/") ? "questoes" : full;
+    const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
+    const navOf = { questoes: "inicio", apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
+    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (navOf[r] || r)));
+    const v = document.getElementById("view");
+    if (!v) return;
+    v.onclick = null;
+    updateTopbar();
     if (r === "apostila") return viewApostila(v, full.slice(9));
+    if (r === "questoes") { window.scrollTo(0, 0); return viewQuiz(v, full.slice(9)); }
     ({ inicio: viewHome, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile, conquistas: viewAchievements, atrasados: viewLate }[r] || viewHome)(v);
     window.scrollTo(0, 0);
   }
@@ -267,7 +274,8 @@
     const h = new Date().getHours(), hi = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
     const now = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
     const p = dParts(t.key), notToday = t.key !== tk;
-    const qd = S.todayLogs.reduce((a, l) => ({ done: a.done + l.done, correct: a.correct + l.correct }), { done: 0, correct: 0 });
+    const qd = g.questions.byDate[tk] || { done: 0, correct: 0 };
+    const bk = S.bank[t.key];
     const xpGain = t.key < tk ? g.xp.rules.late : g.xp.rules.day;
 
     v.innerHTML = `
@@ -287,6 +295,7 @@
         <div class="phase-row">${(t.phases || []).map((ph, i) => `<span class="phase"><b>${ph.min} min</b>${esc(ph.label)}</span>${i < t.phases.length - 1 ? `<span class="ph-arrow">→</span>` : ""}`).join("")}</div>
         <div class="day-actions" style="margin-top:12px">
           <button class="btn btn-pink" id="startToday">${Icon("play", 16)} ${Timer.isActive() ? "Voltar ao foco" : "Começar cronômetro"}</button>
+          ${bk ? `<a class="btn btn-ghost" href="#questoes/${t.key}">📝 Questões <span class="muted">${bk.answered}/${bk.n}</span></a>` : ""}
           ${S.apostilas.has(t.key) ? `<a class="btn btn-ghost ap-btn" href="#apostila/${t.key}">📖 Apostila</a>` : ""}
           ${studied ? `<span class="badge-time">${Icon("clock", 14)} ${hm(studied)} estudados</span>` : ""}
         </div>
@@ -297,7 +306,8 @@
       </div>
 
       <div class="section-title">Questões do dia <span class="muted small">${qd.done ? `${qd.correct}/${qd.done} · ${pct(qd.correct, qd.done)}% de acerto` : `+${g.xp.rules.correct} XP por acerto`}</span></div>
-      <div class="card" id="qCard">${questionForm(t)}</div>
+      ${bk ? bankBlock(t, bk) : ""}
+      <div class="card" id="qCard">${bk ? `<details class="q-manual"><summary>Lançar questões feitas fora do app</summary>${questionForm(t)}</details>` : questionForm(t)}</div>
 
       <div class="rings" style="margin-top:14px">
         <div class="card ring-card"><div class="lbl">Edital coberto</div>${ring(cov.all ? cov.done / cov.all : 0, "#3f8a72", `${pct(cov.done, cov.all)}%`, `${cov.done} de ${cov.all} tópicos`)}</div>
@@ -366,6 +376,102 @@
     };
   }
 
+  // ---------- banco de questões ----------
+  function bankBlock(t, bk) {
+    const left = bk.n - bk.answered, p = pct(bk.answered, bk.n);
+    return `<a class="card bank-cta t-${t.m}" href="#questoes/${t.key}">
+      <div class="bank-ic">📝</div>
+      <div class="bank-txt"><b>${left ? `Resolver ${left} ${left === 1 ? "questão" : "questões"} de prova sobre o tema` : "Questões do dia resolvidas"}</b>
+        <span>${bk.answered ? `${bk.answered}/${bk.n} respondidas · ${bk.correct} ${bk.correct === 1 ? "acerto" : "acertos"} (${pct(bk.correct, bk.answered)}%)` : `${bk.n} questões de concursos anteriores · correção na hora`}</span>
+        <div class="xpbar"><i style="width:${p}%"></i></div></div>
+      <span class="btn btn-pink btn-sm">${left ? (bk.answered ? "Continuar" : "Começar") : "Revisar"}</span></a>`;
+  }
+
+  async function viewQuiz(v, key) {
+    const day = findDay(key);
+    v.innerHTML = `<div class="loading">Carregando questões…</div>`;
+    let qs;
+    try { qs = (await Api.bankDay(key)).questions; } catch (x) { v.innerHTML = `<div class="card empty">${esc(x.message)}</div>`; return; }
+    if (!qs.length) { v.innerHTML = `<div class="card empty">Este dia ainda não tem questões importadas.<br><a href="#inicio">Voltar</a></div>`; return; }
+    let idx = Math.max(0, qs.findIndex(q => !q.answer)), pick = null, retry = false;
+    if (qs.every(q => q.answer)) idx = qs.length;          // tudo respondido: abre no resumo
+
+    const draw = () => {
+      const answered = qs.filter(q => q.answer), right = answered.filter(q => q.answer.firstCorrect).length;
+      const head = `<div class="qz-top"><a href="#inicio" class="link-btn">← Voltar</a>
+        <div class="qz-title t-${day?.m || "ESP"}"><span class="tag">${esc(ED().labels[day?.m] || "")}</span> <b>${esc(day?.t || key)}</b></div>
+        <div class="qz-score">${answered.length}/${qs.length} respondidas · <b>${right} ${right === 1 ? "acerto" : "acertos"}</b></div>
+        <div class="qz-dots">${qs.map((q, i) => `<button data-go="${i}" class="${i === idx ? "cur " : ""}${q.answer ? (q.answer.firstCorrect ? "ok" : "bad") : ""}" aria-label="Questão ${i + 1}">${i + 1}</button>`).join("")}
+          <button data-go="${qs.length}" class="end ${idx === qs.length ? "cur" : ""}" aria-label="Resumo">${Icon("trophy", 14)}</button></div></div>`;
+
+      if (idx >= qs.length) {
+        const p = pct(right, answered.length), isDone = S.done.has(key);
+        v.innerHTML = `${head}<div class="card qz-end">
+          <div style="font-size:44px">${!answered.length ? "📝" : p >= 70 ? "🏆" : p >= 50 ? "💪" : "📚"}</div>
+          <h2>${answered.length ? `${right} de ${answered.length} (${p}%)` : "Nenhuma respondida ainda"}</h2>
+          <p class="muted">${answered.length < qs.length ? `Faltam ${qs.length - answered.length} questões.` : p >= 70 ? "Mandou bem! Esse tema está no caminho certo." : "Revise os erros: o gabarito fica marcado em cada questão."}</p>
+          <div class="actions">${answered.length < qs.length ? `<button class="btn btn-pink" data-go="${qs.findIndex(q => !q.answer)}">Continuar</button>` : ""}
+            ${day && !day.legacy && !isDone ? `<button class="btn btn-dark" id="qzDone">${Icon("check", 16)} Concluir dia</button>` : ""}
+            <a class="btn btn-ghost" href="#inicio">Voltar para Hoje</a></div></div>`;
+        v.querySelector("#qzDone")?.addEventListener("click", () => completeDay(key, true, draw));
+        return;
+      }
+
+      const q = qs[idx], a = retry ? null : q.answer;
+      const meta = [q.banca, q.orgao, q.ano].filter(Boolean).join(" · ");
+      v.innerHTML = `${head}<article class="card qz">
+        <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
+        ${q.textos.filter(Boolean).map(tx => `<div class="qz-texto q-html">${tx}</div>`).join("")}
+        <div class="q-html qz-enun">${q.enunciado}</div>
+        <div class="qz-alts">${q.alternativas.map(al => {
+          const cls = a ? (al.letra === a.gabarito ? "right" : al.letra === a.chosen ? "wrong" : "dim") : al.letra === pick ? "sel" : "";
+          return `<button class="qz-alt ${cls}" data-pick="${esc(al.letra)}" ${a ? "disabled" : ""}><span class="lt">${esc(al.letra)}</span><span class="q-html">${al.texto}</span></button>`; }).join("")}</div>
+        ${a ? `<div class="qz-res ${a.correct ? "ok" : "bad"}">${a.correct ? `✅ Acertou!` : `❌ Não foi dessa vez. Gabarito: <b>${esc(a.gabarito)}</b>`}
+            ${a.attempts > 1 ? `<span class="muted small">· para o desempenho vale a 1ª tentativa (${a.firstCorrect ? "acerto" : "erro"})</span>` : ""}</div>
+          <div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzRetry">Refazer</button><button class="btn btn-pink" id="qzNext">${idx === qs.length - 1 ? "Ver resultado" : "Próxima"} →</button></div>`
+        : `<div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzSkip">Pular</button><button class="btn btn-pink" id="qzSend" ${pick ? "" : "disabled"}>Responder</button></div>`}
+      </article>`;
+
+      v.querySelector("#qzSend")?.addEventListener("click", send);
+      v.querySelector("#qzSkip")?.addEventListener("click", () => go(idx + 1));
+      v.querySelector("#qzNext")?.addEventListener("click", () => go(idx + 1));
+      v.querySelector("#qzRetry")?.addEventListener("click", () => { retry = true; pick = null; draw(); });
+    };
+
+    const go = i => { idx = Math.max(0, Math.min(qs.length, i)); pick = null; retry = false; draw(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
+    async function send() {
+      if (!pick) return;
+      const q = qs[idx], before = S.g;
+      const btn = v.querySelector("#qzSend"); if (btn) btn.disabled = true;
+      try {
+        const r = await Api.bankAnswer({ questionId: q.id, chosen: pick, localDate: todayKey() });
+        const prev = q.answer;
+        q.answer = { chosen: pick, correct: r.correct, gabarito: r.gabarito, firstCorrect: prev ? prev.firstCorrect : r.correct, attempts: (prev?.attempts || 0) + 1 };
+        retry = false; pick = null; draw();
+        await refreshData(); updateTopbar();
+        const gained = S.g.xp.total - before.xp.total;
+        if (gained > 0) toast(`+${gained} XP`);
+        checkLevelUp(before, S.g);
+      } catch (x) { toast(x.message); if (btn) btn.disabled = false; }
+    }
+
+    v.onclick = e => {
+      const g = e.target.closest("[data-go]"); if (g) return go(+g.dataset.go);
+      const p = e.target.closest("[data-pick]"); if (p && !p.disabled) { pick = p.dataset.pick; draw(); }
+    };
+    draw();
+  }
+
+  // atalhos no modo questões: letras escolhem, Enter responde / avança
+  document.addEventListener("keydown", e => {
+    if (!location.hash.startsWith("#questoes/") || e.target.matches("input, textarea, select") || e.metaKey || e.ctrlKey) return;
+    const k = e.key.toUpperCase();
+    const alt = document.querySelector(`.qz-alt[data-pick="${k}"]:not([disabled])`);
+    if (alt) { alt.click(); return; }
+    if (e.key === "Enter") (document.querySelector("#qzSend:not([disabled])") || document.querySelector("#qzNext"))?.click();
+  });
+
   // ---------- concluir / recuperar dia ----------
   async function completeDay(key, done, rerender) {
     const before = S.g;
@@ -420,13 +526,14 @@
         <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
           <div class="ttl">${esc(d.t)}</div>
-          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}</div></div>
+          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key] ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
           <span class="chev">${Icon("chevron", 20)}</span>
         </div>
         <div class="day-body">${dayCardBody(d)}
           <div class="day-actions">
             ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
             ${d.legacy ? "" : `<button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>`}
+            ${S.bank[d.key] ? `<a class="btn btn-ghost btn-sm" href="#questoes/${d.key}">📝 Questões</a>` : ""}
             ${doneBtn}
           </div>
         </div>

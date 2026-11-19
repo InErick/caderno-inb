@@ -76,6 +76,49 @@ CREATE TABLE IF NOT EXISTS achievements (
   unlocked_at TEXT    NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (user_id, edital, code)
 );
+
+-- Banco de questões importadas da Quest API (só no servidor; o repositório é público)
+CREATE TABLE IF NOT EXISTS bank_questions (
+  id           TEXT PRIMARY KEY,     -- id da questão na Quest API
+  enunciado    TEXT NOT NULL,        -- HTML já limpo (bank.js)
+  alternativas TEXT NOT NULL,        -- JSON [{letra, texto}]
+  gabarito     TEXT NOT NULL,
+  textos       TEXT NOT NULL DEFAULT '[]',
+  tipo         TEXT, banca TEXT, orgao TEXT, cargo TEXT, ano TEXT, materia TEXT, assunto TEXT,
+  imported_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Em qual dia do cronograma cada questão aparece (uma vez por edital)
+CREATE TABLE IF NOT EXISTS bank_day (
+  edital      TEXT NOT NULL,
+  day_key     TEXT NOT NULL,
+  question_id TEXT NOT NULL REFERENCES bank_questions(id) ON DELETE CASCADE,
+  pos         INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (edital, question_id)
+);
+CREATE INDEX IF NOT EXISTS idx_bank_day ON bank_day(edital, day_key);
+-- Respostas: a 1ª tentativa vale para desempenho e XP; refazer só atualiza a última
+CREATE TABLE IF NOT EXISTS bank_answers (
+  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  edital        TEXT    NOT NULL,
+  question_id   TEXT    NOT NULL,
+  day_key       TEXT,
+  local_date    TEXT    NOT NULL,
+  materia       TEXT    NOT NULL CHECK (materia IN ('ESP','POR','NOR','ING')),
+  first_correct INTEGER NOT NULL,
+  chosen        TEXT    NOT NULL,
+  correct       INTEGER NOT NULL,
+  attempts      INTEGER NOT NULL DEFAULT 1,
+  created_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT    NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, edital, question_id)
+);
+-- Onde parou cada busca na API (para nunca pagar duas vezes pela mesma questão)
+CREATE TABLE IF NOT EXISTS bank_cursors (
+  qkey      TEXT PRIMARY KEY,
+  cursor    TEXT,
+  exhausted INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 `);
 
 // ---------- migrações de colunas (idempotentes) ----------

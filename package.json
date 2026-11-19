@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.js",
-    "dev": "node --watch --disable-warning=ExperimentalWarning server.js"
+    "dev": "node --watch --disable-warning=ExperimentalWarning server.js",
+    "importar": "node --disable-warning=ExperimentalWarning scripts/importar-questoes.js"
   },
   "license": "MIT",
   "dependencies": {

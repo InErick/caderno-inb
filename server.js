@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("./db");
 const Game = require("./game");
+const Plans = require("./public/js/plans.js");
 
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -193,6 +194,56 @@ app.patch("/api/questions/:id", auth, (req, res) => {
 app.delete("/api/questions/:id", auth, (req, res) => {
   db.prepare("DELETE FROM question_logs WHERE id = ? AND user_id = ?").run(req.params.id, req.user.id);
   res.json({ ok: true });
+});
+
+// ---------- banco de questões (resolver no app, com correção automática) ----------
+const planCache = {};
+const planDay = (ed, key) => (planCache[ed] ||= new Map([...Plans.build(ed), ...Plans.legacy(ed)].map(d => [d.key, d]))).get(key);
+
+// quantas questões cada dia tem (e quantas o usuário já respondeu)
+app.get("/api/bank", auth, (req, res) => {
+  const ed = req.user.edital;
+  const rows = db.prepare(`SELECT d.day_key, COUNT(*) n, COUNT(a.question_id) answered, COALESCE(SUM(a.first_correct),0) correct
+    FROM bank_day d LEFT JOIN bank_answers a ON a.question_id = d.question_id AND a.user_id = ? AND a.edital = d.edital
+    WHERE d.edital = ? GROUP BY d.day_key`).all(req.user.id, ed);
+  res.json({ days: Object.fromEntries(rows.map(r => [r.day_key, { n: r.n, answered: r.answered, correct: r.correct }])) });
+});
+
+// questões de um dia; o gabarito só vem nas que o usuário já respondeu
+app.get("/api/bank/day/:dayKey", auth, (req, res) => {
+  const key = req.params.dayKey;
+  if (!DATE_RE.test(key)) return fail(res, 400, "Dia inválido.");
+  const rows = db.prepare(`SELECT q.*, a.chosen, a.correct AS last_correct, a.first_correct, a.attempts
+    FROM bank_day d JOIN bank_questions q ON q.id = d.question_id
+    LEFT JOIN bank_answers a ON a.question_id = q.id AND a.user_id = ? AND a.edital = d.edital
+    WHERE d.edital = ? AND d.day_key = ? ORDER BY d.pos, q.id`).all(req.user.id, req.user.edital, key);
+  res.json({ questions: rows.map(r => ({
+    id: r.id, enunciado: r.enunciado, alternativas: JSON.parse(r.alternativas), textos: JSON.parse(r.textos),
+    tipo: r.tipo, banca: r.banca, orgao: r.orgao, cargo: r.cargo, ano: r.ano,
+    answer: r.chosen ? { chosen: r.chosen, correct: !!r.last_correct, firstCorrect: !!r.first_correct, attempts: r.attempts, gabarito: r.gabarito } : null,
+  })) });
+});
+
+// responde uma questão: corrige, grava e devolve o gabarito
+app.post("/api/bank/answer", auth, (req, res) => {
+  const b = req.body || {}, ed = req.user.edital;
+  const link = db.prepare("SELECT d.day_key, q.gabarito, q.alternativas FROM bank_day d JOIN bank_questions q ON q.id = d.question_id WHERE d.edital = ? AND d.question_id = ?").get(ed, String(b.questionId || ""));
+  if (!link) return fail(res, 404, "Questão não encontrada.");
+  const chosen = String(b.chosen || "").toUpperCase();
+  if (!JSON.parse(link.alternativas).some(a => a.letra === chosen)) return fail(res, 400, "Escolha uma alternativa.");
+  const localDate = DATE_RE.test(b.localDate || "") ? b.localDate : new Date().toISOString().slice(0, 10);
+  const correct = chosen === link.gabarito ? 1 : 0;
+  const day = planDay(ed, link.day_key);
+  const materia = Game.MATS.includes(day?.m) ? day.m : "ESP";
+  const prev = db.prepare("SELECT first_correct FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(req.user.id, ed, String(b.questionId));
+  if (prev) {
+    db.prepare("UPDATE bank_answers SET chosen = ?, correct = ?, attempts = attempts + 1, updated_at = datetime('now') WHERE user_id = ? AND edital = ? AND question_id = ?")
+      .run(chosen, correct, req.user.id, ed, String(b.questionId));
+  } else {
+    db.prepare(`INSERT INTO bank_answers (user_id, edital, question_id, day_key, local_date, materia, first_correct, chosen, correct)
+      VALUES (?,?,?,?,?,?,?,?,?)`).run(req.user.id, ed, String(b.questionId), link.day_key, localDate, materia, correct, chosen, correct);
+  }
+  res.json({ correct: !!correct, gabarito: link.gabarito, first: !prev });
 });
 
 // ---------- sessões de foco ----------
