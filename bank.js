@@ -55,6 +55,23 @@ function sanitize(html) {
 }
 
 // Grava (ou ignora, se já existe) uma questão no formato da API v2
+// Nível da prova pelo nome do cargo (para questões importadas antes de guardarmos o nível da API)
+const SUP_RE = /n[íi]vel superior|analista|auditor|perit[oa]|especialista|engenheir|advogad|procurador|delegad|juiz|promotor|defensor|consultor|gestor|professor|m[ée]dic[oa]|contador|economista|administrador|arquivista|bibliotec|psic[óo]log|enfermeir|farmac|odont|nutricion|fisioter|assistente social|tecnologista|pesquisador|inspetor|fiscal|supervisor|controlador|oficial de chancelaria|diplomata|oficial de justi|estat[íi]stic|ci[êe]ntista|desenvolvedor|arquiteto|bacharel/i;
+const MED_RE = /n[íi]vel m[ée]dio|t[ée]cnic[oa]|assistente|auxiliar|agente|escritur[áa]rio|soldado|oficial administrativo|atendente|recepcion|operador|motorista|guarda|vigilante|digitador|secret[áa]ri[oa]|escrevente|almoxarife|praticante|aprendiz|monitor/i;
+function nivelDoCargo(cargo) {
+  const c = String(cargo || "");
+  if (/n[íi]vel superior/i.test(c)) return "Superior";
+  if (/n[íi]vel m[ée]dio/i.test(c)) return "Médio";
+  if (/assistente social|analista t[ée]cnico|t[ée]cnico de n[íi]vel superior|t[ée]cnico superior/i.test(c)) return "Superior";
+  const sup = SUP_RE.test(c), med = MED_RE.test(c);
+  return sup && !med ? "Superior" : med && !sup ? "Médio" : null;
+}
+// nível vindo da API (todas as provas da questão do mesmo nível); se não der, pelo cargo
+function nivelDaQuestao(q) {
+  const ns = [...new Set((q.provas || []).map(p => p.nivel_escolaridade).filter(Boolean))];
+  return ns.length === 1 ? ns[0] : nivelDoCargo((q.provas || [])[0]?.cargo);
+}
+
 function saveQuestion(db, q) {
   const prova = (q.provas || [])[0] || {};
   const alts = (q.alternativas || []).map(a => ({
@@ -67,11 +84,11 @@ function saveQuestion(db, q) {
   let enun = sanitize(q.enunciado);
   for (const u of q.anexos || []) if (IMG_HOST.test(u) && !enun.includes(u) && !alts.some(a => a.texto.includes(u))) enun += `<p><img src="${escHtml(u)}" alt="" loading="lazy"></p>`;
   const info = db.prepare(`INSERT OR IGNORE INTO bank_questions
-    (id, enunciado, alternativas, gabarito, textos, tipo, banca, orgao, cargo, ano, materia, assunto)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(String(q.id), enun, JSON.stringify(alts), gab,
+    (id, enunciado, alternativas, gabarito, textos, tipo, banca, orgao, cargo, ano, materia, assunto, nivel)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(String(q.id), enun, JSON.stringify(alts), gab,
     JSON.stringify((q.textos_associados || []).map(sanitize)), q.tipo || "", prova.banca || "", prova.orgao || "",
-    prova.cargo || "", String(prova.ano || ""), q.classificacao?.materia || "", q.classificacao?.assunto || "");
+    prova.cargo || "", String(prova.ano || ""), q.classificacao?.materia || "", q.classificacao?.assunto || "", nivelDaQuestao(q));
   return info.changes > 0;
 }
 
-module.exports = { sanitize, saveQuestion };
+module.exports = { sanitize, saveQuestion, nivelDoCargo };
