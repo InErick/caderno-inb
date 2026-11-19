@@ -4,6 +4,8 @@
 (() => {
   const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [], bank: {}, unlocked: new Set(), due: 0, inReview: 0, qFilter: "ALL" };
   const MATS = ["ESP", "POR", "NOR", "ING"];
+  // etiqueta da matéria; em Específicos mostra também a área ("Específicos · Banco de dados")
+  const tagOf = d => { const l = ED().labels[d?.m] || ""; return d?.m === "ESP" && d.a && d.a !== "Revisão" ? `${l} · ${d.a}` : l; };
   const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
   const findDay = k => S.plan.find(x => x.key === k) || S.legacy.find(x => x.key === k);
   const app = document.getElementById("app");
@@ -299,7 +301,7 @@
 
       <div class="section-title">${notToday ? (tk < t.key ? "Primeiro dia do cronograma" : "Último dia do cronograma") : "Tarefa de hoje"} <span class="muted small">${DOW[p.dow]}, ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} · dia ${t.index}/${S.plan.length}</span></div>
       <div class="card today-card t-${t.m}">
-        <span class="tag">${lab[t.m]}</span><span class="area">${esc(t.a)}</span>
+        <span class="tag">${esc(tagOf(t))}</span>${t.m === "ESP" ? "" : `<span class="area">${esc(t.a)}</span>`}
         <div class="ttl">${esc(t.t)}</div>
         ${dayCardBody(t, 4)}
         <div class="phase-row">${(t.phases || []).map((ph, i) => `<span class="phase"><b>${ph.min} min</b>${esc(ph.label)}</span>${i < t.phases.length - 1 ? `<span class="ph-arrow">→</span>` : ""}`).join("")}</div>
@@ -327,7 +329,7 @@
       ${next.length ? `<div class="section-title">Próximos dias <a href="#cronograma" class="link-btn small" style="text-decoration:none">Ver tudo</a></div>
       <div class="next-list">${next.map(d => { const q = dParts(d.key); return `
         <div class="card next-item t-${d.m}"><div class="date-bubble"><b>${String(q.d).padStart(2, "0")}</b><span>${DOW[q.dow]}</span></div>
-        <div><span class="tag">${lab[d.m]}</span><div class="t" style="margin-top:4px">${esc(d.t)}</div></div></div>`; }).join("")}</div>` : ""}`;
+        <div><span class="tag">${esc(tagOf(d))}</span><div class="t" style="margin-top:4px">${esc(d.t)}</div></div></div>`; }).join("")}</div>` : ""}`;
 
     v.querySelector("#startToday").onclick = e => {
       if (Timer.isActive()) return Timer.expand(e.currentTarget);
@@ -474,7 +476,7 @@
     if (isDay && qs.every(q => q.answer)) idx = qs.length;
     const review = src.kind === "erros" || src.kind === "extra";
     const fresh = q => review ? q._done : q.answer;   // na revisão e nas extras, a resposta antiga não conta
-    const title = isDay ? `<span class="tag">${esc(lab[day?.m] || "")}</span> <b>${esc(day?.t || src.key)}</b>`
+    const title = isDay ? `<span class="tag">${esc(tagOf(day))}</span> <b>${esc(day?.t || src.key)}</b>`
       : src.kind === "treino" ? (src.materia ? `<span class="tag">${esc(lab[src.materia])}</span> <b>🎯 Treino</b>` : `<b>🎯 Treino misto</b>`)
       : src.kind === "extra" ? `<b>⚡ Questões extras</b> <span class="muted small">(revisão livre, não conta na meta)</span>` : `<b>🔁 Revisão de erros</b>`;
 
@@ -512,7 +514,7 @@
       v.innerHTML = `${head}<article class="card qz">
         ${q.recall ? `<div class="qz-recall">🔁 Para relembrar: você acertou esta questão há algum tempo</div>` : ""}
         ${q.extra ? `<div class="qz-recall">${q.wasWrong ? "⚡ Você errou esta da última vez" : "⚡ Você já acertou esta: confirme"}</div>` : ""}
-        <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${qday ? `<span class="qz-topic t-${qday.m}"><span class="tag">${esc(lab[qday.m])}</span> ${esc(qday.t)}</span>` : ""}${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
+        <div class="qz-meta"><b>Questão ${idx + 1}</b><span>${esc(meta)}</span>${qday ? `<span class="qz-topic t-${qday.m}"><span class="tag">${esc(tagOf(qday))}</span> ${esc(qday.t)}</span>` : ""}${q.cargo ? `<span class="qz-cargo">${esc(q.cargo)}</span>` : ""}</div>
         ${q.textos.filter(Boolean).map((tx, ti) => `<details class="qz-texto" ${S.textoOpen === false ? "" : "open"}><summary>📄 ${q.textos.filter(Boolean).length > 1 ? `Texto de apoio ${ti + 1}` : "Texto de apoio"}</summary><div class="q-html">${tx}</div></details>`).join("")}
         <div class="q-html qz-enun">${q.enunciado}</div>
         <div class="qz-alts">${q.alternativas.map(al => {
@@ -624,7 +626,7 @@
     const acc = b.answered ? pct(b.correct, b.answered) : null;
     return `<${open ? `a href="#banco/${d.key}"` : "div"} class="card qs-row t-${d.m} ${open ? "" : "locked"}">
       <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
-      <div class="qs-info"><span class="tag">${esc(lab[d.m])}</span><div class="t">${esc(d.t)}</div>
+      <div class="qs-info"><span class="tag">${esc(tagOf(d))}</span><div class="t">${esc(d.t)}</div>
         ${open ? `<div class="qs-prog"><div class="xpbar"><i style="width:${pct(b.answered, b.n)}%"></i></div><span>${b.answered}/${b.n}${acc !== null ? ` · <b class="${acc >= 70 ? "ok" : acc < 50 ? "bad" : ""}">${acc}%</b>` : ""}</span></div>`
           : `<div class="muted small">Conclua a aula de ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} para liberar · ${b.n} questões</div>`}</div>
       ${open ? Icon("chevron", 18) : ""}</${open ? "a" : "div"}>`;
@@ -684,7 +686,7 @@
       <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
       <div>
         <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
-          <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
+          <div style="flex:1;min-width:0"><span class="tag">${esc(tagOf(d))}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
           <div class="ttl">${esc(d.t)}</div>
           <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q && !S.bank[d.key]?.n ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}${S.bank[d.key]?.n ? `<span class="badge-time">📝 ${S.bank[d.key].answered}/${S.bank[d.key].n} questões</span>` : ""}</div></div>
           <span class="chev">${Icon("chevron", 20)}</span>
@@ -813,7 +815,7 @@
   function openDayModal(d, rerender) {
     const lab = ED().labels, st = dayStatus(d), p = dParts(d.key), isDone = st === "done" || st === "recovered";
     modal(`<div class="day-modal t-${d.m}" style="text-align:left">
-        <span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}, ${p.d}/${p.m}${STATUS_TXT[st] ? ` · ${STATUS_TXT[st]}` : ""}</span>
+        <span class="tag">${esc(tagOf(d))}</span><span class="area">${DOW[p.dow]}, ${p.d}/${p.m}${STATUS_TXT[st] ? ` · ${STATUS_TXT[st]}` : ""}</span>
         <div class="ttl">${esc(d.t)}</div>${dayCardBody(d, 3)}</div>
       <div class="actions">
         ${isDone ? `<button class="btn btn-ghost btn-block" data-a="undo">Desmarcar dia</button>` : `<button class="btn btn-dark btn-block" data-a="done">${Icon("check", 16)} ${st === "late" ? `Recuperar (+${S.g.xp.rules.late} XP)` : `Concluir dia (+${S.g.xp.rules.day} XP)`}</button>`}
