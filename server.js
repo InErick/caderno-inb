@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("./db");
+const Game = require("./game");
 
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -126,18 +127,71 @@ app.post("/api/me/password", auth, (req, res) => {
 
 // ---------- progresso do cronograma ----------
 app.get("/api/progress", auth, (req, res) => {
-  const rows = db.prepare("SELECT day_key FROM progress WHERE user_id = ? AND edital = ?").all(req.user.id, req.user.edital);
-  res.json({ done: rows.map(r => r.day_key) });
+  const rows = db.prepare("SELECT day_key, done_local, late FROM progress WHERE user_id = ? AND edital = ?").all(req.user.id, req.user.edital);
+  res.json({ done: rows.map(r => r.day_key), details: Object.fromEntries(rows.map(r => [r.day_key, { late: !!r.late, doneLocal: r.done_local }])) });
 });
 
 app.put("/api/progress/:dayKey", auth, (req, res) => {
   const key = req.params.dayKey;
   if (!DATE_RE.test(key)) return fail(res, 400, "Dia inválido.");
   if (req.body.done) {
-    db.prepare("INSERT OR IGNORE INTO progress (user_id, edital, day_key) VALUES (?,?,?)").run(req.user.id, req.user.edital, key);
+    const localDate = DATE_RE.test(req.body.localDate || "") ? req.body.localDate : new Date().toISOString().slice(0, 10);
+    const late = localDate > key ? 1 : 0;   // concluído depois da data = recuperado de atrasado
+    db.prepare("INSERT OR IGNORE INTO progress (user_id, edital, day_key, done_local, late) VALUES (?,?,?,?,?)")
+      .run(req.user.id, req.user.edital, key, localDate, late);
   } else {
     db.prepare("DELETE FROM progress WHERE user_id = ? AND edital = ? AND day_key = ?").run(req.user.id, req.user.edital, key);
   }
+  res.json({ ok: true });
+});
+
+// ---------- painel gamificado (XP, nível, sequência, edital, termômetro, conquistas) ----------
+app.get("/api/dashboard", auth, (req, res) => {
+  const today = DATE_RE.test(req.query.today || "") ? req.query.today : new Date().toISOString().slice(0, 10);
+  res.json(Game.compute(db, req.user, today));
+});
+
+// ---------- questões lançadas manualmente ----------
+const SOURCES = ["diario", "simulado", "revisao"];
+function parseLog(b) {
+  const done = parseInt(b.done, 10), correct = parseInt(b.correct, 10);
+  if (!Game.MATS.includes(b.materia)) return "Escolha a matéria.";
+  if (!(done >= 1 && done <= 500)) return "Informe quantas questões você fez (1 a 500).";
+  if (!(correct >= 0 && correct <= done)) return "Os acertos precisam ficar entre 0 e o total de questões.";
+  if (!DATE_RE.test(b.localDate || "")) return "Data inválida.";
+  return { done, correct, materia: b.materia, localDate: b.localDate,
+    dayKey: b.dayKey && DATE_RE.test(b.dayKey) ? b.dayKey : null, source: SOURCES.includes(b.source) ? b.source : "diario" };
+}
+
+app.post("/api/questions", auth, (req, res) => {
+  const v = parseLog(req.body || {});
+  if (typeof v === "string") return fail(res, 400, v);
+  const info = db.prepare(`INSERT INTO question_logs (user_id, edital, day_key, local_date, materia, source, done, correct)
+    VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, req.user.edital, v.dayKey, v.localDate, v.materia, v.source, v.done, v.correct);
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+
+app.get("/api/questions", auth, (req, res) => {
+  const from = DATE_RE.test(req.query.from || "") ? req.query.from : "0000-01-01";
+  const to = DATE_RE.test(req.query.to || "") ? req.query.to : "9999-12-31";
+  const rows = db.prepare(`SELECT id, day_key AS dayKey, local_date AS localDate, materia, source, done, correct, created_at AS createdAt
+    FROM question_logs WHERE user_id = ? AND edital = ? AND local_date BETWEEN ? AND ? ORDER BY local_date DESC, id DESC`)
+    .all(req.user.id, req.user.edital, from, to);
+  res.json({ logs: rows });
+});
+
+app.patch("/api/questions/:id", auth, (req, res) => {
+  const cur = db.prepare("SELECT * FROM question_logs WHERE id = ? AND user_id = ?").get(req.params.id, req.user.id);
+  if (!cur) return fail(res, 404, "Lançamento não encontrado.");
+  const v = parseLog({ materia: cur.materia, localDate: cur.local_date, dayKey: cur.day_key, source: cur.source, done: cur.done, correct: cur.correct, ...req.body });
+  if (typeof v === "string") return fail(res, 400, v);
+  db.prepare("UPDATE question_logs SET materia = ?, done = ?, correct = ?, source = ?, day_key = ?, local_date = ? WHERE id = ?")
+    .run(v.materia, v.done, v.correct, v.source, v.dayKey, v.localDate, cur.id);
+  res.json({ ok: true });
+});
+
+app.delete("/api/questions/:id", auth, (req, res) => {
+  db.prepare("DELETE FROM question_logs WHERE id = ? AND user_id = ?").run(req.params.id, req.user.id);
   res.json({ ok: true });
 });
 
@@ -147,7 +201,7 @@ app.post("/api/sessions", auth, (req, res) => {
   const seconds = Math.round(Number(b.seconds));
   const dayKey = b.dayKey && DATE_RE.test(b.dayKey) ? b.dayKey : null;
   const localDate = String(b.localDate || "");
-  const mode = ["meta", "pomodoro", "livre"].includes(b.mode) ? b.mode : "livre";
+  const mode = ["meta", "pomodoro", "livre", "teoria", "questoes"].includes(b.mode) ? b.mode : "livre";
   if (!(seconds >= 5 && seconds <= 12 * 3600)) return fail(res, 400, "Duração inválida.");
   if (!DATE_RE.test(localDate)) return fail(res, 400, "Data inválida.");
   const startedAt = new Date(b.startedAt), endedAt = new Date(b.endedAt);

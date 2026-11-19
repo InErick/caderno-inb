@@ -143,14 +143,145 @@ const FINAL = [
   return { ESP, RLM, POR, NOR, SAT, FINAL };
 }
 
+// =====================================================================
+// Analista de Sistemas — cronograma DIÁRIO (19/11/2026 → 09/01/2027)
+// Rotina: Seg/Ter/Qui/Sáb = TI · Qua = Português · Sex = Normas · Dom = Inglês + revisão
+// Cada bloco: a = área, t = título, s = subtópicos do edital, k = buscas no YouTube, f = foco
+// =====================================================================
+const DIARIO_START = [2026, 10, 19], SIM_START = [2027, 0, 7];
+
+function dataAnalistaDiario() {
+const W = [
+ { // Semana 1 · 19/11 a 25/11
+  ESP: [
+   {a:"C#",t:"C# básico — tipos, variáveis, operadores, condicionais, laços e métodos",s:["Tipos e variáveis","Operadores","Condicionais (if/switch)","Laços (for, foreach, while)","Métodos e parâmetros"],k:["C# para iniciantes tipos e variáveis","C# operadores e estruturas condicionais","C# laços for foreach while","C# métodos parâmetros ref out"],f:"Atenção a <b>divisão inteira</b> (7/2 = 3), <b>tipos de valor × referência</b> e <b>ref/out</b>: a FGV cobra com trechos de código."},
+   {a:"Orientação a Objetos",t:"POO I — classes, objetos, encapsulamento e herança",s:["Classes e objetos","Encapsulamento e modificadores de acesso","Herança"],k:["C# classes e objetos","C# encapsulamento propriedades get set","C# herança virtual override"],f:"Saiba os modificadores <b>public, private, protected, internal</b> e quando a herança gera acoplamento."},
+   {a:"Orientação a Objetos",t:"POO II — polimorfismo, abstração, interfaces e composição",s:["Polimorfismo (override × overload)","Abstração e classes abstratas","Interfaces","Composição × herança"],k:["C# polimorfismo override overload","C# classe abstrata vs interface","composição vs herança orientação a objetos"],f:"Diferencie <b>sobrescrita</b> (execução) de <b>sobrecarga</b> (compilação) e <b>classe abstrata × interface</b>."},
+   {a:"Boas práticas",t:"Exceções + SOLID, coesão e acoplamento",s:["Exceções (try/catch/finally, throw)","Princípios SOLID","Coesão e acoplamento"],k:["C# tratamento de exceções try catch finally","princípios SOLID exemplos C#","coesão e acoplamento engenharia de software"],f:"FGV dá um código e pergunta <b>qual princípio SOLID foi violado</b>. Lembre: <b>throw;</b> preserva o stack trace."}
+  ],
+  POR: {a:"Leitura",t:"Interpretação de texto, coesão, coerência e intertextualidade",s:["Interpretação de texto","Coesão (referencial e sequencial)","Coerência","Intertextualidade"],k:["interpretação de texto FGV dicas","coesão e coerência textual","intertextualidade paráfrase paródia"],f:"Elimine alternativas que <b>extrapolam</b>, <b>reduzem</b> ou <b>contradizem</b> o texto."},
+  NOR: {a:"Administração pública",t:"Art. 37 da CF (princípios) e Lei 9.784/1999 (processo administrativo)",s:["Princípios da Administração Pública (art. 37 CF)","Processo administrativo (Lei 9.784/1999)"],k:["art. 37 Constituição LIMPE","Lei 9.784/99 resumo prazos","delegação e avocação Lei 9.784"],f:"<b>LIMPE</b>; recurso em <b>10 dias</b>, reconsideração em 5, decisão em 30; não se delega <b>atos normativos, recursos e competência exclusiva</b>."},
+  ING: {a:"Inglês instrumental",t:"Skimming, scanning e palavras-chave",s:["Skimming","Scanning","Palavras-chave"],k:["skimming e scanning inglês instrumental","inglês instrumental palavras-chave"],f:"Skimming = ideia geral; scanning = informação específica. Na 2ª metade, refaça os <b>erros da semana</b>."}
+ },
+ { // Semana 2 · 26/11 a 02/12
+  ESP: [
+   {a:"C# avançado",t:"Generics e Collections",s:["Generics e restrições (where)","Collections (List, Dictionary, HashSet, Queue, Stack)"],k:["C# generics restrições where","C# List Dictionary HashSet diferenças"],f:"Saiba qual coleção usar: <b>Dictionary</b> para busca por chave, <b>HashSet</b> sem duplicatas."},
+   {a:"C# avançado",t:"LINQ, Delegates e Events",s:["LINQ (Where, Select, First, Single, execução adiada)","Delegates (Func, Action, Predicate)","Events"],k:["C# LINQ tutorial","C# delegates Func Action","C# events EventHandler"],f:"<b>Execução adiada</b> do LINQ e a diferença <b>First × Single</b> caem muito."},
+   {a:"C# avançado",t:"Programação assíncrona — async/await, Task e CancellationToken",s:["async/await","Task e Task.WhenAll","CancellationToken"],k:["C# async await explicado","C# Task WhenAll WhenAny","C# CancellationToken"],f:"Evite <b>.Result</b> e <b>async void</b>; cancelamento é <b>cooperativo</b>."},
+   {a:".NET",t:"Dependency Injection, Configuration, Logging e NuGet",s:["Injeção de dependência (Transient, Scoped, Singleton)","Configuration (appsettings, ambientes)","Logging (ILogger, níveis)","NuGet"],k:["ASP.NET Core injeção de dependência scoped transient singleton","ASP.NET Core appsettings configuration","ILogger níveis de log .NET","NuGet pacotes .NET"],f:"<b>Scoped</b> = uma instância por requisição. Na configuração, a <b>última fonte vence</b> (variável de ambiente sobrescreve appsettings)."}
+  ],
+  POR: {a:"Tipologia",t:"Tipos textuais e modos de organização",s:["Descrição","Narração","Exposição","Argumentação","Injunção"],k:["tipos textuais narração descrição dissertação","texto injuntivo características","modos de organização do discurso"],f:"Identifique o <b>verbo predominante</b> e a <b>finalidade</b> do trecho."},
+  NOR: {a:"Integridade",t:"Lei Anticorrupção 12.846/2013, Decreto 11.129/2022 e improbidade (Lei 14.230/2021)",s:["Lei Anticorrupção (12.846/2013)","Decreto 11.129/2022 (programa de integridade)","Improbidade administrativa (Lei 14.230/2021)"],k:["Lei 12.846/2013 resumo anticorrupção","acordo de leniência Lei 12.846","Lei 14.230/2021 improbidade dolo"],f:"Pessoa jurídica responde <b>objetivamente</b>; leniência reduz multa em até <b>2/3</b>; improbidade agora exige <b>dolo</b>."},
+  ING: {a:"Vocabulário",t:"Cognatos, falsos cognatos, prefixos e sufixos",s:["Cognatos","Falsos cognatos","Prefixos e sufixos"],k:["falsos cognatos inglês lista","prefixos e sufixos em inglês"],f:"<b>Eventually</b> = por fim; <b>actually</b> = na verdade; <b>-less</b> = sem."}
+ },
+ { // Semana 3 · 03/12 a 09/12
+  ESP: [
+   {a:"Banco de dados",t:"Modelagem, modelo relacional, chaves e integridade referencial",s:["Modelagem conceitual, lógica e física","Modelo relacional","Chaves (primária, candidata, estrangeira)","Integridade referencial"],k:["modelagem conceitual lógica física banco de dados","modelo relacional chave primária estrangeira","integridade referencial ON DELETE CASCADE"],f:"Relação N:N vira <b>tabela associativa</b>; FK aponta para registro existente ou é nula."},
+   {a:"Banco de dados",t:"Normalização (1FN, 2FN, 3FN) + SELECT, INSERT, UPDATE e DELETE",s:["Normalização (1FN, 2FN, 3FN)","SELECT","INSERT, UPDATE e DELETE"],k:["normalização 1FN 2FN 3FN exemplos","SQL Server SELECT WHERE GROUP BY HAVING","SQL INSERT UPDATE DELETE"],f:"2FN = sem dependência <b>parcial</b>; 3FN = sem dependência <b>transitiva</b>. <b>HAVING</b> filtra grupos."},
+   {a:"Banco de dados",t:"JOIN, subqueries e views",s:["JOINs (INNER, LEFT, RIGHT, FULL)","Subqueries (IN, EXISTS)","Views"],k:["SQL JOIN inner left right explicado","SQL subquery EXISTS NOT EXISTS","SQL Server view"],f:"LEFT JOIN mantém todas as linhas da esquerda; <b>COUNT(coluna)</b> ignora NULL."},
+   {a:"Banco de dados",t:"Procedures, functions, triggers e transações",s:["Stored procedures","Functions","Triggers (inserted/deleted)","Transações e ACID"],k:["SQL Server stored procedure","SQL Server function vs procedure","SQL Server trigger inserted deleted","transações ACID SQL Server"],f:"Trigger de UPDATE: <b>deleted</b> = valor antigo, <b>inserted</b> = novo. ACID e <b>SAVE TRAN</b>."}
+  ],
+  POR: {a:"Gramática",t:"Pontuação e norma culta",s:["Pontuação (vírgula, ponto e vírgula, dois-pontos)","Norma culta"],k:["uso da vírgula regras FGV","oração adjetiva restritiva explicativa vírgula"],f:"Não se separa <b>sujeito e verbo</b> por vírgula. Restritiva × explicativa muda o sentido."},
+  NOR: {a:"Integridade",t:"LAI (Lei 12.527/2011), conflito de interesses e governança corporativa",s:["Lei de Acesso à Informação (12.527/2011)","Conflito de interesses","Governança corporativa"],k:["Lei de Acesso à Informação resumo prazos","conflito de interesses Lei 12.813","governança corporativa princípios estatais Lei 13.303"],f:"LAI: <b>20 + 10 dias</b>; sigilo 25/15/5 anos; não se exige o motivo do pedido."},
+  ING: {a:"Leitura",t:"Marcadores discursivos",s:["Marcadores discursivos (however, therefore, although...)"],k:["linking words inglês however therefore although","conectivos em inglês"],f:"Classifique: adição, <b>contraste</b>, causa, <b>resultado</b>, condição (<b>unless</b> = a menos que)."}
+ },
+ { // Semana 4 · 10/12 a 16/12
+  ESP: [
+   {a:"ASP.NET Core",t:"ASP.NET Core I — estrutura, Controllers/Actions, MVC, Razor e Middleware",s:["Estrutura do projeto (Program.cs)","Controllers e Actions","MVC","Razor","Middleware"],k:["ASP.NET Core MVC do zero","ASP.NET Core controllers actions","Razor views tag helpers","ASP.NET Core middleware pipeline ordem"],f:"A <b>ordem dos middlewares</b> importa: UseAuthentication antes de UseAuthorization."},
+   {a:"ASP.NET Core",t:"ASP.NET Core II — appsettings, ambiente, exceções globais, autenticação e autorização",s:["appsettings e variáveis de ambiente","Tratamento global de exceções","Autenticação","Autorização e roles"],k:["ASP.NET Core appsettings variáveis de ambiente","ASP.NET Core tratamento global de exceções","ASP.NET Core autenticação JWT","ASP.NET Core Authorize roles policies"],f:"<b>401</b> = não autenticado; <b>403</b> = sem permissão."},
+   {a:"Web API",t:"Web API — REST, métodos e status HTTP, JSON, DTOs, Swagger, versionamento, paginação e validação",s:["REST","Métodos HTTP","Status HTTP","JSON","DTOs","Swagger/OpenAPI","Versionamento de API","Paginação","Validação"],k:["ASP.NET Core Web API REST","métodos HTTP idempotentes status code","DTO Web API C#","Swagger OpenAPI ASP.NET Core","paginação Web API Skip Take"],f:"<b>POST</b> não é idempotente; <b>201 Created</b> + Location na criação."},
+   {a:"Entity Framework Core",t:"EF Core — DbContext, entidades, migrations, Code First/Database First, relacionamentos e carregamento",s:["DbContext e entidades","Migrations","Code First e Database First","Relacionamentos","Carregamento de dados (Include, lazy, explicit)"],k:["Entity Framework Core tutorial","EF Core migrations Code First","EF Core Database First scaffold","EF Core Include eager lazy loading"],f:"<b>Include</b> evita N+1; <b>AsNoTracking</b> para leitura; Fluent API vence Data Annotations."}
+  ],
+  POR: {a:"Sintaxe",t:"Sintaxe — termos e orações, ordem direta e inversa, tipos de discurso",s:["Termos da oração","Orações coordenadas e subordinadas","Ordem direta e inversa","Discurso direto, indireto e indireto livre"],k:["análise sintática termos da oração","orações subordinadas resumo","discurso direto indireto indireto livre"],f:"Verbo <b>haver</b> (existir) é impessoal: \"Deve haver vagas\"."},
+  NOR: {a:"Proteção de dados",t:"LGPD (Lei 13.709/2018) e noções de segurança da informação",s:["LGPD (Lei 13.709/2018)","Segurança da informação (CID)"],k:["LGPD resumo para concurso","bases legais LGPD art 7 art 11","confidencialidade integridade disponibilidade"],f:"Agentes: <b>controlador, operador, encarregado</b>. Dado sensível tem bases próprias (art. 11)."},
+  ING: {a:"Leitura técnica",t:"Textos técnicos e normativos",s:["Textos técnicos","Textos normativos (shall, should, may)"],k:["inglês técnico leitura de manuais","shall should may must normas"],f:"Em normas: <b>shall</b> = obrigatório; <b>should</b> = recomendação."}
+ },
+ { // Semana 5 · 17/12 a 23/12
+  ESP: [
+   {a:"Engenharia de Software",t:"Ciclo de vida e modelos de processo (tradicionais e ágeis)",s:["Ciclo de vida do software","Modelos tradicionais (cascata, V, incremental, espiral, RUP)","Modelos ágeis"],k:["modelos de processo de software cascata espiral incremental","modelo em V testes","manifesto ágil valores e princípios"],f:"O espiral é <b>iterativo e guiado por riscos</b>; TDD = teste antes do código."},
+   {a:"Requisitos",t:"Requisitos — funcionais e não funcionais, regras de negócio, critérios de aceitação e rastreabilidade",s:["Requisitos funcionais e não funcionais","Regras de negócio","Critérios de aceitação","Rastreabilidade"],k:["requisitos funcionais e não funcionais exemplos","regra de negócio vs requisito","critérios de aceitação Gherkin dado quando então","matriz de rastreabilidade de requisitos"],f:"Requisito de desempenho que cita uma função <b>continua não funcional</b>."},
+   {a:"UML",t:"UML — casos de uso, classes, sequência, atividades e componentes",s:["Diagrama de casos de uso","Diagrama de classes","Diagrama de sequência","Diagrama de atividades","Diagrama de componentes"],k:["UML casos de uso include extend","UML diagrama de classes relacionamentos","UML diagrama de sequência fragmentos","UML diagrama de atividades fork join"],f:"<b>include</b> = obrigatório; <b>extend</b> = condicional. Losango cheio = composição."},
+   {a:"Arquitetura",t:"Arquitetura — camadas, cliente-servidor, Clean Architecture, SOA e microsserviços",s:["Arquitetura em camadas","Cliente-servidor","Clean Architecture","SOA","Microsserviços"],k:["arquitetura em camadas MVC","Clean Architecture explicada","SOA vs microsserviços","microsserviços padrões API gateway circuit breaker"],f:"Clean Architecture: dependências apontam <b>para dentro</b>. Microsserviços: <b>um banco por serviço</b>."}
+  ],
+  POR: {a:"Morfologia",t:"Classes de palavras — pronomes, conjunções e modalizadores",s:["Classes de palavras","Pronomes","Conjunções","Modalizadores"],k:["classes de palavras resumo","conjunções coordenativas e subordinativas","modalizadores discursivos"],f:"<b>Embora</b> = concessão; <b>pois</b> após o verbo = conclusão."},
+  NOR: {a:"Segurança nuclear",t:"Segurança nuclear — ANSN, normas CNEN, proteção radiológica e controle de materiais nucleares",s:["ANSN e CNEN","Normas da CNEN","Proteção radiológica (justificação, otimização, limitação)","Radioproteção na prática (tempo, distância, blindagem)","Controle de materiais nucleares (salvaguardas)"],k:["ANSN Autoridade Nacional de Segurança Nuclear","princípios de proteção radiológica ALARA","CNEN NN 3.01 limites de dose","salvaguardas materiais nucleares ABACC"],f:"Limites: <b>20 mSv/ano</b> (trabalhador) e <b>1 mSv/ano</b> (público)."},
+  ING: {a:"Leitura",t:"Gráficos e tabelas em inglês",s:["Leitura de gráficos e tabelas"],k:["describing graphs in english vocabulary","inglês gráficos increase decrease"],f:"Vocabulário de tendência: <b>increase, decrease, peak, steady, drop</b>."}
+ },
+ { // Semana 6 · 24/12 a 30/12
+  ESP: [
+   {a:"Front-end",t:"HTML, CSS, JavaScript e DOM",s:["HTML semântico","CSS (box model, flexbox, grid)","JavaScript moderno","DOM"],k:["HTML semântico","CSS flexbox e grid","JavaScript moderno ES6","manipulação do DOM JavaScript"],f:"<b>fetch</b> não rejeita em 404/500; <b>===</b> compara sem coerção."},
+   {a:"React",t:"React I — componentes, props, state, hooks e ciclo de vida",s:["Componentes","Props","State","Hooks (useState, useEffect)","Ciclo de vida"],k:["React do zero componentes props","React useState explicado","React useEffect dependências"],f:"setState não é imediato: use a <b>forma funcional</b> (prev =&gt; prev + 1)."},
+   {a:"React",t:"React II — Context API, rotas, formulários, consumo de APIs e TypeScript",s:["Context API","Rotas (React Router)","Formulários controlados","Consumo de APIs","TypeScript"],k:["React Context API","React Router useParams useNavigate","React formulário controlado","React TypeScript básico"],f:"<b>useParams</b> lê :id da rota; <b>unknown</b> exige checar o tipo, <b>any</b> não."},
+   {a:"Git e ágil",t:"Git (branches, merge, conflitos, PRs, code review, tags) + Scrum e Kanban",s:["Git: branches e merge","Git: conflitos","Pull requests e code review","Tags e versionamento","Scrum (papéis, eventos, artefatos)","Kanban","Backlog e user stories"],k:["git branch merge conflito","pull request code review","Scrum guia 2020 resumo","Kanban WIP limite"],f:"<b>revert</b> é seguro em branch compartilhada; Daily = <b>15 min</b>; Kanban = <b>limitar WIP</b>."}
+  ],
+  POR: {a:"Semântica",t:"Semântica — sinônimos, antônimos, parônimos, hiperônimos, polissemia e ambiguidade",s:["Sinônimos e antônimos","Parônimos e homônimos","Hiperônimos e hipônimos","Polissemia","Ambiguidade"],k:["parônimos e homônimos lista","hiperônimo hipônimo","ambiguidade e polissemia"],f:"<b>Ratificar</b> = confirmar; <b>retificar</b> = corrigir; <b>iminente</b> = prestes a acontecer."},
+  NOR: {a:"Trabalho e meio ambiente",t:"NR-01, Política Nacional do Meio Ambiente (Lei 6.938/1981), licenciamento e resíduos industriais",s:["NR-01 (GRO e PGR)","Política Nacional do Meio Ambiente (Lei 6.938/1981)","Licenciamento ambiental (LP, LI, LO)","Resíduos industriais"],k:["NR 01 GRO PGR","Lei 6.938/81 Política Nacional do Meio Ambiente","licença prévia instalação operação","Política Nacional de Resíduos Sólidos"],f:"LP → LI → LO. EPI é a <b>última</b> medida de controle."},
+  ING: {a:"Revisão",t:"Inglês — revisão com questões FGV",s:[],k:["questões FGV inglês nível superior resolvidas"],f:"Resolva questões FGV de inglês e anote o vocabulário que travou."}
+ },
+ { // Semana 7 · 31/12 a 06/01
+  ESP: [
+   {a:"Inteligência Artificial",t:"IA I — IA generativa, LLMs e engenharia de prompt",s:["IA generativa","LLMs (Transformers, tokens, contexto)","Engenharia de prompt"],k:["o que é IA generativa","como funcionam LLMs transformers","engenharia de prompt few-shot zero-shot"],f:"<b>Alucinação</b>, <b>few-shot</b> × zero-shot e <b>temperatura</b> caem muito."},
+   {a:"Inteligência Artificial",t:"IA II — uso responsável, privacidade e APIs de IA",s:["Uso responsável de IA","Privacidade e dados na IA","APIs de IA (integração)"],k:["uso responsável de inteligência artificial","LGPD e inteligência artificial","RAG retrieval augmented generation explicado"],f:"Chave de API fica <b>no servidor</b>; RAG não altera os pesos do modelo."},
+   {a:"Revisão",t:"Revisão dos piores assuntos I",s:[],rev:true,k:["questões FGV desenvolvimento de sistemas"],f:"Abra <b>Desempenho</b>: comece pelos dias com <b>menor % de acerto</b>."},
+   {a:"Revisão",t:"Revisão dos piores assuntos II",s:[],rev:true,k:["questões FGV analista de sistemas"],f:"Continue a revisão dos piores assuntos e refaça as questões que errou."}
+  ],
+  POR: {a:"Ortografia",t:"Ortografia, acentuação, formação de palavras e vocabulário",s:["Ortografia","Acentuação (novo acordo)","Formação de palavras","Vocabulário"],k:["acentuação gráfica novo acordo ortográfico","formação de palavras derivação composição","ortografia FGV questões"],f:"Caiu o acento de <b>ideia</b> e <b>voo</b>; <b>herói</b> mantém."},
+  NOR: {a:"Qualidade",t:"Qualidade e gestão de processos + revisão de Normas",s:["Qualidade (PDCA, ISO 9001, ferramentas)","Gestão de processos"],k:["ciclo PDCA","ferramentas da qualidade Ishikawa Pareto 5W2H","gestão de processos BPM"],f:"<b>PDCA</b> = Plan, Do, Check, Act. Revise os prazos das leis de Normas."},
+  ING: {a:"Revisão",t:"Inglês — revisão final",s:[],k:["inglês instrumental revisão concurso"],f:"Revise falsos cognatos e marcadores. Na 2ª metade, refaça os erros da semana."}
+ }
+];
+const FINAL = [
+ {m:"FIN",kind:"SIM",a:"Simulado",t:"Simulado 1 — prova antiga da FGV, cronometrado (4h) + revisão dos erros",s:[],k:["prova FGV analista de sistemas pdf","prova FGV desenvolvimento de sistemas"],f:"Faça uma prova completa da FGV em <b>4 horas</b>, sem consulta. Lance os acertos <b>por matéria</b> como simulado."},
+ {m:"FIN",kind:"SIM",a:"Simulado",t:"Simulado 2 — outra prova da FGV, cronometrado (4h) + revisão dos erros",s:[],k:["prova FGV analista judiciário sistemas pdf"],f:"Compare com o simulado 1. Revise só o que errou."},
+ {m:"FIN",kind:"VES",a:"Véspera",t:"Véspera — descanso leve e checklist do dia da prova",s:[],k:["cartão de confirmação FGV INB"],f:"Revisão leve dos erros. Separe <b>documento com foto</b>, caneta preta de corpo transparente e confira o local. Portões fecham <b>8h30</b>. Durma cedo."}
+];
+return { W, FINAL };
+}
+
+// Duração das fases do cronômetro "Dia" por tipo de dia
+function phasesFor(d) {
+  if (d.kind === "SIM") return [{ mode: "questoes", label: "Simulado", min: 240 }];
+  if (d.kind === "VES") return [{ mode: "teoria", label: "Revisão leve", min: 30 }];
+  if (d.m === "ING") return [{ mode: "teoria", label: "Inglês", min: 30 }, { mode: "questoes", label: "Revisão dos erros", min: 30 }];
+  return [{ mode: "teoria", label: "Teoria (videoaula)", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
+}
+
+function buildAnalistaDiario() {
+  const { W, FINAL } = dataAnalistaDiario();
+  const start = new Date(...DIARIO_START), end = new Date(...END), simStart = new Date(...SIM_START);
+  const days = []; let iF = 0;
+  // dia da semana → matéria da rotina fixa
+  const ROT = { 0: "ING", 1: "ESP", 2: "ESP", 3: "POR", 4: "ESP", 5: "NOR", 6: "ESP" };
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const w = d.getDay(), n = days.length, week = Math.floor(n / 7);
+    let it;
+    if (d >= simStart) it = { ...FINAL[iF++], week: W.length };
+    else {
+      const m = ROT[w], wk = W[week];
+      const espIdx = days.filter(x => x.week === week && x.m === "ESP").length;
+      const b = m === "ESP" ? wk.ESP[espIdx] : wk[m];
+      it = { m, ...b, week };
+      if (m === "ING") it = { ...it, t: it.t + " + revisão dos erros da semana" };
+    }
+    const key = keyOf(d);
+    const sub = (it.s || []).map((n2, j) => ({ id: `${key}#${j}`, n: n2 }));
+    const day = { ...it, sub, key, dow: w, index: n + 1, yt: true };
+    day.phases = phasesFor(day);
+    days.push(day);
+  }
+  return days;
+}
+
 const pad = n => String(n).padStart(2, "0");
 const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-function build(edital) {
+// Cronograma rotativo original (61 dias). Hoje só é seguido pelo Assistente;
+// no Analista serve para mostrar a "fase anterior" (10/11 a 18/11).
+function buildRotativo(edital) {
   const isAdm = edital === "assistente";
   const D = isAdm ? dataAssistente() : dataAnalista();
   const start = new Date(...START), end = new Date(...END), finalStart = new Date(...FINAL_START);
-  const days = []; let ie = 0, ir = 0, ip = 0, iN = 0, iF = 0, weekItems = [];
+  const days = []; let ie = 0, ir = 0, ip = 0, iN = 0, iF = 0, weekItems = [], wkNo = 0;
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const w = d.getDay(); let it;
     if (d >= finalStart) it = { ...D.FINAL[iF++] };
@@ -165,9 +296,23 @@ function build(edital) {
     }
     if (it.m !== "REV") weekItems.push(it);
     if (w === 0) weekItems = [];
-    days.push({ ...it, key: keyOf(d), dow: w, index: days.length + 1 });
+    if (days.length && w === 1) wkNo++;
+    const day = { ...it, key: keyOf(d), dow: w, index: days.length + 1, week: wkNo, sub: [] };
+    day.phases = [{ mode: "teoria", label: "Teoria", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
+    days.push(day);
   }
   return days;
+}
+
+function build(edital) {
+  return edital === "analista" ? buildAnalistaDiario() : buildRotativo(edital);
+}
+
+// Dias da fase anterior do Analista (antes do cronograma diário), só para consulta
+function legacy(edital) {
+  if (edital !== "analista") return [];
+  const first = keyOf(new Date(...DIARIO_START));
+  return buildRotativo("analista").filter(d => d.key < first).map(d => ({ ...d, legacy: true }));
 }
 
 const EDITAIS = {
@@ -176,6 +321,7 @@ const EDITAIS = {
     prova: "10/01/2027 · 9h às 13h", portoes: "8h30", examISO: "2027-01-10T09:00:00-03:00",
     pesos: [["Específicos", 60, "ESP"], ["Português", 20, "POR"], ["Normas", 13, "NOR"], ["Inglês", 7, "ING"]],
     minimo: "≥ 45 pts em Específicos · ≥ 75 pts no total · não zerar nenhuma matéria",
+    pontos: { ESP: 90, POR: 30, NOR: 20, ING: 10 }, minEsp: 45, minTotal: 75, totalMax: 150,
     labels: { ESP: "Específicos", POR: "Português", NOR: "Normas", ING: "Inglês", REV: "Revisão", FIN: "Reta final" }
   },
   assistente: {
@@ -183,11 +329,12 @@ const EDITAIS = {
     prova: "10/01/2027 · 16h às 19h", portoes: "15h30", examISO: "2027-01-10T16:00:00-03:00",
     pesos: [["Específicos", 50, "ESP"], ["Português", 25, "POR"], ["Normas", 17, "NOR"], ["Raciocínio lógico", 8, "ING"]],
     minimo: "≥ 30 pts em Específicos · ≥ 60 pts no total · não zerar nenhuma matéria",
+    pontos: { ESP: 60, POR: 30, NOR: 20, ING: 10 }, minEsp: 30, minTotal: 60, totalMax: 120,
     labels: { ESP: "Específicos", POR: "Português", NOR: "Normas", ING: "Raciocínio lógico", REV: "Revisão", FIN: "Reta final" }
   }
 };
 
-const api = { EDITAIS, build, keyOf };
+const api = { EDITAIS, build, legacy, keyOf };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.Plans = api;
 })(typeof window !== "undefined" ? window : globalThis);

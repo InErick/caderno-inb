@@ -2,7 +2,10 @@
 // Caderno INB — telas do app (SPA sem framework)
 // =====================================================================
 (() => {
-  const S = { user: null, plan: [], done: new Set(), stats: null, filter: "ALL", query: "", pick: null, mode: "meta", openDays: new Set(), apostilas: new Set() };
+  const S = { user: null, plan: [], legacy: [], done: new Set(), details: {}, stats: null, g: null, filter: "ALL", query: "", pick: null, mode: "dia", openDays: new Set(), apostilas: new Set(), planView: "lista", calMonth: null, todayLogs: [] };
+  const MATS = ["ESP", "POR", "NOR", "ING"];
+  const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
+  const findDay = k => S.plan.find(x => x.key === k) || S.legacy.find(x => x.key === k);
   const app = document.getElementById("app");
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const todayKey = () => Plans.keyOf(new Date());
@@ -47,6 +50,7 @@
   async function enter(user) {
     S.user = user;
     S.plan = Plans.build(user.edital);
+    S.legacy = Plans.legacy(user.edital);
     Timer.reset();
     Timer.init(user, { toast, confirm: confirmBox, onSaved });
     await refreshData();
@@ -55,10 +59,16 @@
   }
 
   async function refreshData() {
-    const [p, st, ap] = await Promise.all([Api.progress(), Api.stats(todayKey()), Api.apostilas().catch(() => ({ days: [] }))]);
+    const tk = todayKey();
+    const [p, st, ap, g, ql] = await Promise.all([Api.progress(), Api.stats(tk), Api.apostilas().catch(() => ({ days: [] })),
+      Api.dashboard(tk), Api.questions(tk, tk).catch(() => ({ logs: [] }))]);
     S.done = new Set(p.done);
+    S.details = p.details || {};
     S.stats = st;
     S.apostilas = new Set(ap.days);
+    S.g = g;
+    S.todayLogs = ql.logs;
+    if (g.newAchievements?.length) setTimeout(() => showAchievements(g.newAchievements), 400);
   }
 
   function planToday() {
@@ -147,9 +157,10 @@
   // SHELL + ROTAS
   // =================================================================
   const NAV = [
-    ["inicio", "home", "Início"], ["cronograma", "calendar", "Cronograma"], ["foco", "timer", "Foco"],
-    ["estatisticas", "chart", "Estatísticas"], ["perfil", "user", "Perfil"],
+    ["inicio", "home", "Hoje"], ["cronograma", "calendar", "Cronograma"], ["foco", "timer", "Foco"],
+    ["estatisticas", "chart", "Desempenho"], ["perfil", "user", "Perfil"],
   ];
+  const daysLeft = () => Math.max(0, Math.ceil((new Date(ED().examISO) - Date.now()) / 864e5));
 
   function renderShell() {
     app.innerHTML = `<div class="shell">
@@ -163,12 +174,21 @@
         <header class="topbar">
           <div class="av">${esc(initials(S.user.name))}</div>
           <div class="who"><b>${esc(S.user.name.split(" ")[0])}</b><span>${ED().nome}</span></div>
-          <div class="right">${Icon("clock", 16)}<span id="countTop"></span></div>
+          <div class="top-chips" id="topChips"></div>
         </header>
         <main class="main" id="view"></main>
       </div></div>`;
-    const days = Math.ceil((new Date(ED().examISO) - Date.now()) / 864e5);
-    document.getElementById("countTop").textContent = days > 0 ? `${days} dias` : "Prova!";
+    updateTopbar();
+  }
+
+  // contagem regressiva, nível e sequência ficam sempre visíveis no topo
+  function updateTopbar() {
+    const el = document.getElementById("topChips"); if (!el || !S.g) return;
+    const d = daysLeft();
+    el.innerHTML = `
+      <a class="tchip fire ${S.g.streak ? "" : "off"}" href="#conquistas" title="Sequência de dias">🔥 <b>${S.g.streak}</b></a>
+      <a class="tchip lvl" href="#conquistas" title="${esc(S.g.level.name)} · ${S.g.xp.total} XP">Nv <b>${S.g.level.n}</b></a>
+      <span class="tchip days" title="Dias até a prova">${Icon("clock", 14)}<b>${d > 0 ? d : "Prova!"}</b>${d > 0 ? `<span class="hide-xs"> dias</span>` : ""}</span>`;
   }
 
   function route() {
@@ -177,169 +197,384 @@
     const full = (location.hash || "#inicio").slice(1);
     const r = full.startsWith("apostila/") ? "apostila" : full;
     const md = document.getElementById("modal"); md.hidden = true; md.innerHTML = "";
-    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (r === "apostila" ? "cronograma" : r)));
+    const navOf = { apostila: "cronograma", atrasados: "cronograma", conquistas: "estatisticas" };
+    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.r === (navOf[r] || r)));
     const v = document.getElementById("view");
     if (!v) return;
+    updateTopbar();
     const ng = document.getElementById("navGoal");
-    if (ng && S.stats) {
-      const goal = S.user.dailyGoal * 60 * 7, p = Math.min(100, Math.round((S.stats.week / goal) * 100));
-      ng.innerHTML = `<div class="gh">${Icon("target", 16)}<span>Meta semanal</span><b>${p}%</b></div><div class="track"><i style="width:${p}%"></i></div><p>${hm(S.stats.week)} de ${hm(goal)}</p>`;
+    if (ng && S.g) {
+      const c = S.g.coverage.total, p = pct(c.done, c.all), lv = S.g.level;
+      const lp = Math.min(100, Math.round(((S.g.xp.total - lv.floor) / (lv.next - lv.floor)) * 100));
+      ng.innerHTML = `<div class="gh">${Icon("trophy", 16)}<span>${esc(lv.name)}</span><b>Nv ${lv.n}</b></div><div class="track"><i style="width:${lp}%"></i></div><p>${S.g.xp.total} XP · faltam ${lv.next - S.g.xp.total} para o próximo nível</p>
+        <div class="gh" style="margin-top:12px">${Icon("target", 16)}<span>Edital coberto</span><b>${p}%</b></div><div class="track"><i style="width:${p}%;background:#5fb596"></i></div>`;
     }
     if (r === "apostila") return viewApostila(v, full.slice(9));
-    ({ inicio: viewHome, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile }[r] || viewHome)(v);
+    ({ inicio: viewHome, cronograma: viewPlan, foco: viewFocus, estatisticas: viewStats, perfil: viewProfile, conquistas: viewAchievements, atrasados: viewLate }[r] || viewHome)(v);
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", route);
 
   // =================================================================
-  // INÍCIO
+  // PEÇAS REUTILIZADAS
   // =================================================================
-  function ring(pct, color, label, sub) {
-    const r = 46, c = 2 * Math.PI * r, p = Math.max(0, Math.min(1, pct));
+  function ring(p, color, label, sub) {
+    const r = 46, c = 2 * Math.PI * r, x = Math.max(0, Math.min(1, p));
     return `<div class="ring"><svg width="112" height="112" viewBox="0 0 112 112">
       <circle cx="56" cy="56" r="${r}" fill="none" stroke="#eeede9" stroke-width="10"/>
-      <circle cx="56" cy="56" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - p)}"/>
+      <circle cx="56" cy="56" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - x)}"/>
     </svg><div class="val"><div>${label}<small>${sub || ""}</small></div></div></div>`;
   }
 
+  const searchUrl = (d, s) => d.yt ? `https://www.youtube.com/results?search_query=${encodeURIComponent(s)}` : `https://www.google.com/search?q=${encodeURIComponent(s)}`;
   function dayCardBody(d, n = 99) {
-    const kws = d.k.slice(0, n).map(s => `<a href="https://www.google.com/search?q=${encodeURIComponent(s)}" target="_blank" rel="noopener">${esc(s)}</a>`).join("");
-    return `<div class="kw">${kws}</div><div class="foco-txt">🎯 ${d.f}</div>`;
+    const subs = d.sub?.length ? `<ul class="sub-list">${d.sub.map(x => `<li>${esc(x.n)}</li>`).join("")}</ul>` : "";
+    const kws = d.k.slice(0, n).map(s => `<a href="${searchUrl(d, s)}" target="_blank" rel="noopener">${d.yt ? "▶ " : ""}${esc(s)}</a>`).join("");
+    return `${subs}${d.yt ? `<div class="kw-h">Buscar videoaula no YouTube</div>` : ""}<div class="kw ${d.yt ? "yt" : ""}">${kws}</div><div class="foco-txt">🎯 ${d.f}</div>`;
+  }
+  const phaseTxt = d => (d.phases || []).map(p => `${p.min} min ${p.label.toLowerCase()}`).join(" + ");
+
+  // situação de um dia do cronograma
+  function dayStatus(d) {
+    if (d.legacy) return S.done.has(d.key) ? "done" : "old";
+    const det = S.details[d.key], tk = todayKey();
+    if (det) return det.late ? "recovered" : "done";
+    if (d.key < tk) return "late";
+    return d.key === tk ? "today" : "future";
+  }
+  const STATUS_TXT = { done: "concluído", recovered: "recuperado", late: "atrasado", today: "hoje", future: "", old: "" };
+
+  function levelBar(g) {
+    const lv = g.level, p = Math.min(100, Math.round(((g.xp.total - lv.floor) / (lv.next - lv.floor)) * 100));
+    return `<div class="lvl-row"><span class="lvl-badge">${lv.n}</span><div class="lvl-info"><div><b>${esc(lv.name)}</b><span class="muted small">${g.xp.total} XP · faltam ${lv.next - g.xp.total}</span></div>
+      <div class="xpbar"><i style="width:${p}%"></i></div></div></div>`;
+  }
+
+  // =================================================================
+  // HOJE
+  // =================================================================
+  function planToday() {
+    const k = todayKey(), P = S.plan;
+    return P.find(d => d.key === k) || (k < P[0].key ? P[0] : P[P.length - 1]);
   }
 
   function viewHome(v) {
-    const t = planToday(), st = S.stats, goal = S.user.dailyGoal * 60;
-    const days = Math.ceil((new Date(ED().examISO) - Date.now()) / 864e5);
-    const pct = S.done.size / S.plan.length;
-    const idx = S.plan.indexOf(t);
-    const next = S.plan.slice(idx + 1, idx + 4);
-    const done = S.done.has(t.key);
+    const t = planToday(), g = S.g, st = S.stats, goal = S.user.dailyGoal * 60, lab = ED().labels, tk = todayKey();
+    const idx = S.plan.indexOf(t), next = S.plan.slice(idx + 1, idx + 4);
+    const status = dayStatus(t), isDone = status === "done" || status === "recovered";
     const studied = st.byDayKey[t.key] || 0;
-    const lab = ED().labels;
+    const cov = g.coverage.total;
     const h = new Date().getHours(), hi = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
     const now = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-    v.innerHTML = `
-      <section class="welcome"><p class="eyebrow">${esc(now)}</p><h1>${hi}, ${esc(S.user.name.split(" ")[0])}.</h1><p class="sub">Um pouco de progresso todos os dias faz toda a diferença.</p></section>
-      <div class="hero">
-        <div class="ico">${Icon("trophy", 30)}</div>
-        <div><div class="lbl">Faltam para a prova</div><div class="big">${days > 0 ? days : 0} <span style="font-size:18px;font-weight:600">dias</span></div>
-        <div class="small" style="opacity:.9">${ED().prova} · portões fecham ${ED().portoes}</div></div>
-      </div>
+    const p = dParts(t.key), notToday = t.key !== tk;
+    const qd = S.todayLogs.reduce((a, l) => ({ done: a.done + l.done, correct: a.correct + l.correct }), { done: 0, correct: 0 });
+    const xpGain = t.key < tk ? g.xp.rules.late : g.xp.rules.day;
 
-      <div class="section-title">Estudo de hoje <span class="muted small">${DOW[dParts(t.key).dow]}, ${String(dParts(t.key).d).padStart(2, "0")}/${MONTHS[dParts(t.key).m - 1]} · dia ${t.index}/61</span></div>
+    v.innerHTML = `
+      <section class="welcome"><p class="eyebrow">${esc(now)}</p><h1>${hi}, ${esc(S.user.name.split(" ")[0])}.</h1><p class="sub">Um dia de cada vez. Hoje vale ${g.xp.rules.day} XP.</p></section>
+      <div class="game-strip">
+        <div class="card gs-level">${levelBar(g)}</div>
+        <a class="card gs-fire ${g.streak ? "" : "off"}" href="#conquistas"><span class="flame">🔥</span><div><b>${g.streak}</b><span>${g.streak === 1 ? "dia seguido" : "dias seguidos"}</span></div></a>
+        <div class="card gs-days"><span class="lbl">Faltam</span><b>${daysLeft()}</b><span>dias para a prova</span></div>
+      </div>
+      ${g.late.length ? `<a class="late-banner" href="#atrasados">${Icon("clock", 18)}<span>Você tem <b>${g.late.length} ${g.late.length === 1 ? "dia atrasado" : "dias atrasados"}</b>. Recupere e ganhe ${g.xp.rules.late} XP por dia.</span>${Icon("chevron", 18)}</a>` : ""}
+
+      <div class="section-title">${notToday ? (tk < t.key ? "Primeiro dia do cronograma" : "Último dia do cronograma") : "Tarefa de hoje"} <span class="muted small">${DOW[p.dow]}, ${String(p.d).padStart(2, "0")}/${MONTHS[p.m - 1]} · dia ${t.index}/${S.plan.length}</span></div>
       <div class="card today-card t-${t.m}">
         <span class="tag">${lab[t.m]}</span><span class="area">${esc(t.a)}</span>
         <div class="ttl">${esc(t.t)}</div>
-        ${dayCardBody(t, 5)}
-        <div class="day-actions" style="margin-top:14px">
-          <button class="btn btn-pink" id="startToday">${Icon("play", 16)} ${Timer.isActive() ? "Voltar ao foco" : "Iniciar foco"}</button>
-          ${S.apostilas.has(t.key) ? `<a class="btn btn-ghost ap-btn" href="#apostila/${t.key}">📖 Abrir apostila</a>` : ""}
-          <button class="check-btn ${done ? "on" : ""}" id="doneToday"><span class="box">${Icon("check", 12)}</span>${done ? "Concluído" : "Marcar concluído"}</button>
+        ${dayCardBody(t, 4)}
+        <div class="phase-row">${(t.phases || []).map((ph, i) => `<span class="phase"><b>${ph.min} min</b>${esc(ph.label)}</span>${i < t.phases.length - 1 ? `<span class="ph-arrow">→</span>` : ""}`).join("")}</div>
+        <div class="day-actions" style="margin-top:12px">
+          <button class="btn btn-pink" id="startToday">${Icon("play", 16)} ${Timer.isActive() ? "Voltar ao foco" : "Começar cronômetro"}</button>
+          ${S.apostilas.has(t.key) ? `<a class="btn btn-ghost ap-btn" href="#apostila/${t.key}">📖 Apostila</a>` : ""}
           ${studied ? `<span class="badge-time">${Icon("clock", 14)} ${hm(studied)} estudados</span>` : ""}
+        </div>
+        <div class="done-row">
+          ${isDone ? `<div class="done-ok">${Icon("check", 18)} Dia concluído${status === "recovered" ? " (recuperado)" : ""}<button class="link-btn small" id="undoToday">desfazer</button></div>`
+            : `<button class="btn btn-dark btn-block" id="doneToday">${Icon("check", 18)} Concluir dia <span class="xp-pill">+${xpGain} XP</span></button>`}
         </div>
       </div>
 
-      <div class="rings" style="margin-top:14px">
-        <div class="card ring-card"><div class="lbl">Meta de hoje</div>${ring(st.today / goal, "#ef7254", `${mins(st.today)}<span style="font-size:13px">/${S.user.dailyGoal}</span>`, "minutos")}</div>
-        <div class="card ring-card"><div class="lbl">Cronograma</div>${ring(pct, "#3f8a72", `${Math.round(pct * 100)}%`, `${S.done.size} de ${S.plan.length} dias`)}</div>
-      </div>
+      <div class="section-title">Questões do dia <span class="muted small">${qd.done ? `${qd.correct}/${qd.done} · ${pct(qd.correct, qd.done)}% de acerto` : `+${g.xp.rules.correct} XP por acerto`}</span></div>
+      <div class="card" id="qCard">${questionForm(t)}</div>
 
-      <div class="stats3" style="margin-top:14px">
-        <div class="card stat s1"><div class="si">${Icon("fire", 21)}</div><div><span>Sequência atual</span><b>${st.streak} ${st.streak === 1 ? "dia" : "dias"}</b></div></div>
-        <div class="card stat s2"><div class="si">${Icon("clock", 21)}</div><div><span>Últimos 7 dias</span><b>${hm(st.week)}</b></div></div>
-        <div class="card stat s3"><div class="si">${Icon("trophy", 21)}</div><div><span>Tempo total</span><b>${hm(st.total)}</b></div></div>
+      <div class="rings" style="margin-top:14px">
+        <div class="card ring-card"><div class="lbl">Edital coberto</div>${ring(cov.all ? cov.done / cov.all : 0, "#3f8a72", `${pct(cov.done, cov.all)}%`, `${cov.done} de ${cov.all} tópicos`)}</div>
+        <div class="card ring-card"><div class="lbl">Foco hoje</div>${ring(st.today / goal, "#ef7254", `${mins(st.today)}<span style="font-size:13px">/${S.user.dailyGoal}</span>`, "minutos")}</div>
       </div>
 
       ${next.length ? `<div class="section-title">Próximos dias <a href="#cronograma" class="link-btn small" style="text-decoration:none">Ver tudo</a></div>
-      <div class="next-list">${next.map(d => { const p = dParts(d.key); return `
-        <div class="card next-item t-${d.m}"><div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${DOW[p.dow]}</span></div>
+      <div class="next-list">${next.map(d => { const q = dParts(d.key); return `
+        <div class="card next-item t-${d.m}"><div class="date-bubble"><b>${String(q.d).padStart(2, "0")}</b><span>${DOW[q.dow]}</span></div>
         <div><span class="tag">${lab[d.m]}</span><div class="t" style="margin-top:4px">${esc(d.t)}</div></div></div>`; }).join("")}</div>` : ""}`;
 
     v.querySelector("#startToday").onclick = e => {
       if (Timer.isActive()) return Timer.expand(e.currentTarget);
-      Timer.start(t, S.mode, S.user.dailyGoal, e.currentTarget);
+      Timer.start(t, "dia", S.user.dailyGoal, e.currentTarget);
     };
-    v.querySelector("#doneToday").onclick = () => toggleDone(t.key, () => viewHome(v));
+    v.querySelector("#doneToday")?.addEventListener("click", () => completeDay(t.key, true));
+    v.querySelector("#undoToday")?.addEventListener("click", () => completeDay(t.key, false));
+    bindQuestionForm(v.querySelector("#qCard"), t, () => viewHome(v));
   }
 
-  async function toggleDone(key, rerender) {
-    const now = !S.done.has(key);
-    now ? S.done.add(key) : S.done.delete(key);
-    rerender?.();
-    try { await Api.setDone(key, now); if (now) toast("Dia marcado como concluído ✅"); }
-    catch (e) { now ? S.done.delete(key) : S.done.add(key); rerender?.(); toast(e.message); }
+  // ---------- lançamento de questões ----------
+  function questionForm(t) {
+    const lab = ED().labels, sim = t.kind === "SIM";
+    const def = MATS.includes(t.m) ? t.m : "ESP";
+    const rows = sim ? MATS : [null];
+    const logs = S.todayLogs;
+    return `<form class="q-form" id="qf">
+        ${sim ? `<p class="muted small" style="margin:0 0 8px">Dia de simulado: lance os acertos de cada matéria.</p>` : ""}
+        ${rows.map(m => `<div class="q-row">
+          ${m ? `<span class="q-mat t-${m}"><span class="tag">${lab[m]}</span></span><input type="hidden" name="materia" value="${m}">`
+              : `<select name="materia" aria-label="Matéria">${MATS.map(x => `<option value="${x}" ${x === def ? "selected" : ""}>${lab[x]}</option>`).join("")}</select>`}
+          <label class="q-num"><span>Fiz</span><input name="done" type="number" min="${sim ? 0 : 1}" max="500" inputmode="numeric" ${sim ? "" : "required"} placeholder="0"></label>
+          <label class="q-num"><span>Acertei</span><input name="correct" type="number" min="0" max="500" inputmode="numeric" ${sim ? "" : "required"} placeholder="0"></label>
+        </div>`).join("")}
+        <button class="btn btn-pink btn-sm">Lançar questões</button>
+      </form>
+      ${logs.length ? `<div class="q-logs">${logs.map(l => `<div class="q-log t-${l.materia}"><span class="tag">${lab[l.materia]}</span><span>${l.correct}/${l.done} · <b>${pct(l.correct, l.done)}%</b>${l.source === "simulado" ? " · simulado" : ""}</span><button class="icon-btn" data-delq="${l.id}" title="Apagar lançamento">${Icon("trash", 16)}</button></div>`).join("")}</div>` : ""}`;
+  }
+
+  function bindQuestionForm(box, t, rerender) {
+    if (!box) return;
+    const f = box.querySelector("#qf"), sim = t.kind === "SIM";
+    f.onsubmit = async e => {
+      e.preventDefault();
+      const mats = [...f.querySelectorAll('[name="materia"]')].map(x => x.value);
+      const dones = [...f.querySelectorAll('[name="done"]')].map(x => +x.value || 0);
+      const cors = [...f.querySelectorAll('[name="correct"]')].map(x => +x.value || 0);
+      const items = mats.map((m, i) => ({ materia: m, done: dones[i], correct: cors[i] })).filter(x => x.done > 0);
+      if (!items.length) return toast("Informe quantas questões você fez.");
+      const bad = items.find(x => x.correct > x.done);
+      if (bad) return toast("Os acertos não podem passar do total de questões.");
+      const before = S.g;
+      try {
+        for (const it of items) await Api.addQuestions({ ...it, dayKey: t.key, localDate: todayKey(), source: sim ? "simulado" : "diario" });
+        await refreshData(); rerender(); updateTopbar();
+        const gained = S.g.xp.total - before.xp.total;
+        toast(`Questões lançadas · +${gained} XP`);
+        checkLevelUp(before, S.g);
+      } catch (x) { toast(x.message); }
+    };
+    box.onclick = e => {
+      const b = e.target.closest("[data-delq]"); if (!b) return;
+      confirmBox("Apagar lançamento?", "Essas questões saem do seu desempenho e o XP delas é descontado.", "Apagar", async () => {
+        try { await Api.deleteQuestions(b.dataset.delq); await refreshData(); rerender(); updateTopbar(); toast("Lançamento apagado."); } catch (x) { toast(x.message); }
+      });
+    };
+  }
+
+  // ---------- concluir / recuperar dia ----------
+  async function completeDay(key, done, rerender) {
+    const before = S.g;
+    try {
+      await Api.setDone(key, done, todayKey());
+      await refreshData();
+      rerender ? rerender() : route();
+      updateTopbar();
+      if (!done) return toast("Dia desmarcado.");
+      const gained = S.g.xp.total - before.xp.total;
+      const det = S.details[key];
+      celebrate(gained, det?.late, before, S.g);
+    } catch (e) { toast(e.message); }
+  }
+
+  function celebrate(gained, late, before, after) {
+    const up = after.level.n > before.level.n;
+    modal(`<div class="celebrate"><div class="big-emoji">${up ? "🏆" : late ? "💪" : "🎉"}</div>
+      <h3>${late ? "Dia recuperado!" : "Dia concluído!"}</h3>
+      <div class="xp-gain">+${gained} XP</div>
+      ${up ? `<p class="lvl-up">Subiu para o nível <b>${after.level.n} · ${esc(after.level.name)}</b></p>` : ""}
+      <p class="muted small">${after.streak ? `🔥 Sequência de ${after.streak} ${after.streak === 1 ? "dia" : "dias"}.` : ""} ${late ? "Recuperar dá XP, mas não refaz a sequência." : ""}</p></div>
+      <div class="actions"><button class="btn btn-pink btn-block" data-x>Continuar</button></div>`,
+      (m, close) => { m.querySelector("[data-x]").onclick = close; });
+  }
+  function checkLevelUp(before, after) {
+    if (after.level.n > before.level.n) setTimeout(() => toast(`🏆 Nível ${after.level.n}: ${after.level.name}!`), 1200);
+  }
+  function showAchievements(list) {
+    const m = document.getElementById("modal"); if (!m.hidden) { setTimeout(() => showAchievements(list), 1500); return; }
+    modal(`<div class="celebrate"><div class="big-emoji">${list[0].icon}</div><h3>${list.length > 1 ? "Novas conquistas!" : "Nova conquista!"}</h3>
+      ${list.map(a => `<div class="ach-new"><b>${a.icon} ${esc(a.title)}</b><span class="muted small">${esc(a.desc)}</span></div>`).join("")}
+      <div class="xp-gain">+${list.length * S.g.xp.rules.achievement} XP</div></div>
+      <div class="actions"><a class="btn btn-ghost btn-block" href="#conquistas" data-x>Ver conquistas</a><button class="btn btn-pink btn-block" data-x>Continuar</button></div>`,
+      (mm, close) => mm.querySelectorAll("[data-x]").forEach(b => b.addEventListener("click", close)));
   }
 
   // =================================================================
-  // CRONOGRAMA
+  // CRONOGRAMA (lista + calendário)
   // =================================================================
+  function dayItem(d, tk, lab) {
+    const p = dParts(d.key), studied = S.stats.byDayKey[d.key] || 0, status = dayStatus(d);
+    const isDone = status === "done" || status === "recovered";
+    const open = S.openDays.has(d.key) || (d.key === tk && !S.openDays.has("_closed_" + d.key));
+    const q = S.g.questions.byDay[d.key];
+    const doneBtn = d.legacy ? "" : isDone
+      ? `<button class="check-btn on" data-undo><span class="box">${Icon("check", 12)}</span>${status === "recovered" ? "Recuperado" : "Concluído"}</button>`
+      : `<button class="check-btn" data-done><span class="box">${Icon("check", 12)}</span>${status === "late" ? `Recuperar (+${S.g.xp.rules.late} XP)` : `Concluir dia (+${S.g.xp.rules.day} XP)`}</button>`;
+    return `<div class="card day t-${d.m} ${isDone ? "done" : ""} st-${status} ${d.key === tk ? "is-today" : ""} ${open ? "open" : ""}" data-k="${d.key}" ${d.key === tk ? 'id="hoje"' : ""}>
+      <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
+      <div>
+        <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}${d.legacy ? "" : ` · dia ${d.index}`}</span>
+          <div class="ttl">${esc(d.t)}</div>
+          <div class="meta">${STATUS_TXT[status] ? `<span class="st-pill st-${status}">${STATUS_TXT[status]}</span>` : ""}${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${q ? `<span class="badge-time">✏️ ${q.correct}/${q.done}</span>` : ""}</div></div>
+          <span class="chev">${Icon("chevron", 20)}</span>
+        </div>
+        <div class="day-body">${dayCardBody(d)}
+          <div class="day-actions">
+            ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
+            ${d.legacy ? "" : `<button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>`}
+            ${doneBtn}
+          </div>
+        </div>
+      </div></div>`;
+  }
+
+  function bindDayActions(box, rerender) {
+    box.onclick = e => {
+      const card = e.target.closest(".day"); if (!card) return;
+      const key = card.dataset.k, tk = todayKey();
+      if (e.target.closest("[data-toggle]")) {
+        const open = card.classList.toggle("open");
+        if (key === tk) open ? S.openDays.delete("_closed_" + key) : S.openDays.add("_closed_" + key);
+        else open ? S.openDays.add(key) : S.openDays.delete(key);
+      }
+      if (e.target.closest("[data-done]")) completeDay(key, true, rerender);
+      if (e.target.closest("[data-undo]")) completeDay(key, false, rerender);
+      const sb = e.target.closest("[data-study]");
+      if (sb) {
+        if (Timer.isActive()) { Timer.expand(sb); return; }
+        Timer.start(findDay(key), "dia", S.user.dailyGoal, sb);
+      }
+    };
+  }
+
   function viewPlan(v) {
     const lab = ED().labels;
-    const filters = [["ALL", "Tudo"], ["ESP", lab.ESP], ["POR", lab.POR], ["NOR", lab.NOR], ["ING", lab.ING], ["REV", "Revisões"], ["TODO", "Pendentes"]];
+    const filters = [["ALL", "Tudo"], ["ESP", lab.ESP], ["POR", lab.POR], ["NOR", lab.NOR], ["ING", lab.ING], ["REV", "Revisões e reta final"], ["TODO", "Pendentes"], ["LATE", "Atrasados"]];
     v.innerHTML = `
       <div class="page-title">Cronograma · ${ED().nome}</div>
+      <div class="seg" id="seg"><button class="${S.planView === "lista" ? "on" : ""}" data-v="lista">Lista</button><button class="${S.planView === "cal" ? "on" : ""}" data-v="cal">Calendário</button></div>
+      <div id="pv"></div>`;
+    const pv = v.querySelector("#pv");
+    v.querySelector("#seg").onclick = e => {
+      const b = e.target.closest("[data-v]"); if (!b) return;
+      S.planView = b.dataset.v; viewPlan(v);
+    };
+    if (S.planView === "cal") return drawCalendar(pv);
+
+    pv.innerHTML = `
+      ${S.g.late.length ? `<a class="late-banner" href="#atrasados" style="margin-bottom:12px">${Icon("clock", 18)}<span><b>${S.g.late.length} ${S.g.late.length === 1 ? "dia atrasado" : "dias atrasados"}</b> para recuperar.</span>${Icon("chevron", 18)}</a>` : ""}
       <div class="search">${Icon("search", 20)}<input id="q" placeholder="Buscar assunto (ex.: LINQ, crase, LGPD)…" value="${esc(S.query)}"></div>
       <div class="chips">${filters.map(([k, l]) => `<button class="chip ${S.filter === k ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
       <div id="days"></div>`;
     const tk = todayKey();
     const draw = () => {
       const q = S.query.trim().toLowerCase();
-      let html = "", wk = 0, lastWeek = -1, count = 0;
-      S.plan.forEach((d, i) => {
-        if (i === 0 || d.dow === 1) wk++;
-        const isDone = S.done.has(d.key);
-        const f = S.filter;
-        const okF = f === "ALL" || (f === "TODO" ? !isDone : f === "REV" ? (d.m === "REV" || d.m === "FIN") : d.m === f);
-        const okQ = !q || (d.t + " " + d.a + " " + d.k.join(" ")).toLowerCase().includes(q);
-        if (!okF || !okQ) return;
+      let html = "", lastWeek = null, count = 0;
+      const match = d => {
+        const st = dayStatus(d), f = S.filter;
+        const okF = f === "ALL" || (f === "TODO" ? !S.done.has(d.key) && !d.legacy : f === "LATE" ? st === "late" : f === "REV" ? (d.m === "REV" || d.m === "FIN" || d.rev) : d.m === f);
+        const okQ = !q || (d.t + " " + d.a + " " + d.k.join(" ") + " " + (d.sub || []).map(x => x.n).join(" ")).toLowerCase().includes(q);
+        return okF && okQ;
+      };
+      S.plan.forEach(d => {
+        if (!match(d)) return;
         count++;
-        if (wk !== lastWeek) { html += `<div class="week-h">Semana ${wk}</div>`; lastWeek = wk; }
-        const p = dParts(d.key), studied = S.stats.byDayKey[d.key] || 0;
-        const open = S.openDays.has(d.key) || (d.key === tk && !S.openDays.has("_closed_" + d.key));
-        html += `<div class="card day t-${d.m} ${isDone ? "done" : ""} ${d.key === tk ? "is-today" : ""} ${open ? "open" : ""}" data-k="${d.key}" ${d.key === tk ? 'id="hoje"' : ""}>
-          <div class="date-bubble"><b>${String(p.d).padStart(2, "0")}</b><span>${MONTHS[p.m - 1]}</span></div>
-          <div>
-            <div class="day-head" data-toggle style="display:flex;align-items:flex-start;gap:8px">
-              <div style="flex:1;min-width:0"><span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]} · dia ${d.index}</span>
-              <div class="ttl">${esc(d.t)}</div>
-              <div class="meta">${S.apostilas.has(d.key) ? `<span class="badge-time">📖 apostila</span>` : ""}${studied ? `<span class="badge-time">${Icon("clock", 13)} ${hm(studied)}</span>` : ""}${isDone ? `<span class="badge-time" style="color:var(--green)">${Icon("check", 13)} concluído</span>` : ""}</div></div>
-              <span class="chev">${Icon("chevron", 20)}</span>
-            </div>
-            <div class="day-body">${dayCardBody(d)}
-              <div class="day-actions">
-                ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-sm ap-btn" href="#apostila/${d.key}">📖 Apostila</a>` : ""}
-                <button class="btn btn-pink btn-sm" data-study>${Icon("play", 14)} Estudar</button>
-                <button class="check-btn ${isDone ? "on" : ""}" data-done><span class="box">${Icon("check", 12)}</span>${isDone ? "Concluído" : "Marcar concluído"}</button>
-              </div>
-            </div>
-          </div></div>`;
+        if (d.week !== lastWeek) {
+          const ks = S.plan.filter(x => x.week === d.week), a = dParts(ks[0].key), b = dParts(ks[ks.length - 1].key);
+          html += `<div class="week-h">${d.kind ? "Reta final" : `Semana ${d.week + 1}`} · ${a.d}/${a.m} a ${b.d}/${b.m}</div>`; lastWeek = d.week;
+        }
+        html += dayItem(d, tk, lab);
       });
+      const leg = S.legacy.filter(match);
+      if (leg.length) {
+        html += `<details class="legacy"><summary>Fase anterior · ${leg.length} dias (10 a 18/11) · fora do XP e do % do edital</summary>${leg.map(d => dayItem(d, tk, lab)).join("")}</details>`;
+        count += leg.length;
+      }
       const box = v.querySelector("#days");
       box.innerHTML = count ? html : `<div class="card empty">Nada encontrado.</div>`;
     };
     draw();
     setTimeout(() => document.getElementById("hoje")?.scrollIntoView({ block: "center" }), 50);
-
     v.querySelector("#q").oninput = e => { S.query = e.target.value; draw(); };
     v.querySelector(".chips").onclick = e => {
       const b = e.target.closest("[data-f]"); if (!b) return;
       S.filter = b.dataset.f; v.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b)); draw();
     };
-    v.querySelector("#days").onclick = e => {
-      const card = e.target.closest(".day"); if (!card) return;
-      const key = card.dataset.k;
-      if (e.target.closest("[data-toggle]")) {
-        const open = card.classList.toggle("open");
-        if (key === tk) open ? S.openDays.delete("_closed_" + key) : S.openDays.add("_closed_" + key);
-        else open ? S.openDays.add(key) : S.openDays.delete(key);
-      }
-      if (e.target.closest("[data-done]")) toggleDone(key, draw);
-      if (e.target.closest("[data-study]")) {
-        const d = S.plan.find(x => x.key === key);
-        if (Timer.isActive()) { Timer.expand(e.target.closest("[data-study]")); return; }
-        Timer.start(d, S.mode, S.user.dailyGoal, e.target.closest("[data-study]"));
-      }
+    bindDayActions(v.querySelector("#days"), draw);
+  }
+
+  function drawCalendar(box) {
+    const lab = ED().labels, tk = todayKey();
+    const first = dParts(S.plan[0].key), last = dParts(S.plan[S.plan.length - 1].key), t = dParts(tk);
+    const months = [];
+    for (let y = first.y, m = first.m; y < last.y || (y === last.y && m <= last.m); m === 12 ? (y++, m = 1) : m++) months.push([y, m]);
+    if (!S.calMonth) S.calMonth = months.find(([y, m]) => y === t.y && m === t.m) || months[0];
+    const i = months.findIndex(([y, m]) => y === S.calMonth[0] && m === S.calMonth[1]);
+    const [y, m] = months[Math.max(0, i)];
+    const byKey = Object.fromEntries(S.plan.map(d => [d.key, d]));
+    const startDow = new Date(y, m - 1, 1).getDay(), nDays = new Date(y, m, 0).getDate();
+    const MONTH_FULL = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    let cells = "";
+    for (let k = 0; k < startDow; k++) cells += `<div class="cal-cell empty"></div>`;
+    for (let d = 1; d <= nDays; d++) {
+      const key = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`, day = byKey[key];
+      if (!day) { cells += `<div class="cal-cell out"><span class="n">${d}</span></div>`; continue; }
+      const st = dayStatus(day);
+      cells += `<button class="cal-cell st-${st} t-${day.m}" data-k="${key}" title="${esc(day.t)}"><span class="n">${d}</span><span class="cm">${lab[day.m].slice(0, 3)}</span>${st === "done" || st === "recovered" ? `<span class="ok">${Icon("check", 12)}</span>` : ""}</button>`;
+    }
+    const counts = { done: 0, recovered: 0, late: 0 };
+    S.plan.forEach(d => { const s = dayStatus(d); if (counts[s] !== undefined) counts[s]++; });
+    box.innerHTML = `<div class="card cal">
+      <div class="cal-head"><button class="icon-btn" data-mv="-1" ${i <= 0 ? "disabled" : ""} aria-label="Mês anterior">${Icon("chevron", 20, "flip")}</button>
+        <b>${MONTH_FULL[m - 1][0].toUpperCase() + MONTH_FULL[m - 1].slice(1)} de ${y}</b>
+        <button class="icon-btn" data-mv="1" ${i >= months.length - 1 ? "disabled" : ""} aria-label="Próximo mês">${Icon("chevron", 20)}</button></div>
+      <div class="cal-grid">${DOW.map(x => `<div class="cal-dow">${x}</div>`).join("")}${cells}</div>
+      <div class="cal-legend"><span><i class="lg done"></i>Concluído (${counts.done})</span><span><i class="lg recovered"></i>Recuperado (${counts.recovered})</span><span><i class="lg late"></i>Atrasado (${counts.late})</span><span><i class="lg today"></i>Hoje</span><span><i class="lg future"></i>Futuro</span></div>
+    </div>`;
+    box.querySelectorAll("[data-mv]").forEach(b => b.onclick = () => { S.calMonth = months[i + +b.dataset.mv]; drawCalendar(box); });
+    box.querySelector(".cal-grid").onclick = e => {
+      const c = e.target.closest("[data-k]"); if (!c) return;
+      openDayModal(byKey[c.dataset.k], () => drawCalendar(box));
     };
+  }
+
+  function openDayModal(d, rerender) {
+    const lab = ED().labels, st = dayStatus(d), p = dParts(d.key), isDone = st === "done" || st === "recovered";
+    modal(`<div class="day-modal t-${d.m}" style="text-align:left">
+        <span class="tag">${lab[d.m]}</span><span class="area">${DOW[p.dow]}, ${p.d}/${p.m}${STATUS_TXT[st] ? ` · ${STATUS_TXT[st]}` : ""}</span>
+        <div class="ttl">${esc(d.t)}</div>${dayCardBody(d, 3)}</div>
+      <div class="actions">
+        ${isDone ? `<button class="btn btn-ghost btn-block" data-a="undo">Desmarcar dia</button>` : `<button class="btn btn-dark btn-block" data-a="done">${Icon("check", 16)} ${st === "late" ? `Recuperar (+${S.g.xp.rules.late} XP)` : `Concluir dia (+${S.g.xp.rules.day} XP)`}</button>`}
+        <button class="btn btn-pink btn-block" data-a="study">${Icon("play", 16)} Estudar agora</button>
+        ${S.apostilas.has(d.key) ? `<a class="btn btn-ghost btn-block" href="#apostila/${d.key}">📖 Abrir apostila</a>` : ""}
+        <button class="btn btn-ghost btn-block" data-a="x">Fechar</button>
+      </div>`, (m, close) => {
+      m.querySelector(".actions").onclick = e => {
+        const a = e.target.closest("[data-a]")?.dataset.a; if (!a) return;
+        close();
+        if (a === "done") completeDay(d.key, true, rerender);
+        if (a === "undo") completeDay(d.key, false, rerender);
+        if (a === "study") Timer.isActive() ? Timer.expand(e.target) : Timer.start(d, "dia", S.user.dailyGoal, e.target);
+      };
+    });
+  }
+
+  // =================================================================
+  // ATRASADOS
+  // =================================================================
+  function viewLate(v) {
+    const lab = ED().labels, tk = todayKey();
+    const list = S.plan.filter(d => S.g.late.includes(d.key));
+    v.innerHTML = `
+      <div class="page-title">Atrasados</div>
+      <p class="muted small" style="margin:-8px 0 16px">Dia perdido não some: estude e recupere quando puder. Cada dia recuperado vale ${S.g.xp.rules.late} XP (no prazo valeria ${S.g.xp.rules.day}). Recuperar não refaz a sequência 🔥.</p>
+      <div id="days">${list.length ? list.map(d => dayItem(d, tk, lab)).join("") : `<div class="card empty">🎉 Nenhum dia atrasado. Você está em dia com o cronograma.</div>`}</div>`;
+    bindDayActions(v.querySelector("#days"), () => viewLate(v));
   }
 
   // =================================================================
@@ -351,7 +586,8 @@
     const cur = Timer.current();
     const showPipToggle = Timer.pipSupported() && !matchMedia("(pointer: coarse)").matches;
     let autoPip = true; try { autoPip = localStorage.getItem("caderno_auto_pip") !== "0"; } catch {}
-    const modes = [["meta", "Meta do dia", `${S.user.dailyGoal} min`], ["pomodoro", "Pomodoro", "25 min"], ["livre", "Livre", "sem limite"]];
+    const pd = S.plan.find(x => x.key === S.pick);
+    const modes = [["dia", "Dia do cronograma", pd ? pd.phases.map(x => x.min).join(" + ") + " min" : "40 + 20 min"], ["meta", "Meta do dia", `${S.user.dailyGoal} min`], ["pomodoro", "Pomodoro", "25 min"], ["livre", "Livre", "sem limite"]];
     v.innerHTML = `
       <div class="page-title">Modo foco</div>
       ${cur ? `<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
@@ -368,7 +604,7 @@
         <p class="muted small">Ao iniciar, a tela de foco cresce e ocupa a tela inteira.${showPipToggle ? " No computador, uma janela flutuante mostra o tempo mesmo fora desta aba." : ""}</p>
         ${showPipToggle ? `<div class="toggle-row"><span>Abrir janela flutuante ao iniciar</span><label class="switch"><input type="checkbox" id="autopip" ${autoPip ? "checked" : ""}><i></i></label></div>` : ""}
       </div>`;
-    v.querySelector("#topic").onchange = e => S.pick = e.target.value;
+    v.querySelector("#topic").onchange = e => { S.pick = e.target.value; viewFocus(v); };
     v.querySelector(".mode-pick").onclick = e => {
       const b = e.target.closest("[data-m]"); if (!b) return;
       S.mode = b.dataset.m; v.querySelectorAll(".mode").forEach(x => x.classList.toggle("on", x === b));
@@ -378,7 +614,7 @@
     v.querySelector("#go").onclick = e => {
       if (Timer.isActive()) return Timer.expand(e.currentTarget);
       const d = S.plan.find(x => x.key === S.pick) || null;
-      Timer.start(d, S.mode, S.user.dailyGoal, e.currentTarget);
+      Timer.start(d, d ? S.mode : (S.mode === "dia" ? "livre" : S.mode), S.user.dailyGoal, e.currentTarget);
     };
   }
 
@@ -387,11 +623,12 @@
   // =================================================================
   function viewApostila(v, day) {
     Reader.open(v, {
-      day, edital: S.user.edital, plan: S.plan, labels: ED().labels, toast,
+      day, edital: S.user.edital, plan: S.plan.concat(S.legacy), labels: ED().labels, toast,
       onBack: () => { history.length > 1 ? history.back() : (location.hash = "#cronograma"); },
       onStudy: el => {
         if (Timer.isActive()) return toast("O cronômetro já está rodando no canto da tela.");
-        Timer.start(S.plan.find(x => x.key === day), S.mode, S.user.dailyGoal, el, true);
+        const d = findDay(day);
+        Timer.start(d, d && !d.legacy ? "dia" : "livre", S.user.dailyGoal, el, true);
       },
     });
   }
@@ -400,43 +637,105 @@
     try { await refreshData(); } catch {}
     if (!location.hash.startsWith("#apostila/")) route();
     const key = session.dayKey;
-    if (key && !S.done.has(key)) {
+    if (key && !S.done.has(key) && S.plan.some(x => x.key === key)) {
       modal(`<div style="font-size:42px">🎉</div><h3>Sessão salva!</h3>
-        <p class="muted small">${hm(secs)} estudando <b>${esc(session.title)}</b>.<br>Quer marcar esse dia do cronograma como concluído?</p>
-        <div class="actions"><button class="btn btn-pink btn-block" data-ok>Marcar como concluído</button><button class="btn btn-ghost btn-block" data-x>Agora não</button></div>`,
+        <p class="muted small">${hm(secs)} estudando <b>${esc(session.title)}</b>.<br>Lance as questões que fez e marque o dia como concluído.</p>
+        <div class="actions"><button class="btn btn-pink btn-block" data-ok>Concluir dia</button><button class="btn btn-ghost btn-block" data-x>Agora não</button></div>`,
         (m, close) => {
-          m.querySelector("[data-ok]").onclick = () => { close(); toggleDone(key, route); };
+          m.querySelector("[data-ok]").onclick = () => { close(); completeDay(key, true); };
           m.querySelector("[data-x]").onclick = close;
         });
     } else toast(`Sessão salva: ${hm(secs)} ✅`);
   }
 
   // =================================================================
-  // ESTATÍSTICAS
+  // DESEMPENHO
   // =================================================================
+  const fmtPts = x => (Math.round(x * 10) / 10).toString().replace(".", ",");
+
+  function meter(value, max, cut, cls = "") {
+    const w = Math.max(0, Math.min(100, (value / max) * 100));
+    return `<div class="meter ${cls}"><i class="${value >= cut ? "ok" : "bad"}" style="width:${w}%"></i><span class="cut" style="left:${(cut / max) * 100}%"><em>mín. ${cut}</em></span></div>`;
+  }
+
+  function thermoCard(g) {
+    const th = g.thermo, lab = ED().labels;
+    const known = MATS.filter(m => th.est[m] !== null);
+    const pass = !th.partial && !th.alerts.length;
+    const head = !known.length
+      ? `<div class="empty" style="padding:14px 0">Lance pelo menos ${th.minQ} questões de cada matéria para o termômetro estimar sua nota.</div>`
+      : `<div class="thermo-top"><div class="big-score">${fmtPts(th.total)}<small>/ ${th.totalMax} pts</small></div>
+          <span class="st-pill ${th.alerts.length ? "st-late" : pass ? "st-done" : "st-today"}">${th.alerts.length ? "Abaixo do mínimo" : pass ? "Acima dos mínimos" : "Estimativa parcial"}</span></div>
+         <div class="mlabel"><span>Total</span><span>${fmtPts(th.total)} / ${th.totalMax}</span></div>${meter(th.total, th.totalMax, th.minTotal)}
+         ${th.est.ESP !== null ? `<div class="mlabel" style="margin-top:16px"><span>${lab.ESP}</span><span>${fmtPts(th.est.ESP)} / ${th.max.ESP}</span></div>${meter(th.est.ESP, th.max.ESP, th.minEsp)}` : ""}`;
+    return `<div class="card thermo">
+      <b class="card-h">🌡️ Termômetro de aprovação</b>
+      <p class="muted small" style="margin:4px 0 14px">Seu % de acerto em cada matéria aplicado aos pontos da prova. Matéria com menos de ${th.minQ} questões fica de fora.</p>
+      ${head}
+      ${th.alerts.length ? `<div class="alerts">${th.alerts.map(a => `<div class="alert">⚠️ ${esc(a.text)}</div>`).join("")}</div>` : ""}
+      <div class="thermo-mats">${MATS.map(m => {
+        const q = g.questions.byM[m];
+        return `<div class="tm-row t-${m}"><span class="tag">${lab[m]}</span><span class="muted small">${q.done ? `${pct(q.correct, q.done)}% · ${q.done} q` : "sem questões"}</span><b>${th.est[m] === null ? `<span class="muted small">faltam ${Math.max(0, th.minQ - q.done)} q</span>` : `${fmtPts(th.est[m])}<small>/${th.max[m]}</small>`}</b></div>`;
+      }).join("")}</div>
+    </div>`;
+  }
+
   async function viewStats(v) {
-    const st = S.stats, lab = ED().labels;
+    const st = S.stats, lab = ED().labels, g = S.g, tk = todayKey();
     const max = Math.max(S.user.dailyGoal * 60, ...st.last14.map(x => x.seconds));
     const bySubj = {};
-    for (const [k, s] of Object.entries(st.byDayKey)) { const d = S.plan.find(x => x.key === k); if (d) bySubj[d.m] = (bySubj[d.m] || 0) + s; }
+    for (const [k, s] of Object.entries(st.byDayKey)) { const d = findDay(k); if (d) bySubj[d.m] = (bySubj[d.m] || 0) + s; }
     const subjMax = Math.max(1, ...Object.values(bySubj));
     const goalDays = st.last14.filter(x => x.seconds >= S.user.dailyGoal * 60).length;
+    const cov = g.coverage, qt = g.questions.total;
+    const last14 = []; for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); last14.push(Plans.keyOf(d)); }
+
     v.innerHTML = `
-      <div class="page-title">Estatísticas</div>
+      <div class="page-title">Desempenho</div>
       <div class="stats3">
-        <div class="card stat s1"><div class="si">${Icon("fire", 21)}</div><div><span>Sequência atual</span><b>${st.streak} ${st.streak === 1 ? "dia" : "dias"}</b></div></div>
-        <div class="card stat s2"><div class="si">${Icon("clock", 21)}</div><div><span>Tempo total</span><b>${hm(st.total)}</b></div></div>
-        <div class="card stat s3"><div class="si">${Icon("timer", 21)}</div><div><span>Sessões concluídas</span><b>${st.sessionsCount}</b></div></div>
+        <div class="card stat s1"><div class="si">${Icon("fire", 21)}</div><div><span>Sequência · recorde ${g.bestStreak}</span><b>${g.streak} ${g.streak === 1 ? "dia" : "dias"}</b></div></div>
+        <div class="card stat s2"><div class="si">${Icon("target", 21)}</div><div><span>Acerto acumulado</span><b>${qt.done ? pct(qt.correct, qt.done) + "%" : "—"} <small class="muted" style="font-size:12px">${qt.correct}/${qt.done}</small></b></div></div>
+        <a class="card stat s3" href="#conquistas" style="text-decoration:none"><div class="si">${Icon("trophy", 21)}</div><div><span>Nível ${g.level.n} · ${esc(g.level.name)}</span><b>${g.xp.total} XP</b></div></a>
       </div>
-      <div class="card" style="margin-top:14px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font:700 15px var(--head)">Ritmo de estudos</b><span class="muted small">meta batida em ${goalDays} de 14 dias</span></div>
-        <div class="bars">${st.last14.map(x => `<div class="b ${x.date === todayKey() ? "today" : ""}"><em>${x.seconds ? mins(x.seconds) + "min" : ""}</em><i style="height:${Math.max(3, (x.seconds / max) * 82)}%"></i></div>`).join("")}</div>
-        <div class="bars-x">${st.last14.map(x => { const p = dParts(x.date); return `<span class="${x.date === todayKey() ? "today" : ""}">${p.d}/${p.m}</span>`; }).join("")}</div>
-        <div class="muted small" style="margin-top:8px">Minutos de foco por dia · em coral, hoje</div>
+
+      <div class="grid-2" style="margin-top:14px">
+        ${thermoCard(g)}
+        <div class="card">
+          <b class="card-h">📚 Progresso do edital</b>
+          <div class="cov-total"><b>${pct(cov.total.done, cov.total.all)}%</b><span class="muted small">${cov.total.done} de ${cov.total.all} tópicos cobertos</span></div>
+          <div class="xpbar big"><i style="width:${pct(cov.total.done, cov.total.all)}%"></i></div>
+          <div class="subj" style="margin-top:16px">${MATS.map(m => { const c = cov.byM[m]; return `<div class="subj-row t-${m}"><span class="mark">${lab[m][0]}</span><div class="info"><strong>${lab[m]}</strong><small>${pct(c.done, c.all)}% · ${c.done}/${c.all}</small><div class="bar"><i style="width:${pct(c.done, c.all)}%"></i></div></div></div>`; }).join("")}</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:14px">
+        <div class="card">
+          <b class="card-h">✏️ Acerto por matéria</b>
+          <div class="tablewrap"><table class="tbl-q"><thead><tr><th>Matéria</th><th>Feitas</th><th>Acertos</th><th>%</th></tr></thead><tbody>
+            ${MATS.map(m => { const q = g.questions.byM[m]; return `<tr class="t-${m}"><td><span class="tag">${lab[m]}</span></td><td>${q.done}</td><td>${q.correct}</td><td><b>${q.done ? pct(q.correct, q.done) + "%" : "—"}</b></td></tr>`; }).join("")}
+            <tr class="tot"><td>Total</td><td>${qt.done}</td><td>${qt.correct}</td><td><b>${qt.done ? pct(qt.correct, qt.done) + "%" : "—"}</b></td></tr>
+          </tbody></table></div>
+        </div>
+        <div class="card">
+          <b class="card-h">📈 Acerto por dia</b>
+          <div class="bars">${last14.map(k => { const q = g.questions.byDate[k]; const p = q ? pct(q.correct, q.done) : 0; return `<div class="b ${k === tk ? "today" : ""}"><em>${q ? p + "%" : ""}</em><i style="height:${q ? Math.max(4, p * .82) : 3}%;${q ? "" : "opacity:.4"}"></i></div>`; }).join("")}</div>
+          <div class="bars-x">${last14.map(k => { const p = dParts(k); return `<span class="${k === tk ? "today" : ""}">${p.d}/${p.m}</span>`; }).join("")}</div>
+          <div class="muted small" style="margin-top:8px">% de acerto nos últimos 14 dias</div>
+        </div>
+      </div>
+
+      ${g.worst.length ? `<div class="card" style="margin-top:14px"><b class="card-h">🧭 Piores assuntos (para revisar)</b>
+        <div style="margin-top:8px">${g.worst.map(w => { const d = findDay(w.key); return `<div class="sess"><div class="t"><b>${esc(d.t)}</b><span class="muted small">${lab[d.m]} · ${w.correct}/${w.done} acertos</span></div><b style="color:${w.pct < .6 ? "var(--coral)" : "var(--green)"}">${Math.round(w.pct * 100)}%</b></div>`; }).join("")}</div></div>` : ""}
+
+      <div class="section-title">Tempo de foco</div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><b style="font:700 15px var(--head)">Ritmo de estudos</b><span class="muted small">total ${hm(st.total)} · meta batida em ${goalDays} de 14 dias</span></div>
+        <div class="bars">${st.last14.map(x => `<div class="b ${x.date === tk ? "today" : ""}"><em>${x.seconds ? mins(x.seconds) + "min" : ""}</em><i style="height:${Math.max(3, (x.seconds / max) * 82)}%"></i></div>`).join("")}</div>
+        <div class="bars-x">${st.last14.map(x => { const p = dParts(x.date); return `<span class="${x.date === tk ? "today" : ""}">${p.d}/${p.m}</span>`; }).join("")}</div>
       </div>
       <div class="grid-2" style="margin-top:14px">
         <div class="card"><b style="font:700 15px var(--head)">Tempo por matéria</b><div class="subj" style="margin-top:12px">
-          ${["ESP", "POR", "NOR", "ING", "REV", "FIN"].map(m => `<div class="subj-row t-${m}"><span class="mark">${lab[m][0]}</span><div class="info"><strong>${lab[m]}</strong><small>${hm(bySubj[m] || 0)}</small><div class="bar"><i style="width:${((bySubj[m] || 0) / subjMax) * 100}%"></i></div></div></div>`).join("")}
+          ${["ESP", "POR", "NOR", "ING", "REV", "FIN"].filter(m => lab[m]).map(m => `<div class="subj-row t-${m}"><span class="mark">${lab[m][0]}</span><div class="info"><strong>${lab[m]}</strong><small>${hm(bySubj[m] || 0)}</small><div class="bar"><i style="width:${((bySubj[m] || 0) / subjMax) * 100}%"></i></div></div></div>`).join("")}
         </div></div>
         <div class="card"><b style="font:700 15px var(--head)">Sessões recentes</b><div id="sess"><div class="empty">Carregando…</div></div></div>
       </div>`;
@@ -445,9 +744,9 @@
       const box = v.querySelector("#sess");
       if (!box) return;
       box.innerHTML = sessions.length ? sessions.map(s => {
-        const d = S.plan.find(x => x.key === s.dayKey), p = dParts(s.localDate);
+        const d = findDay(s.dayKey), p = dParts(s.localDate);
         const hh = new Date(s.startedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-        return `<div class="sess"><div class="t"><b>${esc(d ? d.t : "Estudo livre")}</b><span class="muted small">${String(p.d).padStart(2, "0")}/${String(p.m).padStart(2, "0")} às ${hh} · ${Timer.MODES[s.mode].label}</span></div>
+        return `<div class="sess"><div class="t"><b>${esc(d ? d.t : "Estudo livre")}</b><span class="muted small">${String(p.d).padStart(2, "0")}/${String(p.m).padStart(2, "0")} às ${hh} · ${(Timer.MODES[s.mode] || Timer.MODES.livre).label}</span></div>
           <b>${hm(s.seconds)}</b><button class="icon-btn" data-del="${s.id}" title="Apagar sessão">${Icon("trash", 18)}</button></div>`;
       }).join("") : `<div class="empty">Nenhuma sessão ainda. Inicie o modo foco!</div>`;
       box.onclick = e => {
@@ -457,6 +756,28 @@
         });
       };
     } catch (x) { toast(x.message); }
+  }
+
+  // =================================================================
+  // CONQUISTAS
+  // =================================================================
+  function viewAchievements(v) {
+    const g = S.g, r = g.xp.rules, got = g.achievements.filter(a => a.unlockedAt).length;
+    const fmtD = s => { const d = new Date(s.replace(" ", "T") + "Z"); return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }); };
+    v.innerHTML = `
+      <div class="page-title">Conquistas</div>
+      <div class="grid-2">
+        <div class="card">${levelBar(g)}
+          <div class="xp-split">
+            <div><b>${g.xp.days}</b><span>dias</span></div><div><b>${g.xp.questions}</b><span>questões</span></div><div><b>${g.xp.achievements}</b><span>conquistas</span></div>
+          </div></div>
+        <div class="card fire-card ${g.streak ? "" : "off"}"><span class="flame">🔥</span><div><b>${g.streak} ${g.streak === 1 ? "dia seguido" : "dias seguidos"}</b><span class="muted small">Recorde: ${g.bestStreak}. A sequência conta os dias concluídos no próprio dia.</span></div></div>
+      </div>
+      <div class="section-title">Medalhas <span class="muted small">${got} de ${g.achievements.length}</span></div>
+      <div class="ach-grid">${g.achievements.map(a => `<div class="card ach ${a.unlockedAt ? "on" : ""}"><span class="ai">${a.icon}</span><b>${esc(a.title)}</b><span class="muted small">${esc(a.desc)}</span>${a.unlockedAt ? `<span class="st-pill st-done">desbloqueada ${fmtD(a.unlockedAt)}</span>` : `<span class="st-pill">+${r.achievement} XP</span>`}</div>`).join("")}</div>
+      <div class="card" style="margin-top:16px"><b class="card-h">Como ganhar XP</b>
+        <ul class="rules"><li>Dia concluído no próprio dia: <b>+${r.day} XP</b></li><li>Dia atrasado recuperado: <b>+${r.late} XP</b></li><li>Cada questão acertada: <b>+${r.correct} XP</b></li><li>Cada conquista: <b>+${r.achievement} XP</b></li></ul>
+        <p class="muted small" style="margin:6px 0 0">Níveis: Estagiário → Júnior I → Júnior II → Pleno I → Pleno II → Sênior → Tech Lead → Arquiteto → Aprovado. Cada nível pede 100 XP a mais que o anterior.</p></div>`;
   }
 
   // =================================================================
