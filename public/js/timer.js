@@ -10,7 +10,7 @@ window.Timer = (() => {
     teoria: { label: "Teoria", countdown: true },
     questoes: { label: "Questões", countdown: true },
   };
-  const DEFAULT_PHASES = [{ mode: "teoria", label: "Teoria (videoaula)", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
+  const DEFAULT_PHASES = [{ mode: "teoria", label: "Teoria (videoaula)", min: 60 }];
   const R = 92, CIRC = 2 * Math.PI * R;
 
   let user = null, opts = {};
@@ -55,7 +55,7 @@ window.Timer = (() => {
   // compact = true: não abre a tela cheia; o cronômetro fica no canto (ex.: lendo a apostila)
   async function start(topic, mode, goalMin, originEl, compact = false) {
     if (st) { compact ? showMini() : expand(originEl); return; }
-    // modo "dia": fases em sequência (ex.: 40 min de teoria + 20 min de questões)
+    // modo "dia": fases em sequência (ex.: domingo = 30 min de Inglês + 30 min de revisão)
     const phases = mode === "dia" ? (topic?.phases?.length ? topic.phases : DEFAULT_PHASES) : null;
     const target = phases ? phases[0].min * 60 : mode === "pomodoro" ? 25 * 60 : mode === "meta" ? goalMin * 60 : null;
     st = {

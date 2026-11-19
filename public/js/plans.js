@@ -329,7 +329,7 @@ function phasesFor(d, edital) {
   if (d.kind === "SIM") return [{ mode: "questoes", label: "Simulado", min: edital === "assistente" ? 180 : 240 }];
   if (d.kind === "VES") return [{ mode: "teoria", label: "Revisão leve", min: 30 }];
   if (d.m === "ING") return [{ mode: "teoria", label: edital === "assistente" ? "Raciocínio lógico" : "Inglês", min: 30 }, { mode: "questoes", label: "Revisão dos erros", min: 30 }];
-  return [{ mode: "teoria", label: "Teoria (videoaula)", min: 40 }, { mode: "questoes", label: "Questões FGV", min: 20 }];
+  return [{ mode: "teoria", label: "Teoria (videoaula)", min: 60 }];
 }
 
 function buildDiario(edital) {
