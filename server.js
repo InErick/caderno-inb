@@ -83,7 +83,7 @@ app.post("/api/auth/register", loginLimiter, (req, res) => {
   if (db.prepare("SELECT 1 FROM users WHERE email = ?").get(email)) return fail(res, 409, "Já existe uma conta com esse e-mail.");
 
   const hash = bcrypt.hashSync(password, 10);
-  const info = db.prepare("INSERT INTO users (name, email, password_hash, edital) VALUES (?,?,?,?)").run(name, email, hash, edital);
+  const info = db.prepare("INSERT INTO users (name, email, password_hash, edital, daily_q_goal) VALUES (?,?,?,?,40)").run(name, email, hash, edital);
   const user = db.prepare("SELECT * FROM users WHERE id = ?").get(info.lastInsertRowid);
   setSession(res, user);
   res.status(201).json({ user: publicUser(user) });
@@ -207,12 +207,11 @@ const addDaysISO = (k, n) => { const d = new Date(k + "T12:00:00Z"); d.setUTCDat
 const todayOf = req => DATE_RE.test(req.query.today || req.body?.localDate || "") ? (req.query.today || req.body.localDate) : new Date().toISOString().slice(0, 10);
 const REVIEW = [1, 3, 7];   // caderno de erros: volta em 1, 3 e 7 dias; 3 acertos seguidos e sai
 
-// assunto desbloqueado = chegou o dia dele (o 1º dia já nasce aberto) ou o dia foi concluído
-function unlockedKeys(user, today) {
-  const plan = planOf(user.edital);
-  const done = new Set(db.prepare("SELECT day_key FROM progress WHERE user_id = ? AND edital = ?").all(user.id, user.edital).map(r => r.day_key));
-  const lim = today < plan[0].key ? plan[0].key : today;
-  return new Set(plan.filter(d => d.key <= lim || done.has(d.key)).map(d => d.key));
+const LESSON = 20;   // questões que aparecem na própria aula; o resto do banco do tema vai para a aba Questões
+
+// conteúdo liberado na aba Questões = aulas concluídas no cronograma
+function unlockedKeys(user) {
+  return new Set(db.prepare("SELECT day_key FROM progress WHERE user_id = ? AND edital = ?").all(user.id, user.edital).map(r => r.day_key));
 }
 
 function toClient(r, withAnswer = true) {
@@ -230,14 +229,15 @@ const Q_SELECT = `SELECT q.*, d.day_key, a.chosen, a.correct AS last_correct, a.
 // resumo: questões por dia, desbloqueados, revisões pendentes e meta de hoje
 app.get("/api/bank", auth, (req, res) => {
   const ed = req.user.edital, uid = req.user.id, today = todayOf(req);
-  const rows = db.prepare(`SELECT d.day_key, COUNT(*) n, COUNT(a.question_id) answered, COALESCE(SUM(a.first_correct),0) correct
+  const rows = db.prepare(`SELECT d.day_key, COUNT(*) n, COUNT(a.question_id) answered, COALESCE(SUM(a.first_correct),0) correct,
+      SUM(d.pos < ${LESSON}) ln, SUM(d.pos < ${LESSON} AND a.question_id IS NOT NULL) la, COALESCE(SUM(CASE WHEN d.pos < ${LESSON} THEN a.first_correct END),0) lc
     FROM bank_day d LEFT JOIN bank_answers a ON a.question_id = d.question_id AND a.user_id = ? AND a.edital = d.edital
     WHERE d.edital = ? GROUP BY d.day_key`).all(uid, ed);
   const due = db.prepare("SELECT COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_due IS NOT NULL AND review_due <= ?").get(uid, ed, today).n;
   const inReview = db.prepare("SELECT COUNT(*) n FROM bank_answers WHERE user_id = ? AND edital = ? AND review_step IS NOT NULL").get(uid, ed).n;
   res.json({
-    days: Object.fromEntries(rows.map(r => [r.day_key, { n: r.n, answered: r.answered, correct: r.correct }])),
-    unlocked: [...unlockedKeys(req.user, today)],
+    days: Object.fromEntries(rows.map(r => [r.day_key, { n: r.ln, answered: r.la, correct: r.lc, pool: { n: r.n, answered: r.answered, correct: r.correct } }])),
+    unlocked: [...unlockedKeys(req.user)],
     due, inReview,
   });
 });
@@ -246,21 +246,25 @@ app.get("/api/bank", auth, (req, res) => {
 app.get("/api/bank/day/:dayKey", auth, (req, res) => {
   const key = req.params.dayKey;
   if (!DATE_RE.test(key)) return fail(res, 400, "Dia inválido.");
-  const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND d.day_key = ? ORDER BY d.pos, q.id`).all(req.user.id, req.user.edital, key);
+  // na aula: as 20 primeiras; na aba Questões (scope=all, só para aula concluída): o banco inteiro do tema
+  const all = req.query.scope === "all" && unlockedKeys(req.user).has(key);
+  const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND d.day_key = ? ${all ? "" : `AND d.pos < ${LESSON}`} ORDER BY ${all ? "a.question_id IS NOT NULL," : ""} d.pos, q.id`).all(req.user.id, req.user.edital, key);
   res.json({ questions: rows.map(r => toClient(r)) });
 });
 
 // sessões montadas pelo servidor: treino do dia (inéditas) ou revisão de erros
 app.get("/api/bank/session", auth, (req, res) => {
   const ed = req.user.edital, uid = req.user.id, today = todayOf(req);
-  const n = Math.min(50, Math.max(5, parseInt(req.query.n, 10) || 20));
+  const n = Math.min(50, Math.max(3, parseInt(req.query.n, 10) || 20));
   if (req.query.mode === "erros") {
     const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.review_due IS NOT NULL AND a.review_due <= ? ORDER BY a.review_due, random() LIMIT ?`).all(uid, ed, today, n);
     return res.json({ questions: rows.map(r => toClient(r, false)) });
   }
-  // treino: ~60% dos assuntos mais recentes, o resto sorteado entre os desbloqueados (pesando os de pior acerto)
-  const open = unlockedKeys(req.user, today);
-  const cand = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.question_id IS NULL ORDER BY d.pos`).all(uid, ed).filter(r => open.has(r.day_key));
+  // treino: ~60% das aulas concluídas mais recentes, o resto sorteado entre as liberadas (pesando as de pior acerto)
+  const open = unlockedKeys(req.user);
+  const mat = Game.MATS.includes(req.query.materia) ? req.query.materia : null;
+  const cand = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.question_id IS NULL ORDER BY d.pos`).all(uid, ed)
+    .filter(r => open.has(r.day_key) && (!mat || planDay(ed, r.day_key)?.m === mat));
   const acc = Object.fromEntries(db.prepare("SELECT day_key, AVG(first_correct) acc FROM bank_answers WHERE user_id = ? AND edital = ? GROUP BY day_key").all(uid, ed).map(r => [r.day_key, r.acc]));
   const byDay = new Map();
   for (const r of cand) { if (!byDay.has(r.day_key)) byDay.set(r.day_key, []); byDay.get(r.day_key).push(r); }
@@ -308,7 +312,7 @@ app.post("/api/bank/answer", auth, (req, res) => {
     db.prepare(`INSERT INTO bank_answers (user_id, edital, question_id, day_key, local_date, materia, first_correct, chosen, correct, review_step, review_due)
       VALUES (?,?,?,?,?,?,?,?,?,?,?)`).run(uid, ed, qid, link.day_key, localDate, materia, correct, chosen, correct, step, due);
   }
-  db.prepare("INSERT INTO bank_attempts (user_id, edital, question_id, local_date, correct, mode) VALUES (?,?,?,?,?,?)").run(uid, ed, qid, localDate, correct, mode);
+  db.prepare("INSERT INTO bank_attempts (user_id, edital, question_id, local_date, correct, mode, materia) VALUES (?,?,?,?,?,?,?)").run(uid, ed, qid, localDate, correct, mode, materia);
   res.json({ correct: !!correct, gabarito: link.gabarito, first: !prev, review: step != null ? { step, due } : null, graduated });
 });
 

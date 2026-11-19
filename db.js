@@ -143,5 +143,10 @@ addColumn("progress", "late", "INTEGER NOT NULL DEFAULT 0");       // 1 = recupe
 addColumn("users", "daily_q_goal", "INTEGER NOT NULL DEFAULT 20");   // meta diária de questões
 addColumn("bank_answers", "review_step", "INTEGER");                // caderno de erros: null = fora; 0..2 = etapa
 addColumn("bank_answers", "review_due", "TEXT");                    // data da próxima revisão
+addColumn("bank_attempts", "materia", "TEXT NOT NULL DEFAULT 'ESP'"); // para a meta por matéria
+// v1: meta diária de questões passa a ser o total do dia, dividido entre as matérias pelo peso (padrão 40)
+if (db.prepare("PRAGMA user_version").get().user_version < 1) {
+  db.exec("UPDATE users SET daily_q_goal = 40 WHERE daily_q_goal = 20; PRAGMA user_version = 1;");
+}
 
 module.exports = db;
