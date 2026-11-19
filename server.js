@@ -222,7 +222,7 @@ function toClient(r, withAnswer = true) {
     review: r.review_step != null ? { step: r.review_step, due: r.review_due } : null,
   };
 }
-const Q_SELECT = `SELECT q.*, d.day_key, a.chosen, a.correct AS last_correct, a.first_correct, a.attempts, a.review_step, a.review_due
+const Q_SELECT = `SELECT q.*, d.day_key, a.chosen, a.correct AS last_correct, a.first_correct, a.attempts, a.review_step, a.review_due, a.updated_at AS answered_at
   FROM bank_day d JOIN bank_questions q ON q.id = d.question_id
   LEFT JOIN bank_answers a ON a.question_id = q.id AND a.user_id = ? AND a.edital = d.edital`;
 
@@ -259,6 +259,20 @@ app.get("/api/bank/session", auth, (req, res) => {
   if (req.query.mode === "erros") {
     const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.review_due IS NOT NULL AND a.review_due <= ? ORDER BY a.review_due, random() LIMIT ?`).all(uid, ed, today, n);
     return res.json({ questions: rows.map(r => toClient(r, false)) });
+  }
+  // extras: revisão livre de questões já respondidas (mais peso nas erradas e nas vistas há mais tempo; nada de hoje)
+  if (req.query.mode === "extra") {
+    const now = Date.parse(today + "T12:00:00Z");
+    const mat = Game.MATS.includes(req.query.materia) ? req.query.materia : null;
+    const rows = db.prepare(`${Q_SELECT} WHERE d.edital = ? AND a.question_id IS NOT NULL AND date(a.updated_at) < ?`).all(uid, ed, today)
+      .filter(r => !mat || planDay(ed, r.day_key)?.m === mat)
+      .map(r => {
+        const age = Math.max(0, (now - Date.parse(String(r.answered_at).replace(" ", "T") + "Z")) / 864e5);
+        const w = 1 + (r.last_correct ? 0 : 3) + (r.first_correct ? 0 : 1) + Math.min(age, 21) / 7;
+        return { r, k: Math.random() ** (1 / w) };
+      })
+      .sort((a, b) => b.k - a.k).slice(0, n).map(x => ({ ...toClient(x.r, false), extra: true, wasWrong: !x.r.last_correct }));
+    return res.json({ questions: rows });
   }
   // treino: ~60% das aulas concluídas mais recentes, o resto sorteado entre as liberadas (pesando as de pior acerto)
   const open = unlockedKeys(req.user);
@@ -300,7 +314,7 @@ app.post("/api/bank/answer", auth, (req, res) => {
   if (!JSON.parse(link.alternativas).some(a => a.letra === chosen)) return fail(res, 400, "Escolha uma alternativa.");
   const localDate = todayOf(req);
   const correct = chosen === link.gabarito ? 1 : 0;
-  const mode = ["dia", "treino", "erros"].includes(b.mode) ? b.mode : "dia";
+  const mode = ["dia", "treino", "erros", "extra"].includes(b.mode) ? b.mode : "dia";
   const day = planDay(ed, link.day_key);
   const materia = Game.MATS.includes(day?.m) ? day.m : "ESP";
   const prev = db.prepare("SELECT first_correct, review_step, review_due FROM bank_answers WHERE user_id = ? AND edital = ? AND question_id = ?").get(uid, ed, qid);
