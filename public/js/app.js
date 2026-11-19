@@ -853,7 +853,7 @@
     const showPipToggle = Timer.pipSupported() && !matchMedia("(pointer: coarse)").matches;
     let autoPip = true; try { autoPip = localStorage.getItem("caderno_auto_pip") !== "0"; } catch {}
     const pd = S.plan.find(x => x.key === S.pick);
-    const modes = [["dia", "Dia do cronograma", pd ? pd.phases.map(x => x.min).join(" + ") + " min" : "40 + 20 min"], ["meta", "Meta do dia", `${S.user.dailyGoal} min`], ["pomodoro", "Pomodoro", "25 min"], ["livre", "Livre", "sem limite"]];
+    const modes = [["dia", "Dia do cronograma", pd ? pd.phases.map(x => x.min).join(" + ") + " min" : "60 min"], ["meta", "Meta do dia", `${S.user.dailyGoal} min`], ["pomodoro", "Pomodoro", "25 min"], ["livre", "Livre", "sem limite"]];
     v.innerHTML = `
       <div class="page-title">Modo foco</div>
       ${cur ? `<div class="card" style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
