@@ -387,6 +387,25 @@
       <span class="btn btn-pink btn-sm">${left ? (bk.answered ? "Continuar" : "Começar") : "Revisar"}</span></a>`;
   }
 
+  // fórmulas LaTeX simples das questões → texto legível (\quad, \neq, \frac{a}{b}, x^{2}…)
+  const TEX = { quad: " ", qquad: "  ", neq: "≠", ne: "≠", leq: "≤", le: "≤", geq: "≥", ge: "≥", lt: "<", gt: ">",
+    times: "×", cdot: "·", div: "÷", pm: "±", ldots: "…", cdots: "…", dots: "…", infty: "∞", approx: "≈", equiv: "≡",
+    rightarrow: "→", to: "→", leftarrow: "←", Rightarrow: "⇒", Leftrightarrow: "⇔", leftrightarrow: "↔", land: "∧", wedge: "∧", lor: "∨", vee: "∨",
+    neg: "¬", lnot: "¬", oplus: "⊕", in: "∈", notin: "∉", subset: "⊂", subseteq: "⊆", cup: "∪", cap: "∩", emptyset: "∅", forall: "∀", exists: "∃",
+    alpha: "α", beta: "β", gamma: "γ", delta: "δ", Delta: "Δ", pi: "π", sigma: "σ", Sigma: "Σ", theta: "θ", lambda: "λ", mu: "μ", sum: "Σ", prod: "∏",
+    degree: "°", circ: "°", percent: "%", left: "", right: "", displaystyle: "", mathrm: "", text: "", textbf: "", mathbf: "" };
+  const SUP = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "+": "⁺", "-": "⁻", "n": "ⁿ" };
+  function texToText(t) {
+    let s = String(t);
+    for (let i = 0; i < 4; i++) s = s.replace(/\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, "($1)/($2)").replace(/\\sqrt\s*\{([^{}]*)\}/g, "√($1)");
+    s = s.replace(/\\([a-zA-Z]+)/g, (m, w) => w in TEX ? TEX[w] : m)
+      .replace(/\\([,;:! ])/g, " ").replace(/\\([{}%&$#_])/g, "$1").replace(/\\\\/g, " ")
+      .replace(/\^\{([^{}]*)\}|\^(\w)/g, (m, a, b) => { const x = a ?? b; return [...x].every(c => SUP[c]) ? [...x].map(c => SUP[c]).join("") : `^(${x})`; })
+      .replace(/_\{([^{}]*)\}|_(\w)/g, (m, a, b) => a ?? b)
+      .replace(/[{}]/g, "");
+    return s.replace(/[ \t]{2,}/g, " ").trim();
+  }
+
   async function viewQuiz(v, key) {
     const day = findDay(key);
     v.innerHTML = `<div class="loading">Carregando questões…</div>`;
@@ -431,6 +450,7 @@
           <div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzRetry">Refazer</button><button class="btn btn-pink" id="qzNext">${idx === qs.length - 1 ? "Ver resultado" : "Próxima"} →</button></div>`
         : `<div class="qz-actions"><button class="btn btn-ghost btn-sm" id="qzSkip">Pular</button><button class="btn btn-pink" id="qzSend" ${pick ? "" : "disabled"}>Responder</button></div>`}
       </article>`;
+      v.querySelectorAll("code.formula").forEach(el => { el.textContent = texToText(el.textContent); });
 
       v.querySelector("#qzSend")?.addEventListener("click", send);
       v.querySelector("#qzSkip")?.addEventListener("click", () => go(idx + 1));
