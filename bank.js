@@ -17,7 +17,11 @@ function sanitize(html) {
   const keep = [];
   let s = String(html)
     .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(script|style|iframe|object|embed|noscript|template)\b[\s\S]*?<\/\1\s*>/gi, "");
+    .replace(/<(script|style|iframe|object|embed|noscript|template)\b[\s\S]*?<\/\1\s*>/gi, "")
+    // texto branco usado como espaçador ("-" invisível no original)
+    .replace(/<span[^>]*color:\s*(rgb\(\s*255,\s*255,\s*255\s*\)|#fff(fff)?\b|white)[^>]*>[^<]*<\/span>/gi, "")
+    // botões internos do editor de listas
+    .replace(/<span[^>]*class="ql-ui"[^>]*>\s*<\/span>/gi, "");
   s = s.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^<>]*)>/g, (all, close, tag, rest) => {
     tag = tag.toLowerCase();
     if (!ALLOWED.has(tag)) return "";
@@ -27,15 +31,20 @@ function sanitize(html) {
       const src = attr(rest, "src");
       out = src && IMG_HOST.test(src) ? `<img src="${escHtml(src)}" alt="" loading="lazy">` : "";
     } else if (tag === "span" && /ql-formula/.test(attr(rest, "class") || "")) {
-      // fórmula do editor (LaTeX): mostra o texto como código
-      out = `<code class="formula">${escHtml(attr(rest, "data-value") || "")}</code><span hidden>`;
+      // fórmula do editor (LaTeX): guarda o código; o app converte para texto (\quad sozinho = só espaço)
+      const tex = attr(rest, "data-value") || "";
+      out = /^(\s|\\quad|\\qquad|\\[,;: !])*$/.test(tex) ? "<span hidden>" : `<code class="formula">${escHtml(tex)}</code><span hidden>`;
     } else {
       const cls = (attr(rest, "class") || "").split(/\s+/).filter(c => /^ql-(font-monospace|indent-\d|align-(center|right|justify))$/.test(c));
       const st = attr(rest, "style") || "";
       const ind = st.match(/text-indent:\s*(\d+(?:\.\d+)?)em/i);
       const al = st.match(/text-align:\s*(center|right)/i);
       const style = [ind && `text-indent:${Math.min(+ind[1], 10)}em`, al && `text-align:${al[1].toLowerCase()}`].filter(Boolean).join(";");
-      const span = (tag === "td" || tag === "th") ? ["colspan", "rowspan"].map(n => { const v = attr(rest, n); return v && /^\d{1,2}$/.test(v) ? ` ${n}="${v}"` : ""; }).join("") : "";
+      const span = (tag === "td" || tag === "th") ? ["colspan", "rowspan"].map(n => { const v = attr(rest, n); return v && /^\d{1,2}$/.test(v) && v !== "1" ? ` ${n}="${v}"` : ""; }).join("") : "";
+      // célula com fundo colorido (cabeçalho) → destaque neutro; lista com marcadores do editor → li.b
+      const bg = (st.match(/background-color:\s*([^;"]+)/i) || [])[1] || "";
+      if ((tag === "td" || tag === "th") && bg && !/^(rgb\(\s*255,\s*255,\s*255\s*\)|#fff(fff)?|white|transparent)$/i.test(bg.trim())) cls.push("hl");
+      if (tag === "li" && attr(rest, "data-list") === "bullet") cls.push("b");
       out = `<${tag}${cls.length ? ` class="${cls.join(" ")}"` : ""}${style ? ` style="${style}"` : ""}${span}>`;
     }
     keep.push(out);
