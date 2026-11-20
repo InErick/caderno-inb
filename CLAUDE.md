@@ -123,12 +123,13 @@ Desempenho mostra horas, % por matéria e o card do banco (questões feitas × t
   flashcards `<div class="cards"><details><summary>pergunta</summary><div>resposta</div></details></div>`,
   questão `<div class="q"><div class="q-n">Questão 1 · inédita</div><p class="q-stem">…</p><ol class="alts"><li class="alt" data-l="A">…</li></ol><details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> …</p></div></details></div>`,
   `.checklist`, `.reais`, `.src muted small`. O PDF abre todos os `<details>` antes de imprimir.
-- **Padrão a partir de 19/11** (pedido do Erick: os vídeos do YouTube não batiam com as questões):
-  1. Rodar `exportar-questoes.js` para a semana e ler as 20 questões da aula + o banco do tema.
-  2. Escrever a apostila em cima do que as questões cobram: roteiro de 1 h, teoria com exemplos resolvidos, palavras-chave da FGV, pegadinhas, mapa-resumo, flashcards, 10–12 exercícios **inéditos** com gabarito comentado (nunca copiar questão da API), tabela "assunto da questão → seção", fontes oficiais, checklist.
-  3. Revisão independente por um segundo agente (fatos, contas dos exercícios, cobertura das questões, HTML).
-  4. PR → merge → Erick dá `git pull` na VPS.
-- Feito: 10–15/11 (fase anterior) e **19/11 dos dois cargos** (aguardando revisão do Erick). Próximo: 20–25/11 dos dois cargos.
+- **Padrão a partir de 19/11** (pedidos do Erick: os vídeos do YouTube não batiam com as questões; depois, "texto mais extenso e profundo, é estudo para concurso"):
+  1. Rodar `exportar-questoes.js` para a semana e ler as 20 questões da aula + o banco do tema, só para saber **o que estudar e em que profundidade**.
+  2. Escrever um **capítulo de estudo** completo (60–75 KB de HTML): teoria extensa e aprofundada, em prosa, cobrindo tudo o que o banco cobra e o entorno do tema; exemplos resolvidos e rastreios de código; tabelas comparativas; boxes de pegadinhas e "na prova"; síntese; flashcards; 12–14 exercícios com gabarito comentado (rótulo "Exercício N"); fontes; checklist.
+  3. **Não** incluir: roteiro de minutos (bloco `.roteiro`), referências às questões da aula como se já existissem ("as 20 questões da aula", "na questão X", tabela questão → seção), cópia ou paráfrase próxima de questões da API.
+  4. Revisão independente por um segundo agente (fatos, contas dos exercícios, cobertura do banco, cópias, HTML).
+  5. PR → merge → Erick dá `git pull` na VPS.
+- Feito: 10–15/11 (fase anterior) e **19/11 dos dois cargos** (reescritas no padrão novo em 20/11, aguardando aprovação do Erick). Próximo: 20–25/11 dos dois cargos.
 - Lembrete agendado para **26/11/2026 às 9h** (São Paulo): preparar as apostilas da semana 2 (26/11–02/12). O Erick precisa exportar e mandar o .txt.
 
 ## 8. Fluxo de git (Claude)
