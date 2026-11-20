@@ -469,6 +469,14 @@ body.reading { background: #fff; }
 .reais li .src { font-weight: 700; }
 .reais li a { color: var(--coral); font-weight: 600; word-break: break-word; }
 .checklist li { list-style: "☐  "; }
+.apostila pre { background: #1f2a28; color: #e8efe9; border-radius: 10px; padding: 12px 14px; overflow-x: auto; font: 13.5px/1.55 ui-monospace, Consolas, monospace; margin: 10px 0; white-space: pre; }
+.apostila pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.apostila .q pre { font-size: 13px; }
+.apostila .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; margin: 12px 0; }
+.apostila .cards details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fbfaf7; font-size: 14.5px; line-height: 1.5; }
+.apostila .cards summary { cursor: pointer; font-weight: 700; }
+.apostila .cards details[open] { background: #f6fbf9; }
+.apostila .cards details > div { margin-top: 6px; }
 
 mark.hl { color: inherit; border-radius: 3px; padding: 1px 0; cursor: pointer; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 mark.hl-y, .dot.hl-y { background: #fde68a; } mark.hl-g, .dot.hl-g { background: #bbf0d2; }
@@ -514,6 +522,8 @@ mark.hl.flash { outline: 3px solid var(--coral); }
   body.printing-apostila .bm-here { box-shadow: none; margin-top: 10px !important; }
   body.printing-apostila .q, body.printing-apostila .box, body.printing-apostila table { break-inside: avoid; }
   body.printing-apostila .apostila h2 { break-after: avoid; }
+  body.printing-apostila .apostila pre { white-space: pre-wrap; break-inside: avoid; font-size: 9.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.printing-apostila .apostila .cards { grid-template-columns: 1fr 1fr; }
   body.printing-apostila .box, body.printing-apostila .roteiro div, body.printing-apostila th, body.printing-apostila .q .gab-body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body.printing-apostila .reais a::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 8.5pt; color: #666; }
 }

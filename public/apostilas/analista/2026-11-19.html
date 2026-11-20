@@ -1,0 +1,464 @@
+<h1>C# básico: tipos, operadores, decisões, laços e métodos</h1>
+<p class="lead">Hoje é o primeiro contato com a linguagem do cargo. As questões da FGV sobre C# básico são quase sempre <b>"qual a saída deste código?"</b> ou <b>"qual destas opções é válida?"</b>. Por isso a apostila foi montada em cima das questões reais da sua aula: cada seção ensina exatamente o que você precisa para resolver uma delas, com código comentado, armadilhas da banca e exercícios inéditos. No final há um panorama rápido de outras linguagens (JavaScript, Java, HTML/CSS e WSDL), porque o banco desse tema mistura essas questões com as de C#.</p>
+<div class="meta-row"><span class="chip-i">Específicos · C#</span><span class="chip-i">Dia 1 do cronograma</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="roteiro">
+  <div><b>0–10 min</b>Seções 1 e 2: tipos, variáveis e nullable</div>
+  <div><b>10–25 min</b>Seção 3: operadores (faça os "rastreios" no papel)</div>
+  <div><b>25–40 min</b>Seções 4 a 7: decisão, laços, métodos, exceções, arquivos</div>
+  <div><b>40–50 min</b>Seção 8: panorama de outras linguagens</div>
+  <div><b>50–60 min</b>Flashcards + exercícios inéditos. Depois, as 20 questões da aula no app</div>
+</div>
+
+<div class="box dica"><span class="bt">Como estudar este conteúdo</span>Questão de código se resolve com <b>rastreio</b> (trace table): pegue papel, faça uma coluna por variável e anote o valor depois de cada linha. Não tente "olhar e adivinhar". Nos exemplos abaixo, <b>cubra a resposta</b>, rastreie, e só então confira. Isso é prática de recuperação (active recall), a técnica com melhor resultado comprovado para memorização de longo prazo.</div>
+
+<h2>1. Estrutura de um programa e tipos de dados</h2>
+<p>Todo programa C# de console tem a mesma "casca". Você vai ver isso em quase toda questão, então aprenda a ignorar a casca e olhar o miolo do <code>Main</code>:</p>
+<pre><code>using System;                 // importa o namespace System (Console, Math, Exception...)
+namespace MeuApp              // agrupa as classes
+{
+    class Program
+    {
+        static void Main(string[] args)   // ponto de entrada do programa
+        {
+            Console.WriteLine("Olá");     // o que importa está aqui
+        }
+    }
+}</code></pre>
+
+<h3>Tipos de valor × tipos de referência</h3>
+<p>C# é <b>fortemente tipado</b>: toda variável tem um tipo definido em tempo de compilação. Os tipos se dividem em dois grupos:</p>
+<div class="tbl"><table>
+<tr><th>Grupo</th><th>Exemplos</th><th>O que a variável guarda</th></tr>
+<tr><td><b>Valor</b> (value types)</td><td><code>int</code>, <code>long</code>, <code>double</code>, <code>decimal</code>, <code>bool</code>, <code>char</code>, <code>struct</code>, <code>enum</code></td><td>O próprio valor. Copiar a variável copia o valor.</td></tr>
+<tr><td><b>Referência</b> (reference types)</td><td><code>string</code>, <code>object</code>, classes, arrays, interfaces, delegates</td><td>Uma referência para o objeto. Copiar a variável copia a referência (as duas apontam para o mesmo objeto).</td></tr>
+</table></div>
+
+<div class="tbl"><table>
+<tr><th>Tipo</th><th>Tamanho</th><th>Literal de exemplo</th><th>Observação</th></tr>
+<tr><td><code>byte</code> / <code>sbyte</code></td><td>8 bits</td><td><code>255</code></td><td>byte é sem sinal (0 a 255)</td></tr>
+<tr><td><code>short</code></td><td>16 bits</td><td><code>-300</code></td><td></td></tr>
+<tr><td><code>int</code></td><td>32 bits</td><td><code>42</code></td><td>tipo padrão de literal inteiro (alias de <code>System.Int32</code>)</td></tr>
+<tr><td><code>long</code></td><td>64 bits</td><td><code>42L</code></td><td></td></tr>
+<tr><td><code>float</code></td><td>32 bits</td><td><code>3.5f</code></td><td>exige o sufixo <code>f</code></td></tr>
+<tr><td><code>double</code></td><td>64 bits</td><td><code>3.5</code></td><td>tipo padrão de literal com ponto</td></tr>
+<tr><td><code>decimal</code></td><td>128 bits</td><td><code>3.5m</code></td><td>para dinheiro; exige o sufixo <code>m</code></td></tr>
+<tr><td><code>bool</code></td><td>—</td><td><code>true</code> / <code>false</code></td><td>não converte de/para int (≠ C)</td></tr>
+<tr><td><code>char</code></td><td>16 bits</td><td><code>'A'</code></td><td>aspas simples; <code>string</code> usa aspas duplas</td></tr>
+</table></div>
+
+<h3>Declaração, <code>var</code>, <code>const</code> e conversões</h3>
+<pre><code>int idade = 30;
+var nome = "Ana";        // var: o compilador deduz o tipo (string); segue tipado
+const double PI = 3.14;  // constante: valor fixo em tempo de compilação
+int x = (int)3.9;        // cast explícito: TRUNCA → 3 (não arredonda)
+double d = idade;        // conversão implícita (int → double, sem perda)
+int r = 7 / 2;           // divisão entre inteiros → 3
+double r2 = 7 / 2.0;     // um operando double → 3.5</code></pre>
+<div class="box atencao"><span class="bt">Pegadinhas</span><code>var</code> exige inicialização na mesma linha (<code>var a;</code> não compila) e só existe para variáveis locais. Variável local precisa receber valor antes de ser lida, senão é <b>erro de compilação</b> (não de execução). E <code>Console.WriteLine</code> de um <code>bool</code> imprime <code>True</code>/<code>False</code>, com inicial maiúscula.</div>
+
+<h2>2. Tipos anuláveis (<code>int?</code>) e o operador <code>??</code></h2>
+<p>Um tipo de valor como <code>int</code> não aceita <code>null</code>. Para permitir "sem valor", usa-se o tipo anulável: <code>int?</code> (abreviação de <code>Nullable&lt;int&gt;</code>). Ele tem as propriedades <code>HasValue</code> e <code>Value</code>.</p>
+<h3>O operador de coalescência nula <code>??</code></h3>
+<p><code>a ?? b</code> significa: <b>"use <code>a</code>; se <code>a</code> for null, use <code>b</code>"</b>. Não há nenhuma conta: é só uma escolha.</p>
+<pre><code>int? a = null;
+int? b = 7;
+double? c = 2.5;
+Console.WriteLine(a ?? b);   // 7   (a é null → pega b)
+Console.WriteLine(b ?? a);   // 7   (b não é null → fica com b)
+Console.WriteLine(c ?? b);   // 2.5
+Console.WriteLine(a ?? 0);   // 0   (valor padrão para "sem valor")
+string s = null;
+Console.WriteLine(s ?? "vazio");  // vazio</code></pre>
+<p>Se os dois lados forem null, o resultado é null, e o <code>WriteLine</code> imprime uma string vazia (nada aparece entre as vírgulas). Parentes do <code>??</code>: <code>x ??= y</code> (atribui y só se x for null) e <code>obj?.Prop</code> (acessa a propriedade só se obj não for null; senão o resultado é null).</p>
+
+<h3>Comparações com null: a regra que a FGV adora</h3>
+<p>Quando um dos lados de uma comparação é um anulável <b>null</b>:</p>
+<div class="tbl"><table>
+<tr><th>Operador</th><th>Com null de um lado</th><th>null com null</th></tr>
+<tr><td><code>&lt;  &gt;  &lt;=  &gt;=</code></td><td><b>false</b>, sempre</td><td><b>false</b></td></tr>
+<tr><td><code>==</code></td><td>false</td><td><b>true</b></td></tr>
+<tr><td><code>!=</code></td><td><b>true</b></td><td>false</td></tr>
+</table></div>
+<div class="box exemplo"><span class="bt">Exemplo resolvido</span>
+<pre><code>int? p = null;  int q = 10;  int? z = null;
+Console.WriteLine(p &gt; q);    // False  (null não é maior nem menor)
+Console.WriteLine(p &lt;= q);   // False  (nem "menor ou igual"!)
+Console.WriteLine(q != p);   // True   (10 é diferente de "sem valor")
+Console.WriteLine(z == p);   // True   (null == null)</code></pre>
+O detalhe que derruba muita gente: <code>p &lt;= q</code> é <b>False</b> e <code>p &gt; q</code> também é <b>False</b>. Com null, as duas comparações de ordem são falsas ao mesmo tempo.</div>
+
+<h2>3. Operadores</h2>
+<h3>Aritméticos e o resto (<code>%</code>)</h3>
+<p><code>+ - * / %</code>. O <code>%</code> devolve o <b>resto</b> da divisão inteira: <code>32 % 3 = 2</code> (pois 3 × 10 = 30, sobra 2). Com negativos, o resultado tem o <b>sinal do dividendo</b> (o da esquerda): <code>-7 % 3 = -1</code> e <code>7 % -3 = 1</code>. Truque útil: <code>i % 2 == 0</code> testa se i é par.</p>
+
+<h3>Incremento: pré × pós</h3>
+<pre><code>int a = 5;
+int b = ++a;   // pré: incrementa primeiro, depois usa → a = 6, b = 6
+int c = a++;   // pós: usa primeiro, depois incrementa → c = 6, a = 7
+int d = ++a + 1;  // a vira 8, d = 9</code></pre>
+
+<h3>Deslocamento de bits (<code>&gt;&gt;</code> e <code>&lt;&lt;</code>)</h3>
+<p>Deslocar <b>n</b> bits para a direita equivale a <b>dividir por 2ⁿ</b> (descartando a parte fracionária); para a esquerda, a <b>multiplicar por 2ⁿ</b>. Vale para positivos; com negativos, o <code>&gt;&gt;</code> arredonda para baixo (<code>-9 &gt;&gt; 1 = -5</code>).</p>
+<pre><code>20 &gt;&gt; 2   // 20 / 4 = 5       (10100 → 00101)
+9 &gt;&gt; 1    // 9 / 2 = 4        (1001 → 0100)
+3 &lt;&lt; 3    // 3 × 8 = 24</code></pre>
+
+<div class="box exemplo"><span class="bt">Rastreio completo (estilo FGV)</span>
+<pre><code>int[] v = { 12, 20, 17 };
+v[0] = v[0] &gt;&gt; 1;      // 12 / 2 = 6
+v[1] = v[1]++ + 2;     // usa 20, soma 2 → 22 (o ++ "se perde": a atribuição sobrescreve)
+v[2] = v[2] % 5;       // 17 = 5×3 + 2 → 2
+foreach (int n in v) Console.WriteLine(n);   // 6, 22, 2</code></pre>
+Repare no <code>v[1]++</code>: é pós-incremento, então a expressão vale 20; o resultado 22 é gravado em <code>v[1]</code> por cima do incremento. Se fosse <code>++v[1] + 2</code>, daria 21 + 2 = 23.</div>
+
+<h3>Comparação, lógicos e atribuição</h3>
+<div class="tbl"><table>
+<tr><th>Categoria</th><th>Operadores válidos em C#</th><th>NÃO existem em C#</th></tr>
+<tr><td>Comparação (relacionais e igualdade)</td><td><code>==  !=  &lt;  &gt;  &lt;=  &gt;=</code></td><td><code>&lt;&gt;</code> (VB/SQL), <code>===</code> e <code>!==</code> (JavaScript), <code>=</code> (isso é atribuição)</td></tr>
+<tr><td>Lógicos</td><td><code>&amp;&amp;</code> (E), <code>||</code> (OU), <code>!</code> (NÃO)</td><td><code>and</code>, <code>or</code>, <code>not</code> como operadores booleanos (existem só como combinadores de padrão, ex.: <code>x is &gt; 0 and &lt; 10</code>)</td></tr>
+<tr><td>Bit a bit</td><td><code>&amp;  |  ^  ~  &lt;&lt;  &gt;&gt;</code></td><td></td></tr>
+<tr><td>Atribuição</td><td><code>=  +=  -=  *=  /=  %=  ??=</code></td><td></td></tr>
+<tr><td>Condicional (ternário)</td><td><code>cond ? valorSeTrue : valorSeFalse</code></td><td></td></tr>
+</table></div>
+<p><b>Curto-circuito:</b> <code>&amp;&amp;</code> e <code>||</code> param assim que o resultado está decidido (em <code>false &amp;&amp; f()</code>, <code>f()</code> nem é chamada). Com <code>bool</code>, <code>&amp;</code> e <code>|</code> fazem o mesmo E/OU, mas avaliam <b>sempre os dois lados</b>.</p>
+<div class="box dica"><span class="bt">Mnemônico</span>"Igual é <b>dois</b>, diferente é <b>exclamação</b>": <code>==</code> e <code>!=</code>. Se aparecer <code>&lt;&gt;</code> ou <code>===</code> numa alternativa de C#, risque.</div>
+
+<h2>4. Decisões: <code>if</code> e <code>switch</code></h2>
+<pre><code>if (nota &gt;= 7) Console.WriteLine("Aprovado");
+else if (nota &gt;= 5) Console.WriteLine("Recuperação");
+else Console.WriteLine("Reprovado");
+
+switch (dia)
+{
+    case 1:
+    case 7:                       // rótulos vazios podem ser empilhados
+        Console.WriteLine("Fim de semana");
+        break;                    // obrigatório: C# não deixa "cair" para o próximo case
+    case 2:
+        Console.WriteLine("Segunda");
+        break;
+    default:
+        Console.WriteLine("Dia útil");
+        break;
+}</code></pre>
+<div class="box atencao"><span class="bt">Diferenças em relação a C/Java</span>A condição do <code>if</code> tem que ser <code>bool</code>: <code>if (x = 5)</code> ou <code>if (1)</code> <b>não compilam</b>. No <code>switch</code>, uma seção com código que não termina em <code>break</code>, <code>return</code>, <code>throw</code> ou <code>goto case</code> é <b>erro de compilação</b> (não existe fall-through implícito). E o <code>switch</code> aceita <code>string</code>.</div>
+
+<h2>5. Laços, <code>break</code>, <code>continue</code> e escopo</h2>
+<pre><code>for (int i = 0; i &lt; 3; i++) { ... }     // inicialização; condição; passo
+while (cond) { ... }                     // testa antes (pode rodar 0 vezes)
+do { ... } while (cond);                 // testa depois (roda pelo menos 1 vez)
+foreach (var item in lista) { ... }      // percorre coleção (item é somente leitura)
+for (;;) { ... }                         // laço infinito válido (sai com break/return)</code></pre>
+
+<h3><code>break</code> × <code>continue</code></h3>
+<ul>
+<li><code>break</code>: <b>sai do laço</b> imediatamente.</li>
+<li><code>continue</code>: <b>pula o resto desta volta</b> e vai para a próxima.</li>
+</ul>
+<div class="box exemplo"><span class="bt">Contando chamadas</span>
+<pre><code>for (int i = 1; i &lt;= 6; i++) {
+    if (i % 3 == 0) break;
+    A(i);                 // i = 1, 2 → A chamada 2 vezes; em i = 3 o laço acaba
+}
+for (int i = 1; i &lt;= 6; i++) {
+    if (i % 3 == 0) continue;
+    B(i);                 // pula 3 e 6 → B chamada 4 vezes (1, 2, 4, 5)
+}</code></pre>
+Atenção ao valor inicial: se o laço começar em <code>i = 0</code> e o teste for <code>i % 2 == 0</code> com <code>break</code>, o laço termina <b>na primeira volta</b> (0 é par), e a função nunca é chamada.</div>
+
+<h3>Escopo da variável do <code>for</code></h3>
+<p>A variável declarada no cabeçalho do <code>for</code> só existe <b>dentro do laço</b>. Usá-la depois gera <b>erro de compilação</b> ("o nome 'i' não existe no contexto atual"), não erro de execução:</p>
+<pre><code>for (int i = 0; i &lt; 5; i++) { }
+Console.WriteLine(i);      // ❌ não compila
+
+int j;
+for (j = 0; j &lt; 5; j++) { }
+Console.WriteLine(j);      // ✅ imprime 5 (j foi declarada fora)</code></pre>
+
+<h2>6. Métodos e parâmetros</h2>
+<pre><code>static int Soma(int a, int b) =&gt; a + b;          // corpo de expressão
+static void Dobra(ref int x) { x *= 2; }          // ref: altera a variável de quem chamou
+static bool TentaLer(string s, out int r) {       // out: o método é obrigado a atribuir r
+    return int.TryParse(s, out r);
+}
+static double Media(params int[] v) { ... }       // params: número variável de argumentos
+static void Saudar(string nome, string pre = "Olá") { ... }  // parâmetro opcional
+
+int n = 5;  Dobra(ref n);          // n = 10
+Saudar(pre: "Oi", nome: "Ana");    // argumentos nomeados, em qualquer ordem</code></pre>
+<div class="tbl"><table>
+<tr><th>Modificador</th><th>Precisa estar inicializado antes?</th><th>O método precisa atribuir?</th></tr>
+<tr><td>(nenhum)</td><td>sim</td><td>não; o método recebe uma <b>cópia</b></td></tr>
+<tr><td><code>ref</code></td><td><b>sim</b></td><td>não</td></tr>
+<tr><td><code>out</code></td><td>não</td><td><b>sim</b>, antes de retornar</td></tr>
+<tr><td><code>in</code></td><td>sim</td><td>não pode alterar (referência somente leitura)</td></tr>
+</table></div>
+<p>Também vale saber: <b>sobrecarga</b> (overload) é ter vários métodos com o mesmo nome e listas de parâmetros diferentes; o tipo de retorno sozinho não diferencia sobrecargas. Parâmetros opcionais vêm depois dos obrigatórios, e <code>params</code> tem que ser o último.</p>
+
+<h2>7. Exceções, diretivas de pré-processador e arquivos</h2>
+<h3>Estrutura de tratamento de erros</h3>
+<pre><code>try
+{
+    int z = int.Parse(texto);          // código que pode falhar
+}
+catch (FormatException e)              // mais específica primeiro
+{
+    Console.WriteLine(e.Message);
+}
+catch (Exception e)                    // mais geral por último
+{
+    throw;                             // relança mantendo o stack trace
+}
+finally
+{
+    Console.WriteLine("sempre executa");  // com ou sem exceção
+}</code></pre>
+<div class="box atencao"><span class="bt">O que a banca troca</span>As alternativas erradas inventam <code>on error</code>, <code>except</code> (Python) ou <code>rescue</code> (Ruby). Em C#: <b>try / catch (Tipo nome) / finally</b>; um <code>catch { }</code> sem parênteses também é válido (captura qualquer exceção), e <code>try</code> + <code>finally</code> sem catch também. Um <code>catch</code> genérico antes de um específico não compila. O tema volta com mais profundidade no dia de Exceções + SOLID.</div>
+
+<h3>Debug × Release: <code>#if DEBUG</code></h3>
+<p>As <b>diretivas de pré-processador</b> começam com <code>#</code> e são avaliadas na compilação. Na configuração Debug, o símbolo <code>DEBUG</code> já vem definido; na Release, não. Assim, só um dos blocos entra no programa compilado:</p>
+<pre><code>#if DEBUG
+    imagem = "logo-teste.png";
+#else
+    imagem = "logo.png";
+#endif</code></pre>
+<p>Outras diretivas: <code>#define</code>/<code>#undef</code> (definem símbolos, no topo do arquivo), <code>#elif</code>, <code>#region</code>/<code>#endregion</code> (só organização visual), <code>#warning</code> e <code>#error</code>. Note que é <code>#if</code> … <code>#endif</code>, sem chaves e sem parênteses obrigatórios.</p>
+
+<h3>Arquivos: a classe estática <code>System.IO.File</code></h3>
+<p>A FGV cobra a <b>lista de métodos válidos</b>. Os principais (todos estáticos):</p>
+<div class="tbl"><table>
+<tr><th>Para…</th><th>Métodos que EXISTEM</th></tr>
+<tr><td>Verificar / apagar / copiar / mover</td><td><code>Exists</code>, <code>Delete</code>, <code>Copy</code>, <code>Move</code>, <code>Replace</code></td></tr>
+<tr><td>Ler tudo de uma vez</td><td><code>ReadAllText</code>, <code>ReadAllLines</code>, <code>ReadAllBytes</code>, <code>ReadLines</code> (lê sob demanda)</td></tr>
+<tr><td>Escrever</td><td><code>WriteAllText</code>, <code>WriteAllLines</code>, <code>WriteAllBytes</code>, <code>AppendAllText</code>, <code>AppendAllLines</code>, <code>AppendText</code></td></tr>
+<tr><td>Abrir fluxos</td><td><code>Open</code>, <code>OpenRead</code>, <code>OpenWrite</code>, <code>OpenText</code>, <code>Create</code>, <code>CreateText</code></td></tr>
+<tr><td>Criptografia e atributos</td><td><code>Encrypt</code>, <code>Decrypt</code>, <code>GetAttributes</code>, <code>SetAttributes</code>, <code>GetLastWriteTime</code></td></tr>
+</table></div>
+<p><b>Não existem</b> (distratores típicos): <code>Erase</code>, <code>Count</code>, <code>Uncrypt</code>, <code>OpenReadWrite</code>, <code>Rename</code> (renomeia-se com <code>Move</code>), <code>Size</code>/<code>Length</code> (o tamanho fica em <code>new FileInfo(caminho).Length</code>).</p>
+
+<h3><code>FileStream</code> e o enum <code>FileMode</code></h3>
+<pre><code>using (var fs = new FileStream("dados.txt", FileMode.OpenOrCreate, FileAccess.ReadWrite)) { ... }</code></pre>
+<div class="tbl"><table>
+<tr><th>FileMode</th><th>Comportamento</th></tr>
+<tr><td><code>CreateNew</code></td><td>cria; dá erro se o arquivo já existir</td></tr>
+<tr><td><code>Create</code></td><td>cria; se existir, sobrescreve</td></tr>
+<tr><td><code>Open</code></td><td>abre; erro se não existir</td></tr>
+<tr><td><code>OpenOrCreate</code></td><td>abre se existir, senão cria</td></tr>
+<tr><td><code>Truncate</code></td><td>abre um arquivo existente e zera o conteúdo</td></tr>
+<tr><td><code>Append</code></td><td>abre (ou cria) e posiciona no fim, só para escrita</td></tr>
+</table></div>
+<p>São <b>seis</b>. Nomes como <code>Rewrite</code>, <code>Overwrite</code> ou <code>ReadWrite</code> <b>não</b> são FileMode (<code>ReadWrite</code> é valor de <code>FileAccess</code>, outro enum). O <code>using</code> garante que o arquivo seja fechado no fim do bloco.</p>
+<div class="box dica"><span class="bt">Para memorizar os 6 FileMode</span>Pense no ciclo de vida: <b>Create</b>, <b>CreateNew</b> (nascer), <b>Open</b>, <b>OpenOrCreate</b> (abrir), <b>Truncate</b> (esvaziar), <b>Append</b> (acrescentar).</div>
+
+<h2>8. Panorama: outras linguagens que caem junto</h2>
+<p>No banco de questões do tema, mais da metade é de "Linguagens de Programação" em geral. Não é o foco do dia, mas estes pontos resolvem a maioria delas.</p>
+
+<h3>Compiladas × interpretadas</h3>
+<ul>
+<li><b>Primordialmente interpretadas</b> (scripts): <b>Perl, PHP, Python, JavaScript, Ruby</b>.</li>
+<li><b>Compiladas para código de máquina</b>: C, C++, Go, Rust, Pascal.</li>
+<li><b>Híbridas</b> (compilam para código intermediário e usam máquina virtual/JIT): <b>Java</b> (bytecode, JVM) e <b>C#</b> (IL, CLR do .NET).</li>
+</ul>
+
+<h3>JavaScript</h3>
+<pre><code>&lt;script src="scripts/app.js"&gt;&lt;/script&gt;   &lt;!-- forma correta de incluir um arquivo .js --&gt;
+
+function f() {
+  total = 10;     // sem var/let/const: vira variável GLOBAL (fora do modo estrito)
+  var a;          // declarada sem valor → undefined
+  console.log(a); // undefined
+}</code></pre>
+<p><code>let</code> e <code>const</code> têm escopo de bloco; <code>var</code> tem escopo de função. Em JavaScript <code>===</code> compara valor <b>e tipo</b> (<code>"1" === 1</code> é false), e <code>==</code> converte tipos antes de comparar.</p>
+<h3>JavaScript: texto × número e ordem de avaliação</h3>
+<p>O <code>+</code> com uma string <b>concatena</b>; os outros operadores aritméticos convertem para número. Valores lidos da página (<code>innerHTML</code>, <code>value</code> de um campo) são <b>strings</b>.</p>
+<pre><code>"2" + 1        // "21"  (concatena)
+"2" * 3        // 6     (converte para número)
+Number("2") + 1   // 3
+parseInt("7px")   // 7</code></pre>
+<div class="box exemplo"><span class="bt">Rastreio: botão e variável global</span>
+<pre><code>&lt;p id="out"&gt;0&lt;/p&gt;
+&lt;button onclick="soma()"&gt;+&lt;/button&gt;
+&lt;script&gt;
+function soma() {
+  var el = document.getElementById("out");
+  el.innerHTML = Number(el.innerHTML) + 2;   // 2, 4, 6 ...
+}
+&lt;/script&gt;</code></pre>
+Clicando 3 vezes, o parágrafo mostra <b>6</b>. Sem o <code>Number()</code>, o resultado seria texto: "02", depois "022", "0222".<br>
+<pre><code>function g1() { k = 5; return k * 2; }   // k vira global
+function g2() { return k * 3; }
+console.log(g1() + g2());                 // 10 + 15 = 25</code></pre>
+A expressão é avaliada da <b>esquerda para a direita</b>: <code>g1()</code> roda primeiro e cria a global <code>k = 5</code>, então <code>g2()</code> já a enxerga. Se a ordem fosse <code>g2() + g1()</code>, daria erro (<code>k</code> ainda não existe).</div>
+
+<h3>Java</h3>
+<ul>
+<li>Arrays: <code>int[] a = new int[5];</code> ou <code>int[] b = {1, 2, 3};</code>. Índices de 0 a <code>length - 1</code>; <code>a.length</code> é atributo (sem parênteses). Acessar fora gera <code>ArrayIndexOutOfBoundsException</code>.</li>
+<li>Matrizes (arrays de arrays): <code>int[][] m = {{1, 2}, {3, 4, 5}};</code>. <code>m.length</code> é o número de linhas (2) e <code>m[i].length</code> o tamanho da linha i (as linhas podem ter tamanhos diferentes). <code>m[1][2]</code> vale 5. Para pegar o primeiro elemento de cada linha: <code>for (int i = 0; i &lt; m.length; i++) System.out.println(m[i][0]);</code> → 1 e 3.</li>
+<li>Construtores: mesmo nome da classe, <b>sem tipo de retorno</b>, podem ser sobrecarregados; o construtor padrão só é criado se a classe não declarar nenhum. <b>Classe abstrata pode ter construtor</b>; <b>interface não tem</b>. O construtor aceita qualquer modificador de acesso (public, protected, private ou o padrão); não precisa ser private.</li>
+<li>Expressões regulares (<code>java.util.regex</code>): as três classes são <b><code>Pattern</code></b> (a expressão compilada), <b><code>Matcher</code></b> (aplica a expressão a um texto: <code>matches()</code>, <code>find()</code>, <code>group()</code>) e <b><code>PatternSyntaxException</code></b> (erro de sintaxe na expressão).</li>
+</ul>
+
+<h3>HTML5 e CSS3</h3>
+<ul>
+<li><code>&lt;canvas&gt;</code>: uma área retangular onde se <b>desenham gráficos via JavaScript</b> (<code>getContext("2d")</code>). Sozinha não desenha nada.</li>
+<li>Formatação: <code>&lt;b&gt;</code> negrito, <code>&lt;i&gt;</code> itálico, <code>&lt;u&gt;</code> <b>sublinhado</b>, <code>&lt;s&gt;</code> riscado, <code>&lt;strong&gt;</code>/<code>&lt;em&gt;</code> ênfase semântica.</li>
+</ul>
+<div class="tbl"><table>
+<tr><th>Seletor CSS</th><th>Seleciona</th></tr>
+<tr><td><code>x[y]</code></td><td>elementos <b>x</b> que <b>têm o atributo y</b> (qualquer valor)</td></tr>
+<tr><td><code>x[y="v"]</code> · <code>[y^="v"]</code> · <code>[y$="v"]</code> · <code>[y*="v"]</code></td><td>valor igual a · começa com · termina com · contém v</td></tr>
+<tr><td><code>x y</code></td><td>y descendente (em qualquer nível) de x</td></tr>
+<tr><td><code>x &gt; y</code></td><td>y filho direto de x</td></tr>
+<tr><td><code>x + y</code> · <code>x ~ y</code></td><td>y imediatamente após x · qualquer irmão y depois de x</td></tr>
+</table></div>
+
+<h3>WSDL (descrição de web services)</h3>
+<p>A WSDL é um XML que descreve o que um serviço web oferece. Na <b>versão 2.0</b>, a raiz é <code>&lt;description&gt;</code> e os componentes são:</p>
+<div class="tbl"><table>
+<tr><th>WSDL 2.0</th><th>Função</th><th>Equivalente na 1.1</th></tr>
+<tr><td><code>types</code></td><td>tipos de dados (XML Schema)</td><td><code>types</code></td></tr>
+<tr><td><code>interface</code></td><td>operações abstratas e as <b>mensagens</b> que o serviço envia/recebe</td><td><code>portType</code> + <code>message</code></td></tr>
+<tr><td><code>binding</code></td><td>protocolo e formato concretos (ex.: SOAP sobre HTTP)</td><td><code>binding</code></td></tr>
+<tr><td><code>service</code> / <code>endpoint</code></td><td>onde o serviço está (endereço de acesso)</td><td><code>service</code> / <code>port</code></td></tr>
+</table></div>
+<div class="box prova"><span class="bt">Como a FGV pergunta</span>"Na WSDL 2.0, qual elemento descreve as mensagens?" → <code>interface</code> (o elemento <code>message</code> da 1.1 deixou de existir). "Qual componente define o endereço/ponto de acesso?" → <code>service</code>, com seus <code>endpoint</code>s.</div>
+
+<h2>Mapa-resumo</h2>
+<div class="tbl"><table>
+<tr><th>Se a questão mostrar…</th><th>Lembre que…</th></tr>
+<tr><td><code>a ?? b</code></td><td>a, se não for null; senão b</td></tr>
+<tr><td><code>null &gt; x</code>, <code>null &lt;= x</code></td><td>False (ordem com null é sempre falsa)</td></tr>
+<tr><td><code>null == null</code> · <code>x != null</code></td><td>True · True</td></tr>
+<tr><td><code>n &gt;&gt; k</code> · <code>n &lt;&lt; k</code></td><td>n ÷ 2ᵏ (inteiro) · n × 2ᵏ</td></tr>
+<tr><td><code>++x</code> × <code>x++</code></td><td>pré soma antes de usar; pós usa e depois soma</td></tr>
+<tr><td>variável do <code>for</code> usada fora</td><td>erro de compilação</td></tr>
+<tr><td><code>break</code> × <code>continue</code></td><td>sai do laço × pula para a próxima volta</td></tr>
+<tr><td><code>&lt;&gt;</code>, <code>===</code></td><td>não existem em C#</td></tr>
+<tr><td>Debug × Release</td><td><code>#if DEBUG … #else … #endif</code></td></tr>
+<tr><td>Métodos de <code>File</code></td><td>Erase, Count, OpenReadWrite, Rename não existem; Encrypt e ReadLines existem</td></tr>
+<tr><td>FileMode</td><td>Create, CreateNew, Open, OpenOrCreate, Truncate, Append</td></tr>
+</table></div>
+
+<h2>Flashcards (responda antes de abrir)</h2>
+<div class="cards">
+<details><summary>Qual o tipo padrão de <code>2.5</code> em C#?</summary><div><code>double</code>. Para float use <code>2.5f</code>; para decimal, <code>2.5m</code>.</div></details>
+<details><summary><code>(int)8.99</code> vale?</summary><div>8. O cast trunca.</div></details>
+<details><summary><code>-9 % 4</code> vale?</summary><div>-1 (sinal do dividendo).</div></details>
+<details><summary><code>40 &gt;&gt; 3</code> vale?</summary><div>5 (40 ÷ 8).</div></details>
+<details><summary><code>int? a = null;</code> o que imprime <code>a &gt;= 0</code>?</summary><div>False.</div></details>
+<details><summary>Diferença entre <code>ref</code> e <code>out</code>?</summary><div>ref exige variável inicializada antes; out exige que o método atribua.</div></details>
+<details><summary>Um <code>case</code> com código sem <code>break</code>…</summary><div>não compila (C# não tem fall-through implícito).</div></details>
+<details><summary>Quais as 3 classes de <code>java.util.regex</code>?</summary><div>Pattern, Matcher, PatternSyntaxException.</div></details>
+<details><summary>O que seleciona <code>a[href]</code>?</summary><div>Links (<code>a</code>) que possuem o atributo href.</div></details>
+<details><summary>WSDL 2.0: elemento das mensagens?</summary><div><code>interface</code>.</div></details>
+<details><summary>Em JS, <code>"5" + 1</code> e <code>"5" * 1</code>?</summary><div>"51" e 5.</div></details>
+<details><summary>Interface Java tem construtor?</summary><div>Não. Classe abstrata pode ter.</div></details>
+<details><summary>Perl, PHP e Python são…</summary><div>primordialmente interpretadas.</div></details>
+</div>
+
+<h2>Exercícios de fixação (inéditos)</h2>
+
+<div class="q"><div class="q-n">Questão 1 · inédita</div><p class="q-stem">Considere o trecho em C#:</p>
+<pre><code>int[] t = { 7, 48, 25 };
+t[0] = t[0] % 4;
+t[1] = t[1] &gt;&gt; 3;
+t[2] = t[2]++ - 5;
+foreach (int k in t) Console.Write(k + " ");</code></pre>
+<p class="q-stem">A saída é:</p>
+<ol class="alts"><li class="alt" data-l="A">3 6 20</li><li class="alt" data-l="B">3 6 21</li><li class="alt" data-l="C">1 6 20</li><li class="alt" data-l="D">3 16 21</li><li class="alt" data-l="E">3 5 20</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> 7 % 4 = 3 (7 = 4 + 3). 48 &gt;&gt; 3 = 48 ÷ 8 = 6. <code>t[2]++</code> vale 25 na expressão (pós-incremento), 25 − 5 = 20, e a atribuição grava 20 por cima. A alternativa B é a pegadinha de quem trata o pós como pré.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 2 · inédita</div><p class="q-stem">Em C#, assinale a opção que contém apenas operadores de comparação válidos.</p>
+<ol class="alts"><li class="alt" data-l="A"><code>==  &lt;&gt;  &gt;=</code></li><li class="alt" data-l="B"><code>===  !=  &lt;</code></li><li class="alt" data-l="C"><code>!=  &lt;=  &gt;</code></li><li class="alt" data-l="D"><code>=  ==  !=</code></li><li class="alt" data-l="E"><code>=&lt;  =&gt;  ==</code></li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> <code>&lt;&gt;</code> é de VB/SQL, <code>===</code> é de JavaScript, <code>=</code> é atribuição e <code>=&lt;</code> não existe (<code>=&gt;</code> é o operador lambda, não comparação).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 3 · inédita</div><p class="q-stem">Analise:</p>
+<pre><code>int? m = null;  int? n = 3;  int? o = null;
+Console.WriteLine(m ?? n);
+Console.WriteLine(m &lt; n);
+Console.WriteLine(o == m);
+Console.WriteLine(n != m);</code></pre>
+<p class="q-stem">São exibidos, na ordem:</p>
+<ol class="alts"><li class="alt" data-l="A">3, True, True, True</li><li class="alt" data-l="B">3, False, True, True</li><li class="alt" data-l="C">(vazio), False, False, True</li><li class="alt" data-l="D">3, False, False, False</li><li class="alt" data-l="E">null, False, True, True</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> <code>m ?? n</code>: m é null, então 3. <code>m &lt; n</code>: comparação de ordem com null é sempre False. <code>o == m</code>: null == null é True. <code>n != m</code>: 3 é diferente de null, True.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 4 · inédita</div><p class="q-stem">Considere:</p>
+<pre><code>for (int i = 1; i &lt;= 10; i++) {
+    if (i % 4 == 0) continue;
+    P(i);
+}
+for (int i = 1; i &lt;= 10; i++) {
+    if (i % 4 == 0) break;
+    Q(i);
+}</code></pre>
+<p class="q-stem">Os métodos P e Q são chamados, respectivamente:</p>
+<ol class="alts"><li class="alt" data-l="A">8 e 3 vezes</li><li class="alt" data-l="B">7 e 3 vezes</li><li class="alt" data-l="C">8 e 4 vezes</li><li class="alt" data-l="D">10 e 3 vezes</li><li class="alt" data-l="E">2 e 8 vezes</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> No primeiro laço, o continue pula os múltiplos de 4 entre 1 e 10 (4 e 8): 10 − 2 = 8 chamadas. No segundo, o break encerra o laço em i = 4, então Q roda para 1, 2 e 3.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 5 · inédita</div><p class="q-stem">Sobre o código abaixo, é correto afirmar que:</p>
+<pre><code>static void Main() {
+    int total = 0;
+    for (int k = 0; k &lt; 3; k++) total += k;
+    Console.WriteLine(total + k);
+}</code></pre>
+<ol class="alts"><li class="alt" data-l="A">exibe 6</li><li class="alt" data-l="B">exibe 3</li><li class="alt" data-l="C">exibe 5</li><li class="alt" data-l="D">gera erro de compilação</li><li class="alt" data-l="E">gera uma exceção em tempo de execução</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> <code>k</code> foi declarada no cabeçalho do for e não existe fora dele. O compilador recusa o programa antes de qualquer execução.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 6 · inédita</div><p class="q-stem">Um programa deve gravar logs detalhados apenas quando compilado na configuração Debug. A construção adequada em C# é:</p>
+<ol class="alts"><li class="alt" data-l="A"><code>if (DEBUG) { Log(); }</code></li><li class="alt" data-l="B"><code>#if DEBUG Log(); #endif</code>, com cada diretiva em sua própria linha</li><li class="alt" data-l="C"><code>#ifdef DEBUG { Log(); }</code></li><li class="alt" data-l="D"><code>#when DEBUG Log(); #end</code></li><li class="alt" data-l="E"><code>@if(Debug) Log(); @endif</code></li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Em C# a compilação condicional usa <code>#if</code> / <code>#else</code> / <code>#endif</code>, cada diretiva em uma linha. <code>#ifdef</code> é de C/C++; <code>if (DEBUG)</code> trataria DEBUG como variável, que não existe.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 7 · inédita</div><p class="q-stem">Assinale a opção que contém somente métodos estáticos existentes na classe <code>System.IO.File</code>.</p>
+<ol class="alts"><li class="alt" data-l="A">Copy; Rename</li><li class="alt" data-l="B">AppendAllText; Size</li><li class="alt" data-l="C">Move; ReadAllLines</li><li class="alt" data-l="D">Erase; Exists</li><li class="alt" data-l="E">OpenReadWrite; Decrypt</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Não existem <code>Rename</code> (usa-se Move), <code>Size</code> (usa-se FileInfo.Length), <code>Erase</code> (o certo é Delete) nem <code>OpenReadWrite</code> (usa-se Open com FileAccess.ReadWrite).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 8 · inédita</div><p class="q-stem">Ao criar um <code>FileStream</code>, deseja-se abrir um arquivo existente e apagar todo o seu conteúdo, gerando erro caso ele não exista. O valor de <code>FileMode</code> adequado é:</p>
+<ol class="alts"><li class="alt" data-l="A">Create</li><li class="alt" data-l="B">Truncate</li><li class="alt" data-l="C">OpenOrCreate</li><li class="alt" data-l="D">Rewrite</li><li class="alt" data-l="E">Append</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Truncate abre um arquivo que já existe e o zera. Create também apagaria o conteúdo, mas criaria o arquivo se ele não existisse, sem gerar erro. Rewrite não existe.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 9 · inédita</div><p class="q-stem">Sobre tratamento de exceções em C#, assinale a afirmativa correta.</p>
+<ol class="alts"><li class="alt" data-l="A">O bloco <code>finally</code> só executa quando nenhuma exceção é lançada.</li><li class="alt" data-l="B">É possível escrever <code>catch (Exception e)</code> antes de <code>catch (FormatException e)</code> no mesmo try.</li><li class="alt" data-l="C">Uma estrutura válida é <code>try { } catch (Exception e) { } finally { }</code>, sendo o bloco <code>finally</code> opcional.</li><li class="alt" data-l="D">O tratamento é feito com <code>try</code> / <code>except</code>.</li><li class="alt" data-l="E">Todo <code>try</code> exige pelo menos um <code>catch</code>.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O finally executa sempre (A errada). O catch genérico antes do específico não compila (B). <code>except</code> é Python (D). E <code>try</code> + <code>finally</code>, sem catch, é válido (E errada).</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 10 · inédita</div><p class="q-stem">Na especificação WSDL 2.0, o componente que agrupa as operações abstratas de um serviço, incluindo as mensagens trocadas, é:</p>
+<ol class="alts"><li class="alt" data-l="A">portType</li><li class="alt" data-l="B">message</li><li class="alt" data-l="C">interface</li><li class="alt" data-l="D">endpoint</li><li class="alt" data-l="E">binding</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Na 2.0, <code>interface</code> substituiu o <code>portType</code> e absorveu as mensagens (o elemento <code>message</code> da 1.1 foi removido). <code>binding</code> define protocolo/formato e <code>endpoint</code> (dentro de <code>service</code>) define o endereço.</p></div></details></div>
+
+<div class="q"><div class="q-n">Questão 11 · inédita</div><p class="q-stem">Em CSS3, o seletor <code>input[required]</code> seleciona:</p>
+<ol class="alts"><li class="alt" data-l="A">todos os elementos com a classe required</li><li class="alt" data-l="B">elementos input que possuem o atributo required</li><li class="alt" data-l="C">elementos required filhos de input</li><li class="alt" data-l="D">o elemento com id required</li><li class="alt" data-l="E">elementos input cujo valor é "required"</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> <code>x[y]</code> seleciona elementos x que têm o atributo y, qualquer que seja o valor. Classe seria <code>.required</code>; id, <code>#required</code>.</p></div></details></div>
+
+<h2>Agora, as 20 questões da aula</h2>
+<p>Abra as questões pelo botão da aula no app. A tabela mostra onde está a teoria de cada assunto que aparece nelas. Ao errar uma, volte à seção indicada antes de ver o comentário.</p>
+<div class="tbl"><table>
+<tr><th>Assunto da questão</th><th>Seção</th></tr>
+<tr><td>Métodos válidos da classe File</td><td>7</td></tr>
+<tr><td>Estrutura try/catch/finally</td><td>7</td></tr>
+<tr><td>Saída com <code>&gt;&gt;</code>, <code>++</code> e <code>%</code> em array</td><td>3</td></tr>
+<tr><td>Variável do for usada fora do laço</td><td>5</td></tr>
+<tr><td>Operadores de comparação válidos / símbolos de operadores</td><td>3</td></tr>
+<tr><td>Debug × Release</td><td>7</td></tr>
+<tr><td>break × continue (contar chamadas)</td><td>5</td></tr>
+<tr><td><code>??</code> e comparações com null (banco do tema)</td><td>2</td></tr>
+<tr><td>FileMode inválido (banco do tema)</td><td>7</td></tr>
+<tr><td>WSDL 2.0 (mensagens, componentes)</td><td>8</td></tr>
+<tr><td>JavaScript (variável global, ordem de avaliação, botão com contador, inclusão de script)</td><td>8</td></tr>
+<tr><td>Java (regex, arrays e matrizes, construtores)</td><td>8</td></tr>
+<tr><td>Linguagens interpretadas</td><td>8</td></tr>
+<tr><td>HTML5 canvas, <code>&lt;u&gt;</code>, seletor CSS <code>x[y]</code></td><td>8</td></tr>
+</table></div>
+<p class="muted small">Algumas questões trazem o código em imagem: rastreie o código no papel do mesmo jeito que nos exemplos.</p>
+<p class="src muted small">Fontes: documentação oficial da Microsoft (Microsoft Learn: tipos internos, operadores, tipos de valor anuláveis, diretivas de pré-processador, classes File e FileStream e enum FileMode), especificação W3C WSDL 2.0, MDN Web Docs (JavaScript, HTML e seletores CSS) e documentação do pacote java.util.regex da Oracle.</p>
+
+<h2>Checklist do dia</h2>
+<ul class="checklist">
+  <li>Sei a diferença entre tipos de valor e de referência e os sufixos f, m e L.</li>
+  <li>Sei resolver <code>??</code> e comparações com null sem errar.</li>
+  <li>Sei calcular <code>%</code>, <code>&gt;&gt;</code>, <code>&lt;&lt;</code>, <code>++x</code> e <code>x++</code>.</li>
+  <li>Sei os operadores de comparação válidos (e os que não existem em C#).</li>
+  <li>Sei o efeito de break e continue e o escopo da variável do for.</li>
+  <li>Sei a sintaxe de try/catch/finally e de #if DEBUG.</li>
+  <li>Sei os métodos principais de File e os 6 valores de FileMode.</li>
+  <li>Revisei o panorama de JavaScript, Java, HTML/CSS e WSDL.</li>
+</ul>
