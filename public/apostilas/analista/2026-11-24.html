@@ -32,7 +32,7 @@ static void Processar(string caminho)
 }                                             // então a exceção sobe para o Main</code></pre>
 
 <h3>1.2 Hierarquia de exceções</h3>
-<p>Em C#, todas as exceções derivam de <code>System.Exception</code>. A biblioteca as organiza em hierarquias: <code>SystemException</code> (lançadas pelo runtime, como <code>NullReferenceException</code>, <code>IndexOutOfRangeException</code>, <code>InvalidCastException</code>, <code>ArithmeticException</code> → <code>DivideByZeroException</code> e <code>OverflowException</code>), <code>ArgumentException</code> (→ <code>ArgumentNullException</code>, <code>ArgumentOutOfRangeException</code>), <code>InvalidOperationException</code>, <code>IOException</code> (→ <code>FileNotFoundException</code>, <code>DirectoryNotFoundException</code>). Como um <code>catch</code> captura a classe indicada <b>e todas as suas subclasses</b>, a ordem dos blocos deve ir do <b>mais específico ao mais geral</b>; o inverso é erro de compilação em C#.</p>
+<p>Em C#, todas as exceções derivam de <code>System.Exception</code>. A biblioteca as organiza em hierarquias: <code>SystemException</code> (lançadas pelo runtime, como <code>NullReferenceException</code>, <code>IndexOutOfRangeException</code>, <code>InvalidCastException</code>, <code>ArithmeticException</code> → <code>DivideByZeroException</code> e <code>OverflowException</code>), <code>ArgumentException</code> (→ <code>ArgumentNullException</code>, <code>ArgumentOutOfRangeException</code>), <code>InvalidOperationException</code>, <code>IOException</code> (→ <code>FileNotFoundException</code>, <code>DirectoryNotFoundException</code>); todas essas também derivam de <code>SystemException</code>. Como um <code>catch</code> captura a classe indicada <b>e todas as suas subclasses</b>, a ordem dos blocos deve ir do <b>mais específico ao mais geral</b>; o inverso é erro de compilação em C#.</p>
 <h3>1.3 Exceções personalizadas</h3>
 <pre><code>public class SaldoInsuficienteException : Exception
 {
@@ -179,13 +179,13 @@ public static class NotificacaoFactory            // fábrica: centraliza a deci
 <tr><td>Bridge</td><td>separar uma abstração da sua implementação para que variem independentemente</td><td>duas dimensões de variação (forma × tecnologia de desenho)</td></tr>
 <tr><td>Flyweight</td><td>compartilhar objetos para suportar grandes quantidades de forma eficiente</td><td>milhares de objetos parecidos (caracteres de um editor)</td></tr>
 </table></div>
-<div class="box exemplo"><span class="bt">Adapter na prática</span>Um centro de controle recebe dados de radar num formato padronizado internacional, e um novo módulo terceirizado precisa desses mesmos dados, mas espera outra interface. Em vez de alterar o sistema existente ou o módulo, cria-se um <b>Adapter</b> que recebe as mensagens no formato original e as entrega no formato esperado pelo módulo.</div>
+<div class="box exemplo"><span class="bt">Adapter na prática</span>Uma loja virtual calcula fretes chamando <code>ICalculadoraFrete.Calcular(cep, pesoKg)</code>. Uma transportadora nova oferece apenas uma biblioteca com o método <code>Cotar(Destino d, int gramas)</code>. Em vez de alterar a loja ou a biblioteca, cria-se a classe <code>FreteTransportadoraAdapter</code>, que implementa <code>ICalculadoraFrete</code> e, por dentro, converte CEP e quilos para o formato da biblioteca e chama <code>Cotar</code>. Esse é o <b>Adapter</b>.</div>
 
 <h3>4.3 Comportamentais</h3>
 <div class="tbl"><table>
 <tr><th>Padrão</th><th>Intenção</th><th>Gatilho</th></tr>
 <tr><td><b>Observer</b></td><td>definir uma dependência <b>um-para-muitos</b>: quando um objeto (sujeito) muda de estado, todos os seus <b>dependentes (observadores) são notificados</b> e atualizados automaticamente</td><td>"notificar", "assinantes", atualizar vários gráficos/telas quando os dados mudam, eventos, respostas assíncronas que atualizam a interface, módulo de notificações (e-mail, push)</td></tr>
-<tr><td><b>Strategy</b></td><td>definir uma <b>família de algoritmos</b>, encapsular cada um e torná-los <b>intercambiáveis</b></td><td>"diferentes formas de calcular/pagar/ordenar", escolher o algoritmo em tempo de execução (cartão, PIX, boleto)</td></tr>
+<tr><td><b>Strategy</b></td><td>definir uma <b>família de algoritmos</b>, encapsular cada um e torná-los <b>intercambiáveis</b></td><td>"diferentes formas de calcular/pagar/ordenar", escolher o algoritmo em tempo de execução (regras de desconto, cálculo de frete, ordenação)</td></tr>
 <tr><td><b>Template Method</b></td><td>definir o <b>esqueleto</b> de um algoritmo na superclasse, deixando passos para as subclasses</td><td>"passos fixos com etapas que variam"</td></tr>
 <tr><td><b>Command</b></td><td>encapsular uma <b>requisição como objeto</b></td><td>desfazer/refazer, filas de operações, botões e menus</td></tr>
 <tr><td><b>State</b></td><td>permitir que um objeto altere seu comportamento quando seu <b>estado interno</b> muda</td><td>pedido "aberto/pago/enviado" com comportamentos diferentes</td></tr>
@@ -194,25 +194,25 @@ public static class NotificacaoFactory            // fábrica: centraliza a deci
 <tr><td><b>Mediator</b></td><td>centralizar a comunicação entre objetos num <b>mediador</b>, reduzindo o acoplamento entre eles</td><td>torre de controle, componentes de um formulário</td></tr>
 <tr><td>Memento · Visitor · Interpreter</td><td>salvar e restaurar estado · acrescentar operações a uma estrutura sem alterá-la · interpretar uma linguagem</td><td>"desfazer para um ponto" · "nova operação sobre os nós" · gramáticas</td></tr>
 </table></div>
-<pre><code>// Strategy: o algoritmo de pagamento é intercambiável
-public interface IFormaPagamento { void Pagar(decimal valor); }
-public class Cartao : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
-public class Pix    : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
-public class Boleto : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
+<pre><code>// Strategy: a regra de desconto é intercambiável
+public interface IDesconto { decimal Aplicar(decimal total); }
+public class SemDesconto     : IDesconto { public decimal Aplicar(decimal t) =&gt; t; }
+public class DescontoCliente : IDesconto { public decimal Aplicar(decimal t) =&gt; t * 0.95m; }
+public class BlackFriday     : IDesconto { public decimal Aplicar(decimal t) =&gt; t * 0.70m; }
 
-public class Checkout
+public class Caixa
 {
-    public void Finalizar(decimal total, IFormaPagamento forma) =&gt; forma.Pagar(total);
+    public decimal Fechar(decimal total, IDesconto regra) =&gt; regra.Aplicar(total);
 }</code></pre>
 <pre><code>// Observer: o sujeito notifica todos os observadores inscritos
-public interface IObservador { void Atualizar(decimal cotacao); }
-public class Ativo
+public interface IObservador { void Atualizar(int vagasLivres); }
+public class Estacionamento
 {
     private readonly List&lt;IObservador&gt; observadores = new();
     public void Inscrever(IObservador o) =&gt; observadores.Add(o);
-    public void NovaCotacao(decimal c)
+    public void CarroSaiu(int vagas)
     {
-        foreach (var o in observadores) o.Atualizar(c);   // gráficos, alertas, logs...
+        foreach (var o in observadores) o.Atualizar(vagas);   // painel da entrada, app, relatório...
     }
 }</code></pre>
 <div class="box atencao"><span class="bt">Strategy × State × Template Method</span>Strategy: o <b>cliente</b> escolhe o algoritmo, que é intercambiável (composição). State: o próprio objeto muda de comportamento conforme seu <b>estado</b>. Template Method: o <b>esqueleto</b> fica na superclasse e as subclasses preenchem passos (herança).</div>
@@ -227,7 +227,7 @@ public class Ativo
 
 <h2>5. Qualidade de software e tópicos vizinhos</h2>
 <h3>Características de qualidade (ISO/IEC 25010)</h3>
-<p>Adequação funcional, eficiência de desempenho, compatibilidade, usabilidade, <b>confiabilidade</b> (maturidade, disponibilidade, tolerância a falhas, recuperabilidade), segurança, <b>manutenibilidade</b> (modularidade, reusabilidade, analisabilidade, modificabilidade, testabilidade) e portabilidade. Quando um sistema desenvolvido por terceiros será entregue para outra equipe manter e evoluir, a característica mais importante a exigir é a <b>manutenibilidade</b>, acompanhada da confiabilidade.</p>
+<p>Adequação funcional, eficiência de desempenho, compatibilidade, usabilidade, <b>confiabilidade</b> (maturidade, disponibilidade, tolerância a falhas, recuperabilidade), segurança, <b>manutenibilidade</b> (modularidade, reusabilidade, analisabilidade, modificabilidade, testabilidade) e portabilidade. A <b>manutenibilidade</b> é a característica ligada à facilidade de corrigir, adaptar e evoluir o código; a <b>confiabilidade</b>, à capacidade de funcionar sem falhas ao longo do tempo. (Esta é a lista da edição de 2011; a revisão de 2023 acrescentou <i>safety</i> e renomeou algumas características.)</p>
 <h3>Testes</h3>
 <ul>
 <li><b>Teste de regressão</b>: reexecutar testes após uma alteração para verificar que a correção de um defeito (ou uma melhoria) <b>não introduziu novos defeitos</b>.</li>
@@ -336,9 +336,9 @@ Console.Write("F");</code></pre>
 <ol class="alts"><li class="alt" data-l="A">Adapter, Decorator e Facade</li><li class="alt" data-l="B">Singleton, Proxy e Observer</li><li class="alt" data-l="C">Strategy, Bridge e Builder</li><li class="alt" data-l="D">Composite, Command e Prototype</li><li class="alt" data-l="E">Iterator, Flyweight e Factory Method</li></ol>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Singleton, Builder, Prototype e Factory Method são criacionais; Observer, Strategy, Command e Iterator são comportamentais.</p></div></details></div>
 
-<div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Em uma aplicação web Java, todas as requisições passam por um único Servlet, que as encaminha ao controlador adequado; e a camada de negócio expõe aos controladores uma interface simplificada que esconde vários componentes internos. Os padrões são, respectivamente:</p>
-<ol class="alts"><li class="alt" data-l="A">Front Controller e Facade;</li><li class="alt" data-l="B">Singleton e Adapter;</li><li class="alt" data-l="C">Observer e Proxy;</li><li class="alt" data-l="D">Front Controller e Decorator;</li><li class="alt" data-l="E">Command e Composite.</li></ol>
-<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Ponto único de entrada = Front Controller; interface simplificada para um subsistema = Facade.</p></div></details></div>
+<div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Um sistema de arquivos deve tratar pastas e arquivos da mesma forma (ambos têm <code>Tamanho()</code>; o tamanho de uma pasta é a soma do que ela contém), e o acesso a imagens muito grandes deve ser feito por um objeto substituto que só carrega a imagem quando ela é exibida. Os padrões são, respectivamente:</p>
+<ol class="alts"><li class="alt" data-l="A">Decorator e Facade;</li><li class="alt" data-l="B">Composite e Proxy;</li><li class="alt" data-l="C">Iterator e Flyweight;</li><li class="alt" data-l="D">Composite e Adapter;</li><li class="alt" data-l="E">Bridge e Proxy.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Estrutura em árvore tratada uniformemente = Composite; substituto que controla o acesso e adia o carregamento = Proxy (virtual).</p></div></details></div>
 
 <div class="q"><div class="q-n">Exercício 13</div><p class="q-stem">Após corrigir um defeito no cálculo de juros, a equipe reexecutou todo o conjunto de testes automatizados para confirmar que nenhuma outra funcionalidade foi afetada. Esse é o teste de:</p>
 <ol class="alts"><li class="alt" data-l="A">aceitação;</li><li class="alt" data-l="B">carga;</li><li class="alt" data-l="C">regressão;</li><li class="alt" data-l="D">usabilidade;</li><li class="alt" data-l="E">fumaça.</li></ol>
