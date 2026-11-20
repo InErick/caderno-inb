@@ -1,0 +1,325 @@
+<h1>Orientação a Objetos II: abstração, classes abstratas, interfaces, composição e o C# do dia a dia (coleções, genéricos, strings, iteradores e concorrência)</h1>
+<p class="lead">Este capítulo aprofunda os conceitos de orientação a objetos que distinguem um projeto bem feito: quando usar classe abstrata ou interface, por que preferir composição a herança, como representar essas relações na UML e como o polimorfismo funciona em C# e em C++. Como as provas de C# misturam OO com recursos práticos da linguagem, a segunda metade cobre coleções, genéricos, strings, iteradores com <code>yield</code>, namespaces, palavras-chave e o bloco <code>lock</code>.</p>
+<div class="meta-row"><span class="chip-i">Específicos · Orientação a Objetos</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="box dica"><span class="bt">Como estudar este capítulo</span>Compare sempre em pares: classe abstrata × interface, herança × composição, agregação × composição, List × HashSet, <code>ref</code> × <code>out</code>. Montar a sua própria tabela comparativa, sem olhar, e depois conferir com a do texto é uma ótima forma de revisão ativa.</div>
+
+<h2>1. Revisão rápida dos pilares</h2>
+<p>As principais características do paradigma orientado a objetos são <b>abstração, encapsulamento, herança e polimorfismo</b>. Os atributos de uma classe dizem o que cada objeto <b>sabe</b> (seu estado) e os métodos, o que ele <b>faz</b>; a quantidade de um não determina a do outro (uma classe de configuração pode ter dez atributos e nenhum método além dos acessores, e uma classe utilitária pode ter só métodos).</p>
+<p>Lembrando os conceitos do capítulo anterior: abstrair é escolher, de uma entidade real, só o que interessa ao sistema; sobrecarregar é reaproveitar um nome de método com listas de parâmetros diferentes; sobrescrever é redefinir, numa subclasse, um método herdado sem mudar a assinatura; e o polimorfismo é a mesma chamada produzir comportamentos distintos conforme o objeto.</p>
+<p>Uma das promessas da orientação a objetos é a manutenção: como cada objeto guarda seus próprios dados e regras, uma mudança costuma ficar restrita a poucas classes, em vez de se espalhar por funções que compartilham dados globais. Os objetos devem esconder sua representação interna e comunicar-se por interfaces bem definidas.</p>
+
+<h2>2. Classes abstratas</h2>
+<p>Uma <b>classe abstrata</b> representa um conceito genérico demais para ter instâncias próprias, mas que reúne o que é comum às suas subclasses.</p>
+<pre><code>public abstract class Documento
+{
+    public string Numero { get; }
+    protected Documento(string numero) { Numero = numero; }   // construtor permitido
+
+    public abstract decimal CalcularTaxa();                    // abstrato: sem corpo
+    public virtual string Resumo() =&gt; $"Doc {Numero}";        // virtual: pode ser sobrescrito
+    public void Arquivar() { /* comum a todos */ }             // concreto
+}
+
+public class Contrato : Documento
+{
+    public decimal Valor { get; set; }
+    public Contrato(string n, decimal v) : base(n) { Valor = v; }
+    public override decimal CalcularTaxa() =&gt; Valor * 0.01m;   // obrigatório implementar
+}</code></pre>
+<ul>
+<li>Não pode ser instanciada com <code>new</code>, mas pode ser usada como <b>tipo</b> de variável (<code>Documento d = new Contrato(...)</code>).</li>
+<li>Pode ter atributos, construtores, métodos concretos, virtuais e abstratos.</li>
+<li>Em classes, um método <code>abstract</code> só pode existir em classe abstrata, não tem corpo e é implicitamente virtual (em interfaces, os membros sem corpo são abstratos implicitamente).</li>
+<li>Uma subclasse concreta deve sobrescrever <b>todos</b> os métodos abstratos; se não o fizer, também precisa ser abstrata.</li>
+<li>Não pode ser <code>sealed</code> (seria contraditório: existe para ser herdada).</li>
+</ul>
+
+<h2>3. Interfaces</h2>
+<p>Uma <b>interface</b> é um <b>contrato</b>: define um conjunto de membros (métodos, propriedades, eventos, indexadores) que as classes que a implementam se comprometem a oferecer. Ela descreve <b>o que</b> fazer, não <b>como</b>. Por convenção, em C# o nome começa com <code>I</code>.</p>
+<pre><code>public interface IExportavel
+{
+    string Exportar();                // implicitamente public e abstrato
+}
+public interface IAssinavel
+{
+    void Assinar(string usuario);
+    bool Assinado { get; }
+}
+
+public class Relatorio : Documento, IExportavel, IAssinavel   // 1 classe + N interfaces
+{
+    public Relatorio(string n) : base(n) { }
+    public override decimal CalcularTaxa() =&gt; 0;
+    public string Exportar() =&gt; "...";
+    public void Assinar(string u) { Assinado = true; }
+    public bool Assinado { get; private set; }
+}
+
+IExportavel e = new Relatorio("R1");   // polimorfismo por interface
+Console.WriteLine(e.Exportar());</code></pre>
+<ul>
+<li>Uma classe C# herda de <b>uma</b> classe, mas pode implementar <b>várias</b> interfaces. Assim, interfaces suprem a ausência de herança múltipla de classes.</li>
+<li>Interfaces não podem ser instanciadas, <b>não têm construtores de instância</b> (desde o C# 8 admitem só construtor estático) e não têm campos de instância.</li>
+<li>Uma interface pode herdar de outras interfaces.</li>
+<li>Desde o C# 8, interfaces podem ter <b>implementações padrão</b> de métodos (<i>default interface methods</i>) e membros estáticos; em Java, isso existe desde a versão 8 (<code>default</code> e <code>static</code>). Ainda assim, não guardam estado de instância.</li>
+<li>Implementação explícita: <code>string IExportavel.Exportar() { ... }</code> só pode ser chamada por uma referência do tipo da interface; usada quando duas interfaces têm membros com o mesmo nome.</li>
+</ul>
+<div class="tbl"><table>
+<tr><th></th><th>Classe abstrata</th><th>Interface</th></tr>
+<tr><td>Instanciável?</td><td>não</td><td>não</td></tr>
+<tr><td>Quantas uma classe pode herdar/implementar?</td><td><b>uma</b></td><td><b>várias</b></td></tr>
+<tr><td>Construtores</td><td>sim</td><td>não (de instância)</td></tr>
+<tr><td>Campos (estado)</td><td>sim</td><td>não (só constantes/estáticos)</td></tr>
+<tr><td>Métodos com implementação</td><td>sim</td><td>só implementação padrão (C# 8+, Java 8+)</td></tr>
+<tr><td>Modificadores de acesso nos membros</td><td>quaisquer</td><td>públicos por padrão</td></tr>
+<tr><td>Relação expressa</td><td>"<b>é um</b>" (identidade comum, código compartilhado)</td><td>"<b>é capaz de</b>" (capacidade, contrato)</td></tr>
+<tr><td>Quando usar</td><td>classes muito próximas que compartilham código e estado</td><td>comportamentos que classes não relacionadas podem ter (<code>IComparable</code>, <code>IDisposable</code>)</td></tr>
+</table></div>
+
+<h2>4. Polimorfismo em profundidade</h2>
+<p>Em C#, o polimorfismo de sobrescrita exige que o método da base seja <code>virtual</code>, <code>abstract</code> ou <code>override</code>, e que a derivada use <code>override</code>. A chamada é resolvida pelo <b>tipo do objeto</b> em tempo de execução (despacho dinâmico, via tabela de métodos virtuais). Sem <code>virtual</code>, a chamada é resolvida pelo <b>tipo da referência</b> em tempo de compilação; com <code>new</code> na derivada, o método apenas <b>oculta</b> o da base.</p>
+<p>O polimorfismo também ocorre por <b>interfaces</b> (várias classes sem parentesco implementando o mesmo contrato) e por <b>genéricos</b> (polimorfismo paramétrico: <code>List&lt;T&gt;</code> funciona para qualquer T).</p>
+<h3>Em C++</h3>
+<ul>
+<li>Classes derivadas são criadas com <code>class Gerente : public Funcionario</code>. C++ admite <b>herança múltipla</b> (com o "problema do diamante", resolvido com herança <code>virtual</code>).</li>
+<li>Para haver ligação dinâmica, o método da base precisa ser declarado <code>virtual</code>, e a chamada deve ser feita por <b>ponteiro ou referência</b> à base. Uma <b>função virtual pura</b> (<code>virtual double area() = 0;</code>) torna a classe abstrata.</li>
+<li>O ponteiro <b><code>this</code></b> é um ponteiro implícito, disponível nas funções-membro não estáticas, que aponta para o objeto que invocou a função.</li>
+<li>C++ tem <b>destrutores</b> (<code>~Classe()</code>), chamados quando o objeto sai de escopo ou é deletado; em hierarquias, o destrutor da base deve ser <code>virtual</code>. Há também funções e classes <code>friend</code>, que acessam membros privados, e sobrecarga de operadores.</li>
+</ul>
+
+<h2>5. Relações entre classes: herança, associação, agregação e composição</h2>
+<div class="tbl"><table>
+<tr><th>Relação</th><th>Significado</th><th>UML</th><th>Exemplo</th></tr>
+<tr><td><b>Generalização</b> (herança)</td><td>"é um"</td><td>linha com triângulo vazado apontando para a superclasse</td><td>Gerente é um Funcionário</td></tr>
+<tr><td><b>Realização</b></td><td>classe implementa interface</td><td>linha tracejada com triângulo vazado</td><td>Relatorio realiza IExportavel</td></tr>
+<tr><td><b>Associação</b></td><td>"usa" / "conhece"; ligação estrutural entre objetos</td><td>linha simples (com multiplicidade)</td><td>Professor leciona Disciplina</td></tr>
+<tr><td><b>Agregação</b></td><td>"tem um", todo-parte <b>fraco</b>: a parte existe sem o todo</td><td>losango <b>vazado</b> no lado do todo</td><td>Departamento tem Funcionários (o funcionário existe se o departamento acabar)</td></tr>
+<tr><td><b>Composição</b></td><td>"é composto de", todo-parte <b>forte</b>: a parte não existe sem o todo; ciclo de vida compartilhado</td><td>losango <b>preenchido</b> no lado do todo</td><td>Pedido é composto de Itens (apagar o pedido apaga os itens)</td></tr>
+<tr><td><b>Dependência</b></td><td>uso temporário (parâmetro, variável local)</td><td>linha tracejada com seta aberta</td><td>Relatorio usa Impressora num método</td></tr>
+</table></div>
+
+<h3>Composição × herança</h3>
+<p>A recomendação clássica (Gang of Four) é "<b>favoreça a composição de objetos em vez da herança de classes</b>". Motivos:</p>
+<ul>
+<li><b>Herança é acoplamento forte</b> e estático: a subclasse depende dos detalhes da superclasse, e mudanças na base podem quebrar as derivadas (classe base frágil). A relação é definida em tempo de compilação.</li>
+<li><b>Composição é mais flexível</b>: o objeto delega parte do trabalho a outro objeto, que pode ser trocado em tempo de execução, especialmente se for referenciado por uma interface. Favorece o encapsulamento ("caixa-preta").</li>
+<li>Herança só é adequada quando a relação "é um" é verdadeira e estável e quando a subclasse pode substituir a superclasse sem quebrar o comportamento esperado (princípio de substituição de Liskov).</li>
+</ul>
+<pre><code>// Herança forçada: um Carro "é um" Motor? Não.
+// Composição: um Carro "tem um" motor, que pode ser trocado.
+public interface IMotor { void Ligar(); }
+public class MotorEletrico : IMotor { public void Ligar() =&gt; Console.WriteLine("silencioso"); }
+public class MotorFlex     : IMotor { public void Ligar() =&gt; Console.WriteLine("vrum"); }
+
+public class Carro
+{
+    private readonly IMotor motor;                 // composição + dependência de abstração
+    public Carro(IMotor motor) { this.motor = motor; }
+    public void Partir() =&gt; motor.Ligar();         // delegação
+}
+new Carro(new MotorEletrico()).Partir();</code></pre>
+
+<h2>6. Genéricos e coleções</h2>
+<p><b>Genéricos</b> permitem escrever classes e métodos parametrizados por tipo, com segurança de tipo em tempo de compilação e sem conversões (boxing) desnecessárias: <code>List&lt;int&gt;</code>, <code>Dictionary&lt;string, Cliente&gt;</code>. Restrições de tipo usam a palavra contextual <code>where</code>: <code>class Repositorio&lt;T&gt; where T : class, new()</code>.</p>
+<div class="tbl"><table>
+<tr><th>Coleção (System.Collections.Generic)</th><th>Característica</th><th>Membros-chave</th></tr>
+<tr><td><code>List&lt;T&gt;</code></td><td>lista dinâmica ordenada por índice; aceita duplicatas</td><td><code>Add</code>, <code>AddRange</code> (insere no <b>final</b>), <code>Insert</code>, <code>Remove</code>, <code>Contains</code>, <code>Count</code>, <code>Sort</code></td></tr>
+<tr><td><code>HashSet&lt;T&gt;</code></td><td>conjunto <b>sem duplicatas</b> e sem ordem garantida; busca rápida</td><td><code>Add</code> devolve <code>false</code> se o elemento já existe; <code>UnionWith</code>, <code>IntersectWith</code></td></tr>
+<tr><td><code>Dictionary&lt;TKey,TValue&gt;</code></td><td>pares chave-valor; chaves únicas</td><td><code>Add</code> (exceção se a chave existir), indexador <code>d[chave]</code>, <code>TryGetValue</code>, <code>ContainsKey</code></td></tr>
+<tr><td><code>Queue&lt;T&gt;</code></td><td>fila, FIFO (primeiro a entrar, primeiro a sair)</td><td><code>Enqueue</code>, <code>Dequeue</code>, <code>Peek</code></td></tr>
+<tr><td><code>Stack&lt;T&gt;</code></td><td>pilha, LIFO (último a entrar, primeiro a sair)</td><td><code>Push</code>, <code>Pop</code>, <code>Peek</code></td></tr>
+<tr><td><code>SortedList</code>, <code>SortedDictionary</code>, <code>LinkedList&lt;T&gt;</code></td><td>ordenadas pela chave; lista duplamente encadeada</td><td></td></tr>
+</table></div>
+<p>As coleções <b>não genéricas</b> do namespace <code>System.Collections</code> (<code>ArrayList</code>, <code>Hashtable</code>) armazenam <code>object</code> e são consideradas legadas. <code>ArrayList.AddRange</code> também adiciona os elementos da coleção recebida <b>no final</b> da lista; para inserir em outra posição, usa-se <code>InsertRange</code>.</p>
+<p>Coleções implementam <code>IEnumerable&lt;T&gt;</code>, o que permite percorrê-las com <code>foreach</code> e consultá-las com <b>LINQ</b>: <code>lista.Where(x =&gt; x &gt; 5).OrderBy(x =&gt; x).ToList()</code>.</p>
+
+<h2>7. Iteradores e yield return</h2>
+<p>Um método que devolve <code>IEnumerable&lt;T&gt;</code> pode usar <code>yield return</code> para produzir os valores <b>um a um, sob demanda</b> (execução adiada). A cada iteração do <code>foreach</code>, o método continua de onde parou. <code>yield break</code> encerra a sequência.</p>
+<pre><code>static IEnumerable&lt;int&gt; Multiplos(int limite, int passo)
+{
+    for (int i = 0; i &lt;= limite; i += passo)
+        yield return i;
+}
+foreach (int n in Multiplos(9, 3)) Console.Write(n + " ");   // 0 3 6 9</code></pre>
+<p>Rastreie como um laço comum: cada <code>yield return</code> entrega um valor ao <code>foreach</code>. Com limite 9 e passo 3: 0, 3, 6, 9 (o 12 já não satisfaz a condição).</p>
+
+<h2>8. Strings: métodos essenciais</h2>
+<div class="tbl"><table>
+<tr><th>Membro</th><th>Resultado</th></tr>
+<tr><td><code>s.Length</code></td><td>número de caracteres (<b>propriedade</b>, sem parênteses). Não existem <code>s.Size</code> nem a propriedade <code>s.Count</code>; o método <code>s.Count()</code> só existe via LINQ</td></tr>
+<tr><td><code>s.Split(',')</code></td><td>array com os pedaços separados pelo caractere; o separador some e espaços são mantidos</td></tr>
+<tr><td><code>s.Substring(i, n)</code></td><td>n caracteres a partir do índice i</td></tr>
+<tr><td><code>s.IndexOf("x")</code></td><td>posição da primeira ocorrência (−1 se não existir)</td></tr>
+<tr><td><code>s.Replace("a","b")</code>, <code>ToUpper()</code>, <code>ToLower()</code>, <code>Trim()</code></td><td>nova string transformada (a original não muda)</td></tr>
+<tr><td><code>s.Contains</code>, <code>StartsWith</code>, <code>EndsWith</code></td><td>bool</td></tr>
+<tr><td><code>string.Join("-", arr)</code>, <code>string.IsNullOrEmpty(s)</code></td><td>junta elementos; testa nulo ou vazio</td></tr>
+</table></div>
+<div class="box exemplo"><span class="bt">Split com separadores misturados</span>
+<pre><code>string y = "café com leite;pão;suco";
+foreach (string p in y.Split(';')) Console.WriteLine(p);
+// café com leite
+// pão
+// suco</code></pre>
+O espaço não é separador, então "café com leite" continua junto: são <b>3</b> elementos.</div>
+
+<h2>9. Namespaces, nomes e palavras-chave</h2>
+<p>Um <b>namespace</b> organiza tipos e evita conflitos de nomes. Quando um nome local esconde um namespace ou tipo (por exemplo, uma classe aninhada chamada <code>System</code> ou uma propriedade chamada <code>Console</code>), referências como <code>Console.WriteLine</code> passam a ser interpretadas como o membro local e o código não compila. A solução é qualificar a partir da raiz com o alias <b><code>global::</code></b>: <code>global::System.Console.WriteLine("ok");</code>. Também é possível criar aliases: <code>using Io = System.IO;</code>.</p>
+<p>As <b>palavras reservadas</b> (como <code>class</code>, <code>int</code>, <code>if</code>, <code>new</code>, <code>this</code>, <code>base</code>, <code>static</code>, <code>virtual</code>, <code>override</code>, <code>abstract</code>, <code>sealed</code>, <code>lock</code>, <code>namespace</code>, <code>using</code>) não podem ser usadas como identificadores (a menos que prefixadas com <code>@</code>, como <code>@class</code>). As <b>palavras-chave contextuais</b> só têm sentido especial em certos contextos e podem ser identificadores em outros: <code>var</code>, <code>where</code>, <code>select</code>, <code>from</code>, <code>yield</code>, <code>async</code>, <code>await</code>, <code>get</code>, <code>set</code>, <code>value</code>, <code>partial</code>, <code>dynamic</code>, <code>nameof</code>, <code>record</code>, <code>init</code>.</p>
+<div class="box prova"><span class="bt">Na prova</span>Algumas bancas não distinguem palavra reservada de contextual: se, entre as alternativas, só <code>where</code> (ou <code>var</code>) for palavra-chave do C# e as demais nem existirem na linguagem, a resposta esperada é ela, mesmo que a pergunta diga "reservada".</div>
+
+<h3>Classes aninhadas e modificadores</h3>
+<p>Classes de nível superior (diretamente no namespace) só podem ser <code>public</code> ou <code>internal</code> (o padrão). Uma classe <code>private</code> só é possível quando <b>aninhada</b> dentro de outra classe, e então só é acessível dentro da classe que a contém. Membros aninhados são <code>private</code> por padrão.</p>
+
+<h3>Mais detalhes de tipos que caem junto</h3>
+<ul>
+<li>Tipos inteiros <b>sem sinal</b> em C#: <code>byte</code>, <code>ushort</code>, <code>uint</code>, <code>ulong</code> (e <code>nuint</code>). Com sinal: <code>sbyte</code>, <code>short</code>, <code>int</code>, <code>long</code>. O <code>int</code> tem 4 bytes.</li>
+<li>Conversões implícitas vão do menor para o maior: <code>byte</code> → <code>int</code> → <code>long</code> → <code>double</code> (de <code>int</code>/<code>long</code> para <code>float</code> e de <code>long</code> para <code>double</code> pode haver perda de precisão, mas não de magnitude). De <code>double</code> para <code>int</code>, só com cast.</li>
+<li>C# é de tipagem <b>estática</b>: em <code>var total = 2.5; total = "dois";</code>, a segunda linha não compila (total é <code>double</code>).</li>
+<li><code>++x--</code> não compila: o pós-fixo tem precedência maior, então a expressão é <code>++(x--)</code>; o resultado de <code>x--</code> é um valor, e não uma variável, e não pode ser incrementado. O mesmo vale para <code>(x++)++</code> e <code>5++</code>.</li>
+<li>Precedência em expressões: <code>12 / 4 * 3 - 1</code> = 3 × 3 − 1 = 8 (multiplicação e divisão da esquerda para a direita, antes da subtração). <code>7 + 15 % 4 * 2</code> = 7 + 3 × 2 = 13.</li>
+</ul>
+
+<h2>10. Concorrência: lock e condição de corrida</h2>
+<p>Quando várias threads acessam e alteram o mesmo dado ao mesmo tempo, o resultado pode depender da ordem imprevisível de execução: é a <b>condição de corrida</b> (<i>race condition</i>). Exemplo: duas threads fazem <code>saldo += 100</code> simultaneamente; ambas leem o mesmo valor antigo e uma das somas se perde.</p>
+<p>O bloco <b><code>lock</code></b> garante <b>exclusão mútua</b>: apenas uma thread por vez executa o trecho protegido (a seção crítica), evitando a condição de corrida.</p>
+<pre><code>private readonly object trava = new object();
+public void Depositar(decimal v)
+{
+    lock (trava)           // só uma thread entra por vez
+    {
+        saldo += v;
+    }
+}</code></pre>
+<p>O objeto usado no <code>lock</code> deve ser um tipo de referência privado e dedicado (não use <code>this</code>, strings ou tipos públicos). <code>lock</code> é um atalho para <code>Monitor.Enter</code>/<code>Monitor.Exit</code> com <code>try/finally</code>. Excesso de bloqueios pode causar <b>deadlock</b> (duas threads esperando, cada uma, um recurso que a outra segura) e perda de desempenho. Outras ferramentas: <code>Interlocked</code>, <code>SemaphoreSlim</code>, coleções concorrentes (<code>ConcurrentDictionary</code>).</p>
+
+<h2>11. Código gerenciado</h2>
+<p>No .NET, o <b>código gerenciado</b> (managed code) é executado pelo CLR, que fica responsável pelo <b>gerenciamento de memória</b> (alocação e coleta de lixo), pela segurança de tipos e pelo tratamento de exceções. O código não gerenciado (por exemplo, C++ nativo chamado via interop) faz o próprio gerenciamento. Em C#, blocos <code>unsafe</code> permitem ponteiros, desde que o projeto seja compilado com essa opção.</p>
+
+<h2>Síntese</h2>
+<div class="tbl"><table>
+<tr><th>Tema</th><th>Ponto-chave</th></tr>
+<tr><td>Classe abstrata</td><td>não instanciável; pode ter estado, construtor e código; herança simples</td></tr>
+<tr><td>Interface</td><td>contrato; várias por classe; sem construtor e sem estado</td></tr>
+<tr><td>Abstrata × interface</td><td>"é um" × "é capaz de"</td></tr>
+<tr><td>Agregação × composição</td><td>parte independente (losango vazado) × parte depende do todo (losango cheio)</td></tr>
+<tr><td>Composição × herança</td><td>prefira composição: menos acoplamento, mais flexibilidade</td></tr>
+<tr><td>C++</td><td>herança múltipla; <code>virtual</code> para ligação dinâmica; <code>this</code> é ponteiro; virtual pura = abstrata</td></tr>
+<tr><td>HashSet</td><td>sem duplicatas</td></tr>
+<tr><td>AddRange</td><td>insere no final</td></tr>
+<tr><td>Queue × Stack</td><td>FIFO × LIFO</td></tr>
+<tr><td>yield return</td><td>gera a sequência sob demanda</td></tr>
+<tr><td>Tamanho da string</td><td><code>s.Length</code></td></tr>
+<tr><td>Conflito de nomes</td><td><code>global::System.Console</code></td></tr>
+<tr><td>Palavra contextual</td><td>var, where, yield, async, get, set…</td></tr>
+<tr><td>Classe private</td><td>só se aninhada</td></tr>
+<tr><td>Sem sinal</td><td>byte, ushort, uint, ulong</td></tr>
+<tr><td><code>++x--</code></td><td>erro de compilação</td></tr>
+<tr><td>lock</td><td>exclusão mútua contra condição de corrida</td></tr>
+</table></div>
+
+<h2>Flashcards</h2>
+<div class="cards">
+<details><summary>Interface pode ter construtor?</summary><div>Não de instância (desde o C# 8, só construtor estático).</div></details>
+<details><summary>Uma classe C# pode implementar quantas interfaces?</summary><div>Várias (e herdar de uma única classe).</div></details>
+<details><summary>Método abstract tem corpo?</summary><div>Não; e só existe em classe abstrata.</div></details>
+<details><summary>Losango preenchido na UML?</summary><div>Composição.</div></details>
+<details><summary>Losango vazado na UML?</summary><div>Agregação.</div></details>
+<details><summary>Seta com triângulo e linha tracejada?</summary><div>Realização (implementação de interface).</div></details>
+<details><summary>Função virtual pura em C++?</summary><div><code>virtual T f() = 0;</code>, torna a classe abstrata.</div></details>
+<details><summary>O que é <code>this</code> em C++?</summary><div>Ponteiro implícito para o objeto que chamou a função-membro.</div></details>
+<details><summary>Coleção sem elementos repetidos?</summary><div>HashSet&lt;T&gt;.</div></details>
+<details><summary>Stack: LIFO ou FIFO?</summary><div>LIFO.</div></details>
+<details><summary>Para que serve <code>global::</code>?</summary><div>Qualificar a partir do namespace raiz, resolvendo conflitos de nome.</div></details>
+<details><summary><code>where</code> é palavra reservada?</summary><div>É palavra-chave contextual (genéricos e LINQ).</div></details>
+<details><summary>O <code>lock</code> evita…</summary><div>condição de corrida.</div></details>
+<details><summary><code>uint</code> tem sinal?</summary><div>Não.</div></details>
+</div>
+
+<h2>Exercícios de fixação</h2>
+
+<div class="q"><div class="q-n">Exercício 1</div><p class="q-stem">Sobre interfaces e classes abstratas em C#, assinale a afirmativa correta.</p>
+<ol class="alts"><li class="alt" data-l="A">Uma classe pode herdar de duas classes abstratas.</li><li class="alt" data-l="B">Interfaces podem ter construtores para inicializar suas implementações.</li><li class="alt" data-l="C">Uma classe pode herdar de uma classe abstrata e implementar várias interfaces.</li><li class="alt" data-l="D">Classes abstratas não podem ter métodos concretos.</li><li class="alt" data-l="E">Interfaces podem ser instanciadas com new.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Herança simples de classe e implementação múltipla de interfaces. Interfaces não têm construtores nem podem ser instanciadas; classes abstratas podem ter métodos concretos.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 2</div><p class="q-stem">Em um diagrama de classes, "Nota Fiscal" e "Item da Nota" estão ligados por um losango preenchido do lado de Nota Fiscal. Isso indica que:</p>
+<ol class="alts"><li class="alt" data-l="A">Item herda de Nota Fiscal;</li><li class="alt" data-l="B">os itens podem existir independentemente da nota;</li><li class="alt" data-l="C">há composição: os itens não existem sem a nota e compartilham seu ciclo de vida;</li><li class="alt" data-l="D">Nota Fiscal implementa a interface Item;</li><li class="alt" data-l="E">há apenas uma dependência temporária.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O losango cheio é composição (todo-parte forte). B descreve agregação (losango vazado).</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 3</div><p class="q-stem">A recomendação "favoreça a composição em vez da herança" se justifica porque a composição:</p>
+<ol class="alts"><li class="alt" data-l="A">elimina a necessidade de interfaces;</li><li class="alt" data-l="B">reduz o acoplamento e permite trocar comportamentos em tempo de execução;</li><li class="alt" data-l="C">é resolvida em tempo de compilação, sendo mais rápida;</li><li class="alt" data-l="D">permite herança múltipla em C#;</li><li class="alt" data-l="E">torna desnecessário o encapsulamento.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> O objeto componente pode ser substituído (sobretudo se referenciado por interface), e as classes ficam menos dependentes dos detalhes umas das outras.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 4</div><p class="q-stem">Considere:</p>
+<pre><code>abstract class Forma { public abstract double Area(); }
+class Quadrado : Forma { public double L; public override double Area() =&gt; L * L; }
+class Circulo : Forma { }</code></pre>
+<p class="q-stem">É correto afirmar que:</p>
+<ol class="alts"><li class="alt" data-l="A">o código compila normalmente;</li><li class="alt" data-l="B">há erro, pois Circulo não implementa Area e não é abstrata;</li><li class="alt" data-l="C">há erro, pois Forma não tem construtor;</li><li class="alt" data-l="D">há erro, pois Quadrado não pode sobrescrever um método abstrato;</li><li class="alt" data-l="E">Circulo herda a implementação de Area de Quadrado.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Toda subclasse concreta precisa implementar os membros abstratos herdados. Circulo teria de implementar Area ou ser declarada abstract.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 5</div><p class="q-stem">Em C++, para que uma chamada feita por meio de um ponteiro para a classe base execute a versão da classe derivada, o método na base deve ser declarado como:</p>
+<ol class="alts"><li class="alt" data-l="A">static;</li><li class="alt" data-l="B">friend;</li><li class="alt" data-l="C">virtual;</li><li class="alt" data-l="D">const;</li><li class="alt" data-l="E">inline.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Sem <code>virtual</code>, a chamada é resolvida estaticamente pelo tipo do ponteiro.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 6</div><p class="q-stem">Considere:</p>
+<pre><code>var s = new HashSet&lt;int&gt; { 3, 5 };
+bool a = s.Add(5);
+bool b = s.Add(7);
+Console.WriteLine($"{a} {b} {s.Count}");</code></pre>
+<ol class="alts"><li class="alt" data-l="A">True True 4</li><li class="alt" data-l="B">False True 3</li><li class="alt" data-l="C">True False 3</li><li class="alt" data-l="D">False False 2</li><li class="alt" data-l="E">exceção em tempo de execução</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> O 5 já existia: <code>Add</code> devolve false e nada muda. O 7 entra: true. O conjunto fica {3, 5, 7}.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 7</div><p class="q-stem">O que o código imprime?</p>
+<pre><code>static IEnumerable&lt;int&gt; Gerar(int max)
+{
+    for (int i = 1; i &lt; max; i *= 2)
+        yield return i;
+}
+foreach (int x in Gerar(20)) Console.Write(x + " ");</code></pre>
+<ol class="alts"><li class="alt" data-l="A">1 2 4 8 16</li><li class="alt" data-l="B">2 4 8 16</li><li class="alt" data-l="C">1 2 4 8 16 32</li><li class="alt" data-l="D">0 2 4 8 16</li><li class="alt" data-l="E">1 2 3 4 … 19</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> i assume 1, 2, 4, 8, 16; o próximo seria 32, que não é menor que 20.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 8</div><p class="q-stem">Após <code>string[] p = "Rio de Janeiro;São Paulo;Belo Horizonte".Split(';');</code>, o valor de <code>p.Length</code> e de <code>p[1]</code> é:</p>
+<ol class="alts"><li class="alt" data-l="A">3 e "São Paulo"</li><li class="alt" data-l="B">7 e "de"</li><li class="alt" data-l="C">3 e "Rio de Janeiro"</li><li class="alt" data-l="D">2 e "São Paulo"</li><li class="alt" data-l="E">7 e "Janeiro"</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> O separador é o ponto e vírgula; os espaços ficam dentro dos pedaços. Índices começam em 0, então p[1] é o segundo elemento.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 9</div><p class="q-stem">Duas threads atualizam simultaneamente o mesmo contador, e às vezes incrementos se perdem. O problema e a solução em C# são:</p>
+<ol class="alts"><li class="alt" data-l="A">deadlock; usar mais threads;</li><li class="alt" data-l="B">condição de corrida; proteger a atualização com lock;</li><li class="alt" data-l="C">vazamento de memória; chamar o coletor de lixo;</li><li class="alt" data-l="D">overflow; usar long;</li><li class="alt" data-l="E">boxing; usar genéricos.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Acessos concorrentes a dado compartilhado sem sincronização causam condição de corrida; o lock impõe exclusão mútua (Interlocked.Increment também resolveria).</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 10</div><p class="q-stem">Assinale a opção que contém apenas tipos inteiros sem sinal em C#.</p>
+<ol class="alts"><li class="alt" data-l="A">sbyte e uint</li><li class="alt" data-l="B">byte e ulong</li><li class="alt" data-l="C">short e ushort</li><li class="alt" data-l="D">int e uint</li><li class="alt" data-l="E">long e byte</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> byte, ushort, uint e ulong são sem sinal; sbyte, short, int e long têm sinal.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 11</div><p class="q-stem">Qual é o valor de <code>n</code> após <code>int n = 8 * 3 / 4 + 7 % 3 * 2;</code>?</p>
+<ol class="alts"><li class="alt" data-l="A">8</li><li class="alt" data-l="B">10</li><li class="alt" data-l="C">12</li><li class="alt" data-l="D">14</li><li class="alt" data-l="E">6</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> 8 × 3 = 24; 24 / 4 = 6; 7 % 3 = 1; 1 × 2 = 2; 6 + 2 = 8. Operadores multiplicativos da esquerda para a direita, antes da soma.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Considere: <code>namespace Loja { private class Cupom { } public class Caixa { private class Troco { } } }</code>. Sobre a compilação, é correto afirmar que:</p>
+<ol class="alts"><li class="alt" data-l="A">compila sem erros;</li><li class="alt" data-l="B">há erro em Troco, pois classes aninhadas não podem ser private;</li><li class="alt" data-l="C">há erro em Caixa, pois uma classe pública não pode conter classe privada;</li><li class="alt" data-l="D">há erro em Cupom, pois um tipo declarado diretamente no namespace só pode ser public ou internal;</li><li class="alt" data-l="E">há erro em Cupom e em Troco.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> <code>private</code> só é permitido para tipos aninhados, como Troco, que fica visível apenas dentro de Caixa.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 13</div><p class="q-stem">Um projeto tem o namespace <code>Empresa.IO</code>. Dentro dele, a linha <code>IO.File.ReadAllText("a.txt")</code> passa a procurar <code>File</code> em <code>Empresa.IO</code> e não compila. Para garantir o uso de <code>System.IO.File</code>, a forma mais segura é:</p>
+<ol class="alts"><li class="alt" data-l="A"><code>base.IO.File.ReadAllText("a.txt")</code></li><li class="alt" data-l="B"><code>this.System.IO.File.ReadAllText("a.txt")</code></li><li class="alt" data-l="C"><code>root.System.IO.File.ReadAllText("a.txt")</code></li><li class="alt" data-l="D"><code>global::System.IO.File.ReadAllText("a.txt")</code></li><li class="alt" data-l="E"><code>System::IO.File.ReadAllText("a.txt")</code></li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> <code>global::</code> inicia a busca pelo namespace raiz, ignorando nomes locais. <code>base</code> e <code>this</code> referem-se a objetos, <code>root</code> não existe e <code>System::</code> não é sintaxe válida.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 14</div><p class="q-stem">Uma fila de atendimento deve atender as senhas na ordem de chegada. A coleção e as operações adequadas são:</p>
+<ol class="alts"><li class="alt" data-l="A">Stack, com Push e Pop;</li><li class="alt" data-l="B">Queue, com Enqueue e Dequeue;</li><li class="alt" data-l="C">HashSet, com Add e Remove;</li><li class="alt" data-l="D">Dictionary, com Add e TryGetValue;</li><li class="alt" data-l="E">ArrayList, com AddRange e InsertRange.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Ordem de chegada = FIFO = fila (Queue). A pilha seria LIFO.</p></div></details></div>
+
+<p class="src muted small">Fontes: Microsoft Learn (classes abstratas, interfaces, implementações padrão de interface, coleções genéricas, iteradores e yield, strings, namespaces e global, palavras-chave, instrução lock, tipos numéricos); Gamma, Helm, Johnson e Vlissides, <i>Padrões de Projeto</i>; Booch, Rumbaugh e Jacobson, <i>UML: guia do usuário</i>; Stroustrup, <i>A Linguagem de Programação C++</i>.</p>
+
+<h2>Checklist</h2>
+<ul class="checklist">
+  <li>Sei as regras de classes e métodos abstratos.</li>
+  <li>Sei o que é uma interface, as novidades do C# 8 e a diferença em relação à classe abstrata.</li>
+  <li>Sei como funciona o polimorfismo em C# e em C++ (virtual, ponteiro this, virtual pura).</li>
+  <li>Sei diferenciar associação, agregação, composição, dependência, generalização e realização na UML.</li>
+  <li>Sei por que preferir composição a herança.</li>
+  <li>Conheço List, HashSet, Dictionary, Queue, Stack e ArrayList.</li>
+  <li>Sei rastrear iteradores com yield return.</li>
+  <li>Sei os métodos essenciais de string, inclusive Length e Split.</li>
+  <li>Sei usar global::, distinguir palavras reservadas de contextuais e as regras de classes aninhadas.</li>
+  <li>Sei o que é condição de corrida e como o lock a evita.</li>
+</ul>
