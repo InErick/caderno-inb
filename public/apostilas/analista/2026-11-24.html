@@ -1,0 +1,364 @@
+<h1>Qualidade de projeto OO: exceções, SOLID, coesão e acoplamento e padrões de projeto (GoF)</h1>
+<p class="lead">Escrever código que funciona é o primeiro passo; escrever código fácil de manter, testar e estender é o que se espera de um analista. Este capítulo trata de três temas que caem juntos nas provas: o <b>tratamento de exceções</b> como parte do projeto (hierarquias, exceções personalizadas, boas práticas, diferenças entre C# e Java), os princípios <b>SOLID</b> com as noções de <b>coesão e acoplamento</b>, e os <b>padrões de projeto</b> do catálogo GoF mais cobrados (Singleton, Factory Method, Abstract Factory, Builder, Adapter, Facade, Decorator, Observer, Strategy e outros), além dos padrões de arquitetura web MVC e Front Controller. No final, um resumo dos atributos de qualidade de software que aparecem no mesmo bloco.</p>
+<div class="meta-row"><span class="chip-i">Específicos · Engenharia de Software</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="box dica"><span class="bt">Como estudar este capítulo</span>Para os padrões de projeto, decore a <b>intenção</b> em uma frase e uma <b>palavra-gatilho</b> (Observer: "notificar"; Strategy: "trocar algoritmo"; Adapter: "converter interface"). As questões descrevem um problema e pedem o padrão: quem reconhece o gatilho responde em segundos. Use os flashcards do final como teste.</div>
+
+<h2>1. Exceções no projeto orientado a objetos</h2>
+<h3>1.1 Conceito e fluxo</h3>
+<p>Uma <b>exceção</b> é um objeto que representa uma condição anormal ocorrida durante a execução. Quando um método encontra um erro que não sabe tratar, ele <b>lança</b> (<code>throw</code>) a exceção; o runtime então interrompe o fluxo normal e procura, subindo pela pilha de chamadas, um bloco <code>catch</code> compatível. Se nenhum for encontrado, o programa termina. Para que uma exceção seja capturada, o comando que a dispara precisa ter sido executado <b>dentro de um bloco <code>try</code></b> (direta ou indiretamente, por um método chamado a partir dele).</p>
+<pre><code>static void Main()
+{
+    try
+    {
+        Processar("dados.csv");
+    }
+    catch (FileNotFoundException e)       // específica primeiro
+    {
+        Console.WriteLine("Arquivo não encontrado: " + e.FileName);
+    }
+    catch (IOException e)                 // mais geral (FileNotFoundException herda dela)
+    {
+        Console.WriteLine("Erro de E/S: " + e.Message);
+    }
+    finally
+    {
+        Console.WriteLine("fim");         // sempre executa
+    }
+}
+static void Processar(string caminho)
+{
+    var linhas = File.ReadAllLines(caminho);   // pode lançar; não há try aqui,
+}                                             // então a exceção sobe para o Main</code></pre>
+
+<h3>1.2 Hierarquia de exceções</h3>
+<p>Em C#, todas as exceções derivam de <code>System.Exception</code>. A biblioteca as organiza em hierarquias: <code>SystemException</code> (lançadas pelo runtime, como <code>NullReferenceException</code>, <code>IndexOutOfRangeException</code>, <code>InvalidCastException</code>, <code>ArithmeticException</code> → <code>DivideByZeroException</code> e <code>OverflowException</code>), <code>ArgumentException</code> (→ <code>ArgumentNullException</code>, <code>ArgumentOutOfRangeException</code>), <code>InvalidOperationException</code>, <code>IOException</code> (→ <code>FileNotFoundException</code>, <code>DirectoryNotFoundException</code>). Como um <code>catch</code> captura a classe indicada <b>e todas as suas subclasses</b>, a ordem dos blocos deve ir do <b>mais específico ao mais geral</b>; o inverso é erro de compilação em C#.</p>
+<h3>1.3 Exceções personalizadas</h3>
+<pre><code>public class SaldoInsuficienteException : Exception
+{
+    public decimal Faltante { get; }
+    public SaldoInsuficienteException(decimal faltante)
+        : base($"Saldo insuficiente. Faltam {faltante:C}.")
+    {
+        Faltante = faltante;
+    }
+}
+
+public void Sacar(decimal valor)
+{
+    if (valor &gt; saldo) throw new SaldoInsuficienteException(valor - saldo);
+    saldo -= valor;
+}</code></pre>
+<p>Convenções: o nome termina em <code>Exception</code>, a classe herda de <code>Exception</code> (ou de uma exceção mais específica), oferece construtores que repassam a mensagem e, quando encapsula outra, guarda-a em <code>InnerException</code> (<code>throw new ErroDeNegocio("...", ex);</code>).</p>
+
+<h3>1.4 C# × Java: exceções verificadas</h3>
+<div class="tbl"><table>
+<tr><th></th><th>Java</th><th>C#</th></tr>
+<tr><td>Raiz</td><td><code>Throwable</code> → <code>Error</code> (falhas graves da JVM) e <code>Exception</code></td><td><code>Exception</code></td></tr>
+<tr><td>Exceções verificadas (checked)</td><td>sim: subclasses de <code>Exception</code> que não são <code>RuntimeException</code> devem ser <b>capturadas ou declaradas</b> com <code>throws</code> na assinatura do método, sob pena de erro de compilação</td><td><b>não existem</b>: todas são não verificadas; não há cláusula <code>throws</code></td></tr>
+<tr><td>Não verificadas</td><td><code>RuntimeException</code> e subclasses (<code>NullPointerException</code>, <code>ArithmeticException</code>…) e <code>Error</code></td><td>todas</td></tr>
+<tr><td>Liberação de recursos</td><td><code>try-with-resources</code> (<code>AutoCloseable</code>)</td><td><code>using</code> (<code>IDisposable</code>)</td></tr>
+<tr><td>Relançar</td><td><code>throw e;</code></td><td><code>throw;</code> preserva o stack trace</td></tr>
+</table></div>
+
+<h3>1.5 Boas práticas</h3>
+<ul>
+<li>Use exceções para situações <b>excepcionais</b>, não para controle de fluxo comum (para validar entrada do usuário, prefira <code>TryParse</code> e testes).</li>
+<li>Capture apenas o que você sabe tratar; não "engula" exceções com <code>catch { }</code> vazio.</li>
+<li>Prefira exceções específicas a <code>Exception</code> genérica, tanto ao lançar quanto ao capturar.</li>
+<li>Libere recursos em <code>finally</code> ou <code>using</code>.</li>
+<li>Lance cedo (valide argumentos na entrada: <code>ArgumentNullException.ThrowIfNull(x)</code>) e capture tarde (no nível que pode decidir o que fazer).</li>
+<li>Não exponha detalhes internos (stack trace, SQL) ao usuário final: registre em log e mostre mensagem amigável. Isso também é um controle de segurança de aplicações web.</li>
+</ul>
+
+<h2>2. Coesão e acoplamento</h2>
+<p>São as duas medidas clássicas de qualidade de um projeto modular:</p>
+<ul>
+<li><b>Coesão</b>: o grau em que os elementos de um módulo (os métodos e atributos de uma classe) trabalham juntos para uma <b>única finalidade</b>. Deseja-se <b>alta coesão</b>.</li>
+<li><b>Acoplamento</b>: o grau de <b>dependência</b> entre módulos. Deseja-se <b>baixo acoplamento</b>.</li>
+</ul>
+<div class="tbl"><table>
+<tr><th>Tipos de coesão (da pior para a melhor)</th><th>Tipos de acoplamento (do pior para o melhor)</th></tr>
+<tr><td>coincidental (sem relação) → lógica (agrupados por categoria) → temporal (executados no mesmo momento) → procedural → comunicacional (mesmos dados) → sequencial (saída de um é entrada do outro) → <b>funcional</b> (tudo contribui para uma única função)</td><td>de conteúdo (um módulo mexe nos dados internos do outro) → comum (dados globais compartilhados) → externo → de controle (passa flags que controlam a lógica do outro) → de carimbo (passa estruturas inteiras) → <b>de dados</b> (passa só os parâmetros necessários)</td></tr>
+</table></div>
+<p>Alta coesão e baixo acoplamento tornam o sistema mais fácil de entender, testar, reutilizar e modificar: uma mudança fica localizada em poucos lugares. Os princípios SOLID e os padrões de projeto são, em grande parte, técnicas para chegar a esse resultado.</p>
+
+<h2>3. Princípios SOLID</h2>
+<p>Reunidos por Robert C. Martin, os cinco princípios orientam o projeto de classes:</p>
+
+<h3>S · Princípio da Responsabilidade Única (SRP)</h3>
+<p>"Uma classe deve ter <b>um, e apenas um, motivo para mudar</b>." Cada classe deve ter uma única responsabilidade (atender a um único ator ou interesse). Uma classe <code>Funcionario</code> que calcula salário, gera relatório em PDF e grava no banco tem três motivos para mudar (regras de RH, layout do relatório, banco de dados) e deve ser dividida. O SRP é a expressão de <b>alta coesão</b>.</p>
+
+<h3>O · Princípio Aberto/Fechado (OCP)</h3>
+<p>"Entidades de software devem estar <b>abertas para extensão e fechadas para modificação</b>" (Bertrand Meyer). Deve ser possível acrescentar comportamento novo <b>sem alterar</b> o código existente e testado, em geral por meio de abstrações e polimorfismo. Exemplo: em vez de um <code>switch</code> sobre o tipo de pagamento que precisa ser editado a cada novo meio, cria-se a interface <code>IPagamento</code>; um novo meio é uma nova classe.</p>
+
+<h3>L · Princípio da Substituição de Liskov (LSP)</h3>
+<p>"Objetos de uma subclasse devem poder <b>substituir</b> objetos da superclasse <b>sem quebrar a corretude</b> do programa" (Barbara Liskov). A subclasse deve honrar o contrato da base: não exigir pré-condições mais fortes, não entregar pós-condições mais fracas, não lançar exceções inesperadas. Uma classe <code>Cachorro</code> que sobrescreve <code>EmitirSom()</code> de <code>Animal</code> retornando "au-au" respeita o LSP. O exemplo clássico de violação é <code>Quadrado</code> herdando de <code>Retangulo</code>: definir a largura de um quadrado altera também a altura, quebrando o que um código que espera um retângulo assume. Outro sinal de violação: sobrescrever um método só para lançar <code>NotImplementedException</code>.</p>
+
+<h3>I · Princípio da Segregação de Interfaces (ISP)</h3>
+<p>"Clientes não devem ser forçados a depender de métodos que não usam." Prefira várias interfaces pequenas e específicas a uma interface "gorda". Uma interface <code>IMultifuncional</code> com <code>Imprimir</code>, <code>Digitalizar</code> e <code>EnviarFax</code> força uma impressora simples a implementar métodos vazios; o correto é separar em <code>IImpressora</code>, <code>IScanner</code> e <code>IFax</code>.</p>
+
+<h3>D · Princípio da Inversão de Dependência (DIP)</h3>
+<p>"Módulos de alto nível não devem depender de módulos de baixo nível; ambos devem depender de <b>abstrações</b>. Abstrações não devem depender de detalhes; detalhes devem depender de abstrações." Na prática, uma classe de regra de negócio depende de uma interface (<code>IRepositorio</code>, <code>IExportador</code>), e a implementação concreta é fornecida de fora, por <b>injeção de dependência</b> (normalmente pelo construtor).</p>
+<pre><code>// Violação do DIP: alto nível conhece as classes concretas
+public class ServicoDeEnvio
+{
+    public void Enviar(string formato, Dados d)
+    {
+        if (formato == "xml") new ExportadorXml().Exportar(d);
+        else if (formato == "json") new ExportadorJson().Exportar(d);
+        else new ExportadorTexto().Exportar(d);
+    }
+}
+
+// Respeitando o DIP (e o OCP): depende da abstração, que é injetada
+public interface IExportador { void Exportar(Dados d); }
+public class ServicoDeEnvio
+{
+    private readonly IExportador exportador;
+    public ServicoDeEnvio(IExportador exportador) { this.exportador = exportador; }
+    public void Enviar(Dados d) =&gt; exportador.Exportar(d);
+}</code></pre>
+<div class="box atencao"><span class="bt">DIP × injeção de dependência × inversão de controle</span>O <b>DIP</b> é o princípio (dependa de abstrações). A <b>injeção de dependência</b> é uma técnica para aplicá-lo (as dependências são passadas de fora). A <b>inversão de controle</b> (IoC) é a ideia mais geral de que um framework ou contêiner, e não a própria classe, controla a criação e o fluxo.</div>
+
+<h3>Outros princípios citados com o SOLID</h3>
+<ul>
+<li><b>DRY</b> (<i>Don't Repeat Yourself</i>): não duplicar conhecimento.</li>
+<li><b>KISS</b> (<i>Keep It Simple</i>) e <b>YAGNI</b> (<i>You Aren't Gonna Need It</i>): não construir o que não é necessário agora.</li>
+<li><b>Lei de Deméter</b> ("fale só com seus amigos próximos"): evitar cadeias como <code>a.GetB().GetC().Fazer()</code>.</li>
+<li>Características gerais da POO: encapsulamento, herança, polimorfismo, reutilização, modularidade e abordagem <b>de baixo para cima</b> (<i>bottom-up</i>: identificam-se os objetos e compõe-se o sistema a partir deles), ao contrário da programação estruturada, tipicamente <b>de cima para baixo</b> (<i>top-down</i>, decomposição funcional). Linguagens como C#, Java e Python oferecem encapsulamento, herança e polimorfismo.</li>
+</ul>
+
+<h2>4. Padrões de projeto (Design Patterns)</h2>
+<p>Um <b>padrão de projeto</b> é uma solução reutilizável e consagrada para um problema recorrente de projeto, descrita por nome, problema, solução e consequências. O livro <i>Design Patterns</i> (1994), da "Gangue dos Quatro" (GoF: Gamma, Helm, Johnson e Vlissides), catalogou <b>23 padrões</b> em três categorias:</p>
+<div class="tbl"><table>
+<tr><th>Categoria</th><th>Propósito</th><th>Padrões</th></tr>
+<tr><td><b>Criacionais</b></td><td>abstrair o processo de <b>criação</b> de objetos</td><td>Abstract Factory, Builder, Factory Method, Prototype, Singleton</td></tr>
+<tr><td><b>Estruturais</b></td><td>compor classes e objetos em <b>estruturas</b> maiores</td><td>Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy</td></tr>
+<tr><td><b>Comportamentais</b></td><td>distribuir <b>responsabilidades</b> e organizar a comunicação entre objetos</td><td>Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor</td></tr>
+</table></div>
+
+<h3>4.1 Criacionais</h3>
+<div class="tbl"><table>
+<tr><th>Padrão</th><th>Intenção</th><th>Gatilho na questão</th></tr>
+<tr><td><b>Singleton</b></td><td>garantir que uma classe tenha <b>uma única instância</b> e fornecer um <b>ponto global de acesso</b> a ela</td><td>"apenas um objeto", configuração global, pool de conexões, log</td></tr>
+<tr><td><b>Factory Method</b></td><td>definir uma interface para criar um objeto, deixando as <b>subclasses decidirem</b> qual classe instanciar</td><td>"a subclasse decide o produto"; método que devolve uma interface e escolhe a classe concreta</td></tr>
+<tr><td><b>Abstract Factory</b></td><td>fornecer uma interface para criar <b>famílias de objetos relacionados</b> sem especificar suas classes concretas</td><td>"famílias" (componentes de interface para Windows e para Mac; peças de um mesmo fornecedor); apoia-se na <b>abstração</b></td></tr>
+<tr><td><b>Builder</b></td><td>separar a <b>construção passo a passo</b> de um objeto complexo da sua representação</td><td>objeto com muitos parâmetros opcionais; <code>.ComNome().ComIdade().Build()</code></td></tr>
+<tr><td><b>Prototype</b></td><td>criar objetos <b>clonando</b> um protótipo</td><td>"cópia", "clone"</td></tr>
+</table></div>
+<pre><code>public sealed class Configuracao                 // Singleton
+{
+    private static readonly Lazy&lt;Configuracao&gt; instancia = new(() =&gt; new Configuracao());
+    private Configuracao() { }                    // construtor privado: ninguém mais cria
+    public static Configuracao Instancia =&gt; instancia.Value;   // ponto global de acesso
+}</code></pre>
+<pre><code>public interface INotificacao { void Enviar(string msg); }
+public class Email : INotificacao { public void Enviar(string m) { /* ... */ } }
+public class Sms : INotificacao { public void Enviar(string m) { /* ... */ } }
+
+public static class NotificacaoFactory            // fábrica: centraliza a decisão de qual classe criar
+{
+    public static INotificacao Criar(string tipo) =&gt; tipo switch
+    {
+        "email" =&gt; new Email(),
+        "sms" =&gt; new Sms(),
+        _ =&gt; throw new ArgumentException("tipo inválido")
+    };
+}</code></pre>
+<p>O exemplo acima é a "fábrica simples" (Simple Factory), muito cobrada simplesmente como padrão <b>Factory</b>. No <b>Factory Method</b> do GoF, a decisão fica num método sobrescrito por subclasses; no <b>Abstract Factory</b>, uma interface de fábrica tem vários métodos, um para cada produto da família, e cada fábrica concreta cria uma família inteira.</p>
+
+<h3>4.2 Estruturais</h3>
+<div class="tbl"><table>
+<tr><th>Padrão</th><th>Intenção</th><th>Gatilho</th></tr>
+<tr><td><b>Adapter</b></td><td><b>converter a interface</b> de uma classe em outra que o cliente espera, permitindo que classes incompatíveis trabalhem juntas</td><td>integrar sistema legado ou de terceiros que espera outro formato; "adaptador de tomada"</td></tr>
+<tr><td><b>Facade</b></td><td>fornecer uma <b>interface unificada e simplificada</b> para um conjunto de interfaces de um subsistema</td><td>"simplificar o acesso a um subsistema complexo"; um ponto de entrada para várias chamadas</td></tr>
+<tr><td><b>Decorator</b></td><td>acrescentar <b>responsabilidades dinamicamente</b> a um objeto, como alternativa flexível à herança</td><td>"envolver" objetos, empilhar funcionalidades (stream com buffer + criptografia + compressão)</td></tr>
+<tr><td><b>Proxy</b></td><td>fornecer um <b>substituto</b> que controla o acesso a outro objeto</td><td>carga tardia (lazy), controle de acesso, cache, acesso remoto</td></tr>
+<tr><td><b>Composite</b></td><td>compor objetos em <b>estruturas de árvore</b> e tratar objetos individuais e composições de forma uniforme</td><td>pastas e arquivos, menus e submenus, organograma</td></tr>
+<tr><td>Bridge</td><td>separar uma abstração da sua implementação para que variem independentemente</td><td>duas dimensões de variação (forma × tecnologia de desenho)</td></tr>
+<tr><td>Flyweight</td><td>compartilhar objetos para suportar grandes quantidades de forma eficiente</td><td>milhares de objetos parecidos (caracteres de um editor)</td></tr>
+</table></div>
+<div class="box exemplo"><span class="bt">Adapter na prática</span>Um centro de controle recebe dados de radar num formato padronizado internacional, e um novo módulo terceirizado precisa desses mesmos dados, mas espera outra interface. Em vez de alterar o sistema existente ou o módulo, cria-se um <b>Adapter</b> que recebe as mensagens no formato original e as entrega no formato esperado pelo módulo.</div>
+
+<h3>4.3 Comportamentais</h3>
+<div class="tbl"><table>
+<tr><th>Padrão</th><th>Intenção</th><th>Gatilho</th></tr>
+<tr><td><b>Observer</b></td><td>definir uma dependência <b>um-para-muitos</b>: quando um objeto (sujeito) muda de estado, todos os seus <b>dependentes (observadores) são notificados</b> e atualizados automaticamente</td><td>"notificar", "assinantes", atualizar vários gráficos/telas quando os dados mudam, eventos, respostas assíncronas que atualizam a interface, módulo de notificações (e-mail, push)</td></tr>
+<tr><td><b>Strategy</b></td><td>definir uma <b>família de algoritmos</b>, encapsular cada um e torná-los <b>intercambiáveis</b></td><td>"diferentes formas de calcular/pagar/ordenar", escolher o algoritmo em tempo de execução (cartão, PIX, boleto)</td></tr>
+<tr><td><b>Template Method</b></td><td>definir o <b>esqueleto</b> de um algoritmo na superclasse, deixando passos para as subclasses</td><td>"passos fixos com etapas que variam"</td></tr>
+<tr><td><b>Command</b></td><td>encapsular uma <b>requisição como objeto</b></td><td>desfazer/refazer, filas de operações, botões e menus</td></tr>
+<tr><td><b>State</b></td><td>permitir que um objeto altere seu comportamento quando seu <b>estado interno</b> muda</td><td>pedido "aberto/pago/enviado" com comportamentos diferentes</td></tr>
+<tr><td><b>Iterator</b></td><td>acessar sequencialmente os elementos de uma coleção sem expor sua estrutura</td><td><code>foreach</code>, <code>IEnumerable</code></td></tr>
+<tr><td><b>Chain of Responsibility</b></td><td>passar a requisição por uma <b>cadeia de manipuladores</b> até que um a trate</td><td>aprovações em níveis, filtros, middlewares</td></tr>
+<tr><td><b>Mediator</b></td><td>centralizar a comunicação entre objetos num <b>mediador</b>, reduzindo o acoplamento entre eles</td><td>torre de controle, componentes de um formulário</td></tr>
+<tr><td>Memento · Visitor · Interpreter</td><td>salvar e restaurar estado · acrescentar operações a uma estrutura sem alterá-la · interpretar uma linguagem</td><td>"desfazer para um ponto" · "nova operação sobre os nós" · gramáticas</td></tr>
+</table></div>
+<pre><code>// Strategy: o algoritmo de pagamento é intercambiável
+public interface IFormaPagamento { void Pagar(decimal valor); }
+public class Cartao : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
+public class Pix    : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
+public class Boleto : IFormaPagamento { public void Pagar(decimal v) { /* ... */ } }
+
+public class Checkout
+{
+    public void Finalizar(decimal total, IFormaPagamento forma) =&gt; forma.Pagar(total);
+}</code></pre>
+<pre><code>// Observer: o sujeito notifica todos os observadores inscritos
+public interface IObservador { void Atualizar(decimal cotacao); }
+public class Ativo
+{
+    private readonly List&lt;IObservador&gt; observadores = new();
+    public void Inscrever(IObservador o) =&gt; observadores.Add(o);
+    public void NovaCotacao(decimal c)
+    {
+        foreach (var o in observadores) o.Atualizar(c);   // gráficos, alertas, logs...
+    }
+}</code></pre>
+<div class="box atencao"><span class="bt">Strategy × State × Template Method</span>Strategy: o <b>cliente</b> escolhe o algoritmo, que é intercambiável (composição). State: o próprio objeto muda de comportamento conforme seu <b>estado</b>. Template Method: o <b>esqueleto</b> fica na superclasse e as subclasses preenchem passos (herança).</div>
+
+<h3>4.4 Padrões de arquitetura e do Java EE</h3>
+<ul>
+<li><b>MVC</b> (Model-View-Controller): separa os dados e regras (Model), a apresentação (View) e o tratamento das requisições (Controller).</li>
+<li><b>Front Controller</b>: um <b>ponto único de entrada</b> (por exemplo, um Servlet) recebe todas as requisições HTTP e as direciona ao controlador adequado.</li>
+<li><b>Facade</b> (no contexto de EJB, <i>Session Facade</i>): fachada que expõe aos clientes uma interface simples para a lógica de negócio distribuída em vários componentes.</li>
+<li>Outros: DAO (Data Access Object, isola o acesso a dados), DTO (objeto de transferência de dados), Repository, Dependency Injection.</li>
+</ul>
+
+<h2>5. Qualidade de software e tópicos vizinhos</h2>
+<h3>Características de qualidade (ISO/IEC 25010)</h3>
+<p>Adequação funcional, eficiência de desempenho, compatibilidade, usabilidade, <b>confiabilidade</b> (maturidade, disponibilidade, tolerância a falhas, recuperabilidade), segurança, <b>manutenibilidade</b> (modularidade, reusabilidade, analisabilidade, modificabilidade, testabilidade) e portabilidade. Quando um sistema desenvolvido por terceiros será entregue para outra equipe manter e evoluir, a característica mais importante a exigir é a <b>manutenibilidade</b>, acompanhada da confiabilidade.</p>
+<h3>Testes</h3>
+<ul>
+<li><b>Teste de regressão</b>: reexecutar testes após uma alteração para verificar que a correção de um defeito (ou uma melhoria) <b>não introduziu novos defeitos</b>.</li>
+<li>Níveis: unidade, integração, sistema e aceitação. Caixa-branca (estrutura interna) × caixa-preta (entradas e saídas). Exceções e casos de erro também devem ser testados.</li>
+</ul>
+<h3>Análise de Pontos de Função (APF)</h3>
+<p>Mede o tamanho funcional do software, independentemente da linguagem. Funções de dados: <b>ALI</b> (Arquivo Lógico Interno, mantido pela aplicação) e <b>AIE</b> (Arquivo de Interface Externa: grupo de dados logicamente relacionados, identificável pelo usuário, <b>referenciado</b> pela aplicação, mas <b>mantido por outra</b> aplicação). Funções de transação: entrada externa (EE), saída externa (SE) e consulta externa (CE).</p>
+
+<h2>Síntese</h2>
+<div class="tbl"><table>
+<tr><th>Tema</th><th>Ponto-chave</th></tr>
+<tr><td>Captura de exceção</td><td>só se o comando foi executado dentro de um try</td></tr>
+<tr><td>Ordem dos catch</td><td>do específico ao geral</td></tr>
+<tr><td>Exceções verificadas</td><td>existem em Java (throws); não existem em C#</td></tr>
+<tr><td>Coesão × acoplamento</td><td>alta × baixo</td></tr>
+<tr><td>SRP</td><td>um único motivo para mudar</td></tr>
+<tr><td>OCP</td><td>aberto para extensão, fechado para modificação</td></tr>
+<tr><td>LSP</td><td>subclasse substitui a base sem quebrar o programa</td></tr>
+<tr><td>ISP</td><td>interfaces pequenas e específicas</td></tr>
+<tr><td>DIP</td><td>depender de abstrações; injeção de dependência</td></tr>
+<tr><td>Singleton</td><td>uma instância + ponto global de acesso</td></tr>
+<tr><td>Abstract Factory</td><td>famílias de objetos relacionados</td></tr>
+<tr><td>Adapter</td><td>converte interfaces incompatíveis</td></tr>
+<tr><td>Facade</td><td>interface simplificada de um subsistema</td></tr>
+<tr><td>Observer</td><td>um-para-muitos, notificação automática</td></tr>
+<tr><td>Strategy</td><td>algoritmos intercambiáveis</td></tr>
+<tr><td>Front Controller</td><td>ponto único de entrada das requisições</td></tr>
+<tr><td>Regressão</td><td>a correção não criou novos defeitos</td></tr>
+<tr><td>AIE</td><td>dados referenciados, mantidos por outra aplicação</td></tr>
+</table></div>
+
+<h2>Flashcards</h2>
+<div class="cards">
+<details><summary>Qual é a raiz das exceções em Java?</summary><div>Throwable (com Error e Exception).</div></details>
+<details><summary>C# tem cláusula throws?</summary><div>Não; não há exceções verificadas.</div></details>
+<details><summary>Melhor tipo de coesão?</summary><div>Funcional.</div></details>
+<details><summary>Melhor tipo de acoplamento?</summary><div>De dados.</div></details>
+<details><summary>Quadrado herdando de Retângulo viola qual princípio?</summary><div>Substituição de Liskov.</div></details>
+<details><summary>Interface "gorda" viola…</summary><div>Segregação de Interfaces.</div></details>
+<details><summary>Switch que cresce a cada novo tipo viola…</summary><div>Aberto/Fechado.</div></details>
+<details><summary>Três categorias GoF?</summary><div>Criacionais, estruturais e comportamentais.</div></details>
+<details><summary>Padrão para "notificar vários interessados"?</summary><div>Observer.</div></details>
+<details><summary>Padrão para trocar o algoritmo em tempo de execução?</summary><div>Strategy.</div></details>
+<details><summary>Padrão para integrar interfaces incompatíveis?</summary><div>Adapter.</div></details>
+<details><summary>Padrão de famílias de objetos?</summary><div>Abstract Factory.</div></details>
+<details><summary>Padrão que acrescenta responsabilidades dinamicamente?</summary><div>Decorator.</div></details>
+<details><summary>Decorator é criacional?</summary><div>Não, estrutural.</div></details>
+<details><summary>POO é top-down ou bottom-up?</summary><div>Bottom-up.</div></details>
+<details><summary>Teste que verifica se a correção criou novos bugs?</summary><div>Regressão.</div></details>
+</div>
+
+<h2>Exercícios de fixação</h2>
+
+<div class="q"><div class="q-n">Exercício 1</div><p class="q-stem">Considere:</p>
+<pre><code>try {
+    Console.Write("A");
+    int[] v = new int[2];
+    v[2] = 10;
+    Console.Write("B");
+}
+catch (IndexOutOfRangeException) { Console.Write("C"); }
+catch (Exception) { Console.Write("D"); }
+finally { Console.Write("E"); }
+Console.Write("F");</code></pre>
+<p class="q-stem">A saída é:</p>
+<ol class="alts"><li class="alt" data-l="A">ABEF</li><li class="alt" data-l="B">ACEF</li><li class="alt" data-l="C">ACDEF</li><li class="alt" data-l="D">ACE</li><li class="alt" data-l="E">ADEF</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> "A" é impresso; v[2] não existe (índices 0 e 1) e lança IndexOutOfRangeException, então "B" é pulado. Só o primeiro catch compatível executa ("C"), depois o finally ("E"), e o programa continua ("F").</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 2</div><p class="q-stem">Sobre exceções em Java e em C#, é correto afirmar que:</p>
+<ol class="alts"><li class="alt" data-l="A">em C#, métodos devem declarar com throws as exceções que podem lançar;</li><li class="alt" data-l="B">em Java, exceções verificadas devem ser capturadas ou declaradas na assinatura do método;</li><li class="alt" data-l="C">em Java, RuntimeException é uma exceção verificada;</li><li class="alt" data-l="D">em C#, a raiz da hierarquia é Throwable;</li><li class="alt" data-l="E">em ambas, o bloco finally é obrigatório.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> C# não tem exceções verificadas nem throws na assinatura; RuntimeException é não verificada; Throwable é a raiz em Java; finally é opcional.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 3</div><p class="q-stem">Uma classe <code>Pedido</code> calcula impostos, formata o pedido em HTML para e-mail e o grava no banco de dados. O princípio SOLID mais diretamente violado é:</p>
+<ol class="alts"><li class="alt" data-l="A">responsabilidade única;</li><li class="alt" data-l="B">substituição de Liskov;</li><li class="alt" data-l="C">segregação de interfaces;</li><li class="alt" data-l="D">aberto/fechado;</li><li class="alt" data-l="E">inversão de dependência.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Três responsabilidades, três motivos para mudar: baixa coesão.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 4</div><p class="q-stem">A classe <code>AveVoadora</code> tem o método <code>Voar()</code>. A subclasse <code>Pinguim</code> o sobrescreve lançando <code>NotSupportedException</code>, e um módulo que percorre uma lista de <code>AveVoadora</code> passa a falhar. O princípio violado é:</p>
+<ol class="alts"><li class="alt" data-l="A">responsabilidade única;</li><li class="alt" data-l="B">substituição de Liskov;</li><li class="alt" data-l="C">aberto/fechado;</li><li class="alt" data-l="D">inversão de dependência;</li><li class="alt" data-l="E">DRY.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> A subclasse não pode substituir a base sem quebrar o programa.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 5</div><p class="q-stem">Um módulo de relatórios precisa gerar arquivos em PDF, Excel e CSV, e novos formatos surgirão. Para acrescentar formatos sem alterar o código existente, deve-se aplicar principalmente:</p>
+<ol class="alts"><li class="alt" data-l="A">o princípio aberto/fechado, com uma abstração implementada por uma classe para cada formato;</li><li class="alt" data-l="B">um switch central atualizado a cada formato;</li><li class="alt" data-l="C">herança múltipla;</li><li class="alt" data-l="D">o padrão Singleton;</li><li class="alt" data-l="E">acoplamento de conteúdo.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Extensão por novas classes, sem modificar as existentes. A alternativa B é exatamente o que o OCP evita.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 6</div><p class="q-stem">Um sistema deve garantir que exista uma única instância da classe que gerencia o arquivo de log, acessível de qualquer ponto da aplicação. O padrão adequado é:</p>
+<ol class="alts"><li class="alt" data-l="A">Prototype;</li><li class="alt" data-l="B">Singleton;</li><li class="alt" data-l="C">Builder;</li><li class="alt" data-l="D">Facade;</li><li class="alt" data-l="E">Observer.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Instância única + ponto global de acesso, com construtor privado.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 7</div><p class="q-stem">Um painel de monitoramento possui vários gráficos que devem ser atualizados automaticamente sempre que chegam novas leituras de um sensor. O padrão mais indicado é:</p>
+<ol class="alts"><li class="alt" data-l="A">Strategy;</li><li class="alt" data-l="B">Adapter;</li><li class="alt" data-l="C">Observer;</li><li class="alt" data-l="D">Composite;</li><li class="alt" data-l="E">Template Method.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Dependência um-para-muitos com notificação automática dos observadores quando o sujeito muda.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 8</div><p class="q-stem">Um sistema de frete calcula o valor por transportadora (Correios, transportadora A, retirada na loja), e o cliente escolhe a opção no carrinho. Para encapsular cada cálculo em uma classe intercambiável, usa-se:</p>
+<ol class="alts"><li class="alt" data-l="A">Strategy;</li><li class="alt" data-l="B">Singleton;</li><li class="alt" data-l="C">Proxy;</li><li class="alt" data-l="D">Memento;</li><li class="alt" data-l="E">Flyweight.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Família de algoritmos encapsulados e intercambiáveis, escolhidos em tempo de execução.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 9</div><p class="q-stem">Um órgão precisa usar uma biblioteca de assinatura digital de terceiros cuja interface é incompatível com a interface de assinatura já usada em todo o sistema. Sem alterar nenhum dos dois lados, a solução adequada é o padrão:</p>
+<ol class="alts"><li class="alt" data-l="A">Facade;</li><li class="alt" data-l="B">Adapter;</li><li class="alt" data-l="C">Decorator;</li><li class="alt" data-l="D">Builder;</li><li class="alt" data-l="E">Command.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> O Adapter converte a interface da biblioteca na interface que o sistema espera. A Facade simplifica um subsistema, mas não serve para compatibilizar interfaces.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 10</div><p class="q-stem">Uma aplicação gráfica deve criar botões, caixas de texto e menus com aparência coerente para o tema claro ou para o tema escuro, sem que o código cliente conheça as classes concretas. O padrão indicado é:</p>
+<ol class="alts"><li class="alt" data-l="A">Abstract Factory;</li><li class="alt" data-l="B">Singleton;</li><li class="alt" data-l="C">Iterator;</li><li class="alt" data-l="D">Adapter;</li><li class="alt" data-l="E">Chain of Responsibility.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Famílias de objetos relacionados (todos os componentes de um tema), criadas por uma fábrica concreta por família.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 11</div><p class="q-stem">Assinale a opção que contém apenas padrões estruturais do catálogo GoF.</p>
+<ol class="alts"><li class="alt" data-l="A">Adapter, Decorator e Facade</li><li class="alt" data-l="B">Singleton, Proxy e Observer</li><li class="alt" data-l="C">Strategy, Bridge e Builder</li><li class="alt" data-l="D">Composite, Command e Prototype</li><li class="alt" data-l="E">Iterator, Flyweight e Factory Method</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Singleton, Builder, Prototype e Factory Method são criacionais; Observer, Strategy, Command e Iterator são comportamentais.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Em uma aplicação web Java, todas as requisições passam por um único Servlet, que as encaminha ao controlador adequado; e a camada de negócio expõe aos controladores uma interface simplificada que esconde vários componentes internos. Os padrões são, respectivamente:</p>
+<ol class="alts"><li class="alt" data-l="A">Front Controller e Facade;</li><li class="alt" data-l="B">Singleton e Adapter;</li><li class="alt" data-l="C">Observer e Proxy;</li><li class="alt" data-l="D">Front Controller e Decorator;</li><li class="alt" data-l="E">Command e Composite.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Ponto único de entrada = Front Controller; interface simplificada para um subsistema = Facade.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 13</div><p class="q-stem">Após corrigir um defeito no cálculo de juros, a equipe reexecutou todo o conjunto de testes automatizados para confirmar que nenhuma outra funcionalidade foi afetada. Esse é o teste de:</p>
+<ol class="alts"><li class="alt" data-l="A">aceitação;</li><li class="alt" data-l="B">carga;</li><li class="alt" data-l="C">regressão;</li><li class="alt" data-l="D">usabilidade;</li><li class="alt" data-l="E">fumaça.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Regressão: garantir que a alteração não introduziu novos defeitos.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 14</div><p class="q-stem">Uma classe de serviço recebe no construtor uma instância de <code>IRepositorioClientes</code>, em vez de criar internamente um <code>RepositorioSqlServer</code>. Essa prática aplica:</p>
+<ol class="alts"><li class="alt" data-l="A">o princípio da inversão de dependência, por meio de injeção de dependência;</li><li class="alt" data-l="B">o padrão Singleton;</li><li class="alt" data-l="C">acoplamento de conteúdo;</li><li class="alt" data-l="D">herança múltipla de interfaces;</li><li class="alt" data-l="E">o princípio da segregação de interfaces.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> O serviço depende da abstração, e a implementação concreta é injetada de fora.</p></div></details></div>
+
+<p class="src muted small">Fontes: Microsoft Learn (tratamento de exceções, hierarquia de exceções, criação de exceções personalizadas, boas práticas); Oracle, <i>The Java Tutorials: Exceptions</i>; Robert C. Martin, <i>Arquitetura Limpa</i> e <i>Agile Software Development</i>; Gamma, Helm, Johnson e Vlissides, <i>Padrões de Projeto</i>; Pressman, <i>Engenharia de Software</i>; ISO/IEC 25010; IFPUG, <i>Counting Practices Manual</i>.</p>
+
+<h2>Checklist</h2>
+<ul class="checklist">
+  <li>Sei o fluxo de uma exceção, a ordem dos catch e o papel do finally e do using.</li>
+  <li>Sei criar exceções personalizadas e as boas práticas de tratamento.</li>
+  <li>Sei a diferença entre exceções em Java (checked, throws) e em C#.</li>
+  <li>Sei os tipos de coesão e acoplamento e qual é o desejável.</li>
+  <li>Sei explicar e exemplificar cada princípio SOLID e reconhecer violações.</li>
+  <li>Sei as três categorias GoF e classifico os 23 padrões.</li>
+  <li>Reconheço Singleton, Factory, Abstract Factory, Builder, Adapter, Facade, Decorator, Proxy, Composite, Observer, Strategy, Template Method, State e Command por seus gatilhos.</li>
+  <li>Sei MVC, Front Controller e DAO.</li>
+  <li>Sei as características de qualidade da ISO 25010, teste de regressão e ALI × AIE.</li>
+</ul>

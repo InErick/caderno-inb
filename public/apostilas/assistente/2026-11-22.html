@@ -1,0 +1,282 @@
+<h1>Lógica proposicional: proposições, conectivos, tabela-verdade, equivalências, negações, quantificadores e argumentos</h1>
+<p class="lead">A lógica é o assunto de Raciocínio Lógico mais cobrado pela FGV. As questões giram em torno de poucas ferramentas: saber quando uma proposição composta é verdadeira, transformar uma frase em outra equivalente, negar corretamente frases com "e", "ou", "se… então" e quantificadores, e tirar conclusões válidas a partir de premissas. Este capítulo apresenta cada ferramenta com o raciocínio passo a passo, as "receitas" que a banca exige e exemplos resolvidos. No final, há uma seção sobre problemas de lógica sem símbolos (verdade e mentira, parentesco, casa dos pombos), que aparecem no mesmo bloco.</p>
+<div class="meta-row"><span class="chip-i">Raciocínio lógico · Lógica</span><span class="chip-i">⏱ 1 hora</span></div>
+
+<div class="box dica"><span class="bt">Como estudar este capítulo</span>Lógica se aprende fazendo. Para cada regra, escreva a frase do exemplo, feche o texto e tente produzir a equivalência ou a negação sozinho. As três receitas mais importantes são: <b>"se p então q" equivale a "se não q então não p" e a "não p ou q"</b>; a <b>negação de "se p então q" é "p e não q"</b>; e a <b>negação de "todo" é "algum… não"</b>. Elas resolvem a maior parte das questões.</div>
+
+<h2>1. Proposições</h2>
+<p><b>Proposição</b> é toda frase declarativa que pode ser classificada como <b>verdadeira (V)</b> ou <b>falsa (F)</b>, mas não as duas coisas ao mesmo tempo. Dois princípios regem a lógica clássica:</p>
+<ul>
+<li><b>Não contradição:</b> uma proposição não pode ser verdadeira e falsa ao mesmo tempo.</li>
+<li><b>Terceiro excluído:</b> toda proposição é verdadeira ou falsa; não há terceira possibilidade.</li>
+</ul>
+<div class="tbl"><table>
+<tr><th>São proposições</th><th>Não são proposições</th></tr>
+<tr><td>"Brasília é a capital do Brasil." (V)<br>"30% de 120 é 36." (V)<br>"2 + 2 = 5." (F)</td><td>perguntas ("Que horas são?"); ordens ("Feche a porta."); exclamações ("Que dia lindo!"); frases sem sujeito definido ou com variável livre ("x + 3 = 7", "Ele é médico"), chamadas <b>sentenças abertas</b>; paradoxos ("Esta frase é falsa.")</td></tr>
+</table></div>
+<p><b>Proposições simples</b> têm uma única ideia e são representadas por letras minúsculas (p, q, r). <b>Proposições compostas</b> combinam simples por meio de <b>conectivos</b>.</p>
+
+<h2>2. Conectivos e tabela-verdade</h2>
+<div class="tbl"><table>
+<tr><th>Conectivo</th><th>Símbolo</th><th>Leitura</th><th>Regra para ser verdadeira</th></tr>
+<tr><td>Negação</td><td>~p ou ¬p</td><td>não p</td><td>inverte o valor de p</td></tr>
+<tr><td>Conjunção</td><td>p ∧ q</td><td>p <b>e</b> q</td><td>V só se <b>as duas</b> forem V</td></tr>
+<tr><td>Disjunção (inclusiva)</td><td>p ∨ q</td><td>p <b>ou</b> q</td><td>V se <b>pelo menos uma</b> for V; F só se as duas forem F</td></tr>
+<tr><td>Disjunção exclusiva</td><td>p ⊻ q</td><td><b>ou</b> p <b>ou</b> q (mas não ambos)</td><td>V se os valores forem <b>diferentes</b></td></tr>
+<tr><td>Condicional</td><td>p → q</td><td><b>se</b> p, <b>então</b> q</td><td>F <b>somente</b> quando p é V e q é F ("Vera Fischer é falsa")</td></tr>
+<tr><td>Bicondicional</td><td>p ↔ q</td><td>p <b>se e somente se</b> q</td><td>V se os valores forem <b>iguais</b></td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>p</th><th>q</th><th>p ∧ q</th><th>p ∨ q</th><th>p ⊻ q</th><th>p → q</th><th>p ↔ q</th></tr>
+<tr><td>V</td><td>V</td><td>V</td><td>V</td><td>F</td><td>V</td><td>V</td></tr>
+<tr><td>V</td><td>F</td><td>F</td><td>V</td><td>V</td><td><b>F</b></td><td>F</td></tr>
+<tr><td>F</td><td>V</td><td>F</td><td>V</td><td>V</td><td>V</td><td>F</td></tr>
+<tr><td>F</td><td>F</td><td>F</td><td>F</td><td>F</td><td>V</td><td>V</td></tr>
+</table></div>
+<p>Com <b>n</b> proposições simples, a tabela-verdade tem <b>2ⁿ linhas</b>: 2 proposições → 4 linhas; 3 → 8; 4 → 16.</p>
+
+<h3>Entendendo o condicional</h3>
+<p>"Se p, então q" é uma <b>promessa</b>: só é quebrada quando p acontece e q não acontece. Se p não acontece, a promessa não foi testada e o condicional é considerado verdadeiro. Exemplo: "Se chover, levo guarda-chuva". Só sou mentiroso se chover e eu não levar.</p>
+<p>Formas de dizer p → q: "se p, q"; "q, se p"; "quando p, q"; "p implica q"; "p é condição <b>suficiente</b> para q"; "q é condição <b>necessária</b> para p"; "todo p é q". No condicional, p é o <b>antecedente</b> e q, o <b>consequente</b>.</p>
+
+<div class="box exemplo"><span class="bt">Avaliando proposições com números</span>Sejam a: "30% de 120 = 36" (V, pois 0,3 × 120 = 36) e b: "25% de 140 = 36" (F, pois 0,25 × 140 = 35).<br>
+"a e b" → V ∧ F = <b>F</b>.<br>
+"a ou b" → V ∨ F = <b>V</b>.<br>
+"Se b, então a" → F → V = <b>V</b> (antecedente falso).<br>
+"Se a, então b" → V → F = <b>F</b> (único caso falso).</div>
+
+<h3>Tautologia, contradição e contingência</h3>
+<ul>
+<li><b>Tautologia:</b> proposição composta sempre verdadeira, quaisquer que sejam os valores das simples. Ex.: p ∨ ~p.</li>
+<li><b>Contradição:</b> sempre falsa. Ex.: p ∧ ~p.</li>
+<li><b>Contingência:</b> pode ser V ou F, dependendo dos valores. Ex.: p → q.</li>
+</ul>
+
+<h2>3. Equivalências lógicas</h2>
+<p>Duas proposições são <b>equivalentes</b> (≡) quando têm a mesma tabela-verdade, ou seja, dizem a mesma coisa de formas diferentes. As equivalências do condicional são as mais cobradas.</p>
+
+<h3>3.1 Contrapositiva: p → q ≡ ~q → ~p</h3>
+<p>"Se p, então q" equivale a "se <b>não q</b>, então <b>não p</b>": inverte-se a ordem e nega-se as duas partes.</p>
+<ul>
+<li>"Se Marta gosta de pescar, então gosta de siri" ≡ "Se Marta <b>não</b> gosta de siri, então <b>não</b> gosta de pescar".</li>
+<li>"Se o acusado estava no hospital, então não é culpado" ≡ "Se o acusado é culpado, então não estava no hospital".</li>
+<li>"Se todos os cidadãos contribuem, então o país melhora" ≡ "Se o país não melhora, então <b>nem todo</b> cidadão contribui" (a negação de "todos contribuem" é "nem todos contribuem", e não "nenhum contribui").</li>
+</ul>
+<div class="box atencao"><span class="bt">As duas armadilhas</span>A <b>recíproca</b> (q → p: "se gosta de siri, então gosta de pescar") e a <b>inversa</b> (~p → ~q: "se não gosta de pescar, então não gosta de siri") <b>não</b> são equivalentes ao condicional original. Só a contrapositiva é.</div>
+
+<h3>3.2 Condicional como disjunção: p → q ≡ ~p ∨ q</h3>
+<p>"Se p, então q" equivale a "<b>não p ou q</b>": nega-se o antecedente, troca-se "se… então" por "ou" e mantém-se o consequente.</p>
+<ul>
+<li>"Se está chovendo, uso guarda-chuva" ≡ "Não está chovendo ou uso guarda-chuva".</li>
+<li>"Se Temístocles é professor, então Demóstenes é orador" ≡ "Temístocles não é professor ou Demóstenes é orador".</li>
+<li>Com antecedente composto: "Se Pedro é torcedor do Avaí <b>e</b> Marcela não é torcedora do Figueirense, então Joana é torcedora da Chapecoense". Negando o antecedente por De Morgan: "Pedro não é torcedor do Avaí <b>ou</b> Marcela é torcedora do Figueirense", e acrescentando o consequente: "… <b>ou</b> Joana é torcedora da Chapecoense".</li>
+</ul>
+<p>O caminho inverso também vale: "p ou q" ≡ "se não p, então q" (e ≡ "se não q, então p").</p>
+
+<h3>3.3 Outras equivalências úteis</h3>
+<div class="tbl"><table>
+<tr><th>Nome</th><th>Equivalência</th></tr>
+<tr><td>Dupla negação</td><td>~(~p) ≡ p</td></tr>
+<tr><td>Comutativas</td><td>p ∧ q ≡ q ∧ p; p ∨ q ≡ q ∨ p (o condicional <b>não</b> é comutativo)</td></tr>
+<tr><td>Bicondicional</td><td>p ↔ q ≡ (p → q) ∧ (q → p) ≡ (~p ↔ ~q)</td></tr>
+<tr><td>Distributivas</td><td>p ∧ (q ∨ r) ≡ (p ∧ q) ∨ (p ∧ r); p ∨ (q ∧ r) ≡ (p ∨ q) ∧ (p ∨ r)</td></tr>
+<tr><td>Exportação</td><td>(p ∧ q) → r ≡ p → (q → r)</td></tr>
+<tr><td>Condicional com "ou" no consequente</td><td>p → (q ∨ r) ≡ (p ∧ ~q) → r</td></tr>
+</table></div>
+
+<h2>4. Negações</h2>
+<p>Negar uma proposição é construir outra com o valor lógico <b>sempre oposto</b>. A negação não é "o contrário intuitivo": é exatamente o caso em que a frase original falha.</p>
+
+<h3>4.1 Leis de De Morgan</h3>
+<div class="tbl"><table>
+<tr><th>Original</th><th>Negação</th><th>Regra</th></tr>
+<tr><td>p <b>e</b> q</td><td>~p <b>ou</b> ~q</td><td>nega as duas e troca "e" por "ou"</td></tr>
+<tr><td>p <b>ou</b> q</td><td>~p <b>e</b> ~q</td><td>nega as duas e troca "ou" por "e"</td></tr>
+</table></div>
+<ul>
+<li>"Miguel não almoçou e foi trabalhar" é falsa → sua negação é verdadeira: "Miguel almoçou <b>ou</b> não foi trabalhar".</li>
+<li>"Joana gosta de leite e não gosta de café" é falsa → "Joana não gosta de leite <b>ou</b> gosta de café" é verdadeira. Convertendo esse "ou" em condicional (seção 3.2): "Se Joana não gosta de café, então não gosta de leite" também é verdadeira.</li>
+</ul>
+
+<h3>4.2 Negação do condicional: ~(p → q) ≡ p ∧ ~q</h3>
+<p>O condicional só é falso quando o antecedente acontece e o consequente não. Por isso a negação de "se p, então q" é "<b>p e não q</b>": mantém-se o antecedente, troca-se por "e" e nega-se o consequente. <b>A negação de um condicional nunca é outro condicional.</b> Mnemônico: <b>MA-NÉ</b> (Mantém a primeira, E, Nega a segunda).</p>
+<ul>
+<li>"Se como demais, então passo mal" → negação: "Como demais <b>e</b> não passo mal".</li>
+<li>"Se eu como e não corro, então eu engordo" → negação: "Eu como e não corro <b>e</b> não engordo".</li>
+<li>"Se não estou cansado, então vejo televisão ou vou ao cinema" → negação: "Não estou cansado <b>e</b> não (vejo TV ou vou ao cinema)", ou seja, por De Morgan, "Não estou cansado e não vejo televisão e não vou ao cinema".</li>
+</ul>
+
+<h3>4.3 Negação do bicondicional e da disjunção exclusiva</h3>
+<p>~(p ↔ q) ≡ p ⊻ q ("ou p ou q") ≡ p ↔ ~q. E a negação de "ou p ou q" é "p se e somente se q".</p>
+
+<h2>5. Quantificadores</h2>
+<p>Frases com <b>todo</b>, <b>algum</b> e <b>nenhum</b> envolvem quantificadores. O <b>universal</b> (∀, "para todo") afirma algo de todos os elementos; o <b>existencial</b> (∃, "existe pelo menos um") afirma algo de pelo menos um. Em lógica, "algum" significa "<b>pelo menos um</b>" (pode ser um, vários ou até todos).</p>
+<div class="tbl"><table>
+<tr><th>Proposição</th><th>Negação</th></tr>
+<tr><td>Todo A é B</td><td><b>Algum</b> A <b>não</b> é B (pelo menos um A não é B; nem todo A é B)</td></tr>
+<tr><td>Algum A é B</td><td><b>Nenhum</b> A é B</td></tr>
+<tr><td>Nenhum A é B</td><td><b>Algum</b> A é B</td></tr>
+<tr><td>Algum A não é B</td><td><b>Todo</b> A é B</td></tr>
+</table></div>
+<div class="box atencao"><span class="bt">O erro mais comum</span>A negação de "todo capixaba nasceu em Vitória" <b>não</b> é "nenhum capixaba nasceu em Vitória". Para desmentir uma afirmação universal basta <b>um</b> contraexemplo: "algum capixaba não nasceu em Vitória". Se alguém diz "todos os relatórios foram avaliados" e isso é falso, conclui-se apenas que <b>pelo menos um</b> relatório não foi avaliado.</div>
+<p>Quando o predicado é composto, aplica-se De Morgan dentro do quantificador. "Todas as pessoas apreendidas têm 21 anos ou mais <b>e</b> são do sexo masculino" → negação: "Pelo menos uma pessoa apreendida tem <b>menos de 21 anos ou</b> é do sexo feminino".</p>
+
+<h3>Quantificadores e diagramas</h3>
+<p>Questões de "todo/algum/nenhum" se resolvem bem com diagramas (círculos de Euler-Venn):</p>
+<ul>
+<li><b>Todo A é B:</b> o círculo de A fica dentro do de B. Consequência: quem não é B não é A ("todo ciclista joga futebol" → "quem não joga futebol não é ciclista"). Note que isso é a contrapositiva.</li>
+<li><b>Algum A é B:</b> os círculos se interceptam (há pelo menos um elemento em comum).</li>
+<li><b>Nenhum A é B:</b> os círculos são separados.</li>
+</ul>
+<p>"Todo A é B" <b>não</b> permite concluir que todo B é A. Com "todos os ciclistas jogam futebol e alguns ciclistas jogam basquete", não se pode concluir que todo jogador de futebol é ciclista, nem que quem joga basquete é ciclista; mas pode-se concluir que algum jogador de futebol joga basquete e que quem não joga futebol não é ciclista.</p>
+
+<h2>6. Argumentos e dedução</h2>
+<p>Um <b>argumento</b> é um conjunto de <b>premissas</b> que sustentam uma <b>conclusão</b>. Ele é <b>válido</b> quando é impossível que todas as premissas sejam verdadeiras e a conclusão falsa. Validade diz respeito à <b>forma</b>, e não à verdade dos conteúdos.</p>
+<div class="tbl"><table>
+<tr><th>Regra válida</th><th>Forma</th><th>Exemplo</th></tr>
+<tr><td><b>Modus ponens</b></td><td>p → q; p; logo q</td><td>Se chove, a rua molha. Choveu. Logo, a rua molhou.</td></tr>
+<tr><td><b>Modus tollens</b></td><td>p → q; ~q; logo ~p</td><td>Se chove, a rua molha. A rua não molhou. Logo, não choveu.</td></tr>
+<tr><td><b>Silogismo disjuntivo</b></td><td>p ∨ q; ~p; logo q</td><td>Vou de ônibus ou de metrô. Não vou de ônibus. Logo, vou de metrô.</td></tr>
+<tr><td><b>Silogismo hipotético</b> (encadeamento)</td><td>p → q; q → r; logo p → r</td><td>Se estudo, passo. Se passo, viajo. Logo, se estudo, viajo.</td></tr>
+</table></div>
+<div class="tbl"><table>
+<tr><th>Falácias formais (inválidas)</th><th>Forma</th></tr>
+<tr><td>Afirmação do consequente</td><td>p → q; q; logo p ❌</td></tr>
+<tr><td>Negação do antecedente</td><td>p → q; ~p; logo ~q ❌</td></tr>
+</table></div>
+<p>Além das falácias formais, há problemas de <b>conteúdo</b>: no argumento "minha família está passando necessidades, daí eu ter assaltado o banco", a premissa, ainda que verdadeira, <b>não é suficiente</b> para justificar a conclusão.</p>
+
+<h3>Método para "considere como verdadeiras as afirmativas…"</h3>
+<ol>
+<li>Comece pela proposição <b>simples</b> dada como certa (uma informação "solta", como "Beatriz não é brasileira").</li>
+<li>Use-a para descobrir o valor das outras partes: em "~D ∨ B" verdadeira com B falso, ~D tem de ser verdadeira, logo D é falso.</li>
+<li>Propague: em "J → D" verdadeira com D falso, J tem de ser falso (modus tollens).</li>
+<li>Compare as alternativas com os valores encontrados. Lembre que um condicional com antecedente falso é verdadeiro.</li>
+</ol>
+<div class="box exemplo"><span class="bt">Exemplo resolvido</span>Premissas verdadeiras: (1) Se Jorge é francês, então Denise é espanhola. (2) Denise não é espanhola ou Beatriz é brasileira. (3) Beatriz não é brasileira.<br>
+De (3), "Beatriz é brasileira" é F. Em (2), para a disjunção ser V, "Denise não é espanhola" tem de ser V: Denise não é espanhola. Em (1), o consequente é F; para o condicional ser V, o antecedente tem de ser F: Jorge não é francês.<br>
+Conclusões válidas: Jorge não é francês; Denise não é espanhola; e qualquer condicional com consequente verdadeiro, como "Se Jorge não é francês, então Denise não é espanhola" (V → V = V).</div>
+<div class="box exemplo"><span class="bt">Hipóteses em cadeia</span>Premissas: (1) Se X é vermelho, então Y não é verde. (2) Se X não é vermelho, então Z não é azul. (3) Se Y é verde, então Z é azul.<br>
+Suponha que Y seja verde. Por (3), Z é azul. Pela contrapositiva de (2), se Z é azul, X é vermelho. Por (1), se X é vermelho, Y não é verde: contradição. Logo, a suposição é impossível, e <b>Y não é verde</b>. (Testar uma hipótese e chegar a um absurdo é a redução ao absurdo.)</div>
+
+<h2>7. Lógica sem símbolos</h2>
+<h3>Verdade e mentira</h3>
+<p>Quando se sabe que exatamente um personagem mente, procure duas afirmações <b>contraditórias</b>: uma delas é a mentira, e as outras são verdadeiras. Exemplo: Chico diz "hoje não é dia 15"; Juvenal diz "hoje é dia 15"; Serafim diz "ontem foi dia 13". Chico e Juvenal se contradizem, então um deles mente e Serafim fala a verdade: ontem foi 13, hoje é <b>14</b>. Logo, quem mentiu foi Juvenal.</p>
+
+<h3>Princípio da casa dos pombos (pior caso)</h3>
+<p>Para garantir um resultado "com certeza", imagine o <b>pior cenário</b> possível. Num saco com 4 fichas brancas, 3 pretas, 2 azuis e 1 vermelha, quantas fichas é preciso tirar para garantir <b>uma branca</b>? No pior caso, saem antes todas as não brancas: 3 + 2 + 1 = 6. A 7ª é obrigatoriamente branca. Para garantir <b>duas de mesma cor</b>, bastam 5 fichas (uma de cada uma das 4 cores e, na 5ª, repete-se uma cor).</p>
+
+<h3>Parentesco</h3>
+<p>Monte a árvore. "Marcelo é filho de Alberto; Pedro é filho de Luiz; Marcelo e Luiz são irmãos por parte de pai" → Luiz também é filho de Alberto; Pedro é neto de Alberto, e Marcelo é <b>tio</b> de Pedro (Pedro é sobrinho de Marcelo).</p>
+
+<h3>Tempo</h3>
+<p>Converta tudo para minutos a partir de uma referência. Ex.: Maria chegou às 18h48; Carla chegou 27 minutos depois, às 19h15; Daniela chegou às 19h12, ou seja, 3 minutos antes de Carla.</p>
+
+<h3>Sentenças abertas e conjuntos</h3>
+<p>Para que um condicional com variáveis seja <b>sempre</b> verdadeiro, não pode existir nenhum caso com antecedente V e consequente F. Ex.: "Se x é par e y &gt; x, então y é ímpar", com x ∈ A e y ∈ B. Teste os x pares de A e, para cada um, os y de B maiores que ele: se algum desses y for par, a sentença falha. Com A = {2, 3, 4} e B = {2, 3, 5}: x = 2 → y ∈ {3, 5}, ambos ímpares; x = 4 → y = 5, ímpar. Sempre verdadeira.</p>
+
+<h2>Síntese</h2>
+<div class="tbl"><table>
+<tr><th>Situação</th><th>Receita</th></tr>
+<tr><td>p ∧ q verdadeira</td><td>as duas verdadeiras</td></tr>
+<tr><td>p ∨ q falsa</td><td>as duas falsas</td></tr>
+<tr><td>p → q falsa</td><td>p V e q F (único caso)</td></tr>
+<tr><td>p ↔ q verdadeira</td><td>valores iguais</td></tr>
+<tr><td>Equivalente de p → q</td><td>~q → ~p (contrapositiva) ou ~p ∨ q</td></tr>
+<tr><td>Negação de p ∧ q</td><td>~p ∨ ~q</td></tr>
+<tr><td>Negação de p ∨ q</td><td>~p ∧ ~q</td></tr>
+<tr><td>Negação de p → q</td><td>p ∧ ~q</td></tr>
+<tr><td>Negação de "todo A é B"</td><td>algum A não é B</td></tr>
+<tr><td>Negação de "algum A é B"</td><td>nenhum A é B</td></tr>
+<tr><td>Nº de linhas da tabela</td><td>2ⁿ</td></tr>
+<tr><td>Garantir com certeza</td><td>pior caso + 1</td></tr>
+</table></div>
+
+<h2>Flashcards</h2>
+<div class="cards">
+<details><summary>"Que horas são?" é proposição?</summary><div>Não. Perguntas não têm valor lógico.</div></details>
+<details><summary>Quando p → q é falso?</summary><div>Só quando p é V e q é F.</div></details>
+<details><summary>Linhas da tabela com 3 proposições?</summary><div>8.</div></details>
+<details><summary>Contrapositiva de p → q?</summary><div>~q → ~p.</div></details>
+<details><summary>p → q como disjunção?</summary><div>~p ∨ q.</div></details>
+<details><summary>Recíproca de p → q é equivalente?</summary><div>Não.</div></details>
+<details><summary>Negação de "p e q"?</summary><div>"não p ou não q".</div></details>
+<details><summary>Negação de "se p, então q"?</summary><div>"p e não q".</div></details>
+<details><summary>Negação de "todo A é B"?</summary><div>"algum A não é B".</div></details>
+<details><summary>Negação de "nenhum A é B"?</summary><div>"algum A é B".</div></details>
+<details><summary>Modus tollens?</summary><div>p → q; ~q; logo ~p.</div></details>
+<details><summary>"p é condição necessária para q" equivale a…</summary><div>q → p.</div></details>
+</div>
+
+<h2>Exercícios de fixação</h2>
+
+<div class="q"><div class="q-n">Exercício 1</div><p class="q-stem">Considere as proposições: I. 15% de 80 = 12 e 40% de 50 = 25. II. 15% de 80 = 12 ou 40% de 50 = 25. III. Se 40% de 50 = 25, então 15% de 80 = 12. É correto afirmar que:</p>
+<ol class="alts"><li class="alt" data-l="A">apenas I é verdadeira;</li><li class="alt" data-l="B">apenas II é verdadeira;</li><li class="alt" data-l="C">apenas II e III são verdadeiras;</li><li class="alt" data-l="D">apenas I e III são verdadeiras;</li><li class="alt" data-l="E">as três são verdadeiras.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> 15% de 80 = 12 (V); 40% de 50 = 20, e não 25 (F). I: V ∧ F = F. II: V ∨ F = V. III: F → V = V.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 2</div><p class="q-stem">Uma sentença logicamente equivalente a "Se o processo está completo, então o parecer é emitido" é:</p>
+<ol class="alts"><li class="alt" data-l="A">Se o parecer é emitido, então o processo está completo.</li><li class="alt" data-l="B">Se o processo não está completo, então o parecer não é emitido.</li><li class="alt" data-l="C">Se o parecer não é emitido, então o processo não está completo.</li><li class="alt" data-l="D">O processo está completo e o parecer não é emitido.</li><li class="alt" data-l="E">O processo está completo ou o parecer é emitido.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Contrapositiva. A é a recíproca e B a inversa (não equivalentes); D é a negação; E troca o "não" de lugar (o correto seria "não está completo ou é emitido").</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 3</div><p class="q-stem">A sentença "Se Ana viaja, então Bruno fica" é equivalente a:</p>
+<ol class="alts"><li class="alt" data-l="A">Ana viaja e Bruno fica.</li><li class="alt" data-l="B">Ana não viaja ou Bruno fica.</li><li class="alt" data-l="C">Ana viaja ou Bruno não fica.</li><li class="alt" data-l="D">Ana não viaja e Bruno não fica.</li><li class="alt" data-l="E">Bruno fica se e somente se Ana viaja.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> p → q ≡ ~p ∨ q.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 4</div><p class="q-stem">A negação de "Se o servidor faltou, então o relatório atrasou" é:</p>
+<ol class="alts"><li class="alt" data-l="A">Se o servidor não faltou, então o relatório não atrasou.</li><li class="alt" data-l="B">O servidor não faltou e o relatório atrasou.</li><li class="alt" data-l="C">O servidor faltou e o relatório não atrasou.</li><li class="alt" data-l="D">O servidor não faltou ou o relatório atrasou.</li><li class="alt" data-l="E">Se o relatório não atrasou, então o servidor não faltou.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> ~(p → q) ≡ p ∧ ~q. D é equivalente (não negação) e E é a contrapositiva.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 5</div><p class="q-stem">A negação de "Paulo estuda à noite ou trabalha aos sábados" é:</p>
+<ol class="alts"><li class="alt" data-l="A">Paulo não estuda à noite ou não trabalha aos sábados.</li><li class="alt" data-l="B">Paulo não estuda à noite e não trabalha aos sábados.</li><li class="alt" data-l="C">Paulo estuda à noite e trabalha aos sábados.</li><li class="alt" data-l="D">Se Paulo estuda à noite, então não trabalha aos sábados.</li><li class="alt" data-l="E">Paulo não estuda à noite e trabalha aos sábados.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> De Morgan: ~(p ∨ q) ≡ ~p ∧ ~q.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 6</div><p class="q-stem">Sabe-se que a sentença "Lúcia fala inglês e não fala espanhol" é falsa. Pode-se concluir que é verdadeira a sentença:</p>
+<ol class="alts"><li class="alt" data-l="A">Lúcia não fala inglês e fala espanhol.</li><li class="alt" data-l="B">Se Lúcia fala inglês, então fala espanhol.</li><li class="alt" data-l="C">Lúcia fala inglês.</li><li class="alt" data-l="D">Lúcia não fala espanhol.</li><li class="alt" data-l="E">Se Lúcia fala espanhol, então não fala inglês.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> A negação verdadeira é "não fala inglês ou fala espanhol" (~p ∨ q), que equivale a "se fala inglês, então fala espanhol" (p → q). As demais não decorrem necessariamente.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 7</div><p class="q-stem">A negação de "Todos os candidatos aprovados são do Rio de Janeiro e têm curso superior" é:</p>
+<ol class="alts"><li class="alt" data-l="A">Nenhum candidato aprovado é do Rio de Janeiro nem tem curso superior.</li><li class="alt" data-l="B">Pelo menos um candidato aprovado não é do Rio de Janeiro ou não tem curso superior.</li><li class="alt" data-l="C">Todos os candidatos aprovados não são do Rio de Janeiro e não têm curso superior.</li><li class="alt" data-l="D">Algum candidato aprovado não é do Rio de Janeiro e não tem curso superior.</li><li class="alt" data-l="E">Nenhum candidato aprovado é do Rio de Janeiro ou tem curso superior.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> "Todo" vira "pelo menos um", e o predicado "A e B" é negado por De Morgan: "não A ou não B". D exige as duas falhas ao mesmo tempo, o que é mais forte do que a negação.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 8</div><p class="q-stem">Considere verdadeiras: (1) Se Carlos é engenheiro, então Diana é advogada. (2) Diana não é advogada ou Eduardo é médico. (3) Eduardo não é médico. Logo:</p>
+<ol class="alts"><li class="alt" data-l="A">Carlos é engenheiro.</li><li class="alt" data-l="B">Diana é advogada.</li><li class="alt" data-l="C">Carlos não é engenheiro e Diana não é advogada.</li><li class="alt" data-l="D">Eduardo é médico ou Diana é advogada.</li><li class="alt" data-l="E">Carlos é engenheiro ou Diana é advogada.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Por (3), "Eduardo é médico" é F; por (2), "Diana não é advogada" é V; por (1), com consequente F, o antecedente é F: Carlos não é engenheiro.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 9</div><p class="q-stem">Em uma empresa, todos os analistas sabem SQL e alguns analistas sabem Python. Pode-se afirmar que:</p>
+<ol class="alts"><li class="alt" data-l="A">todos que sabem SQL são analistas;</li><li class="alt" data-l="B">quem não sabe SQL não é analista;</li><li class="alt" data-l="C">quem sabe Python é analista;</li><li class="alt" data-l="D">nenhum analista sabe Python;</li><li class="alt" data-l="E">todos que sabem Python sabem SQL.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> "Todo analista sabe SQL": o conjunto dos analistas está dentro do de quem sabe SQL; quem está fora de SQL está fora dos analistas. A é a recíproca; C e E não decorrem; D contradiz a premissa.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 10</div><p class="q-stem">Dizer que não é verdade que "nenhum servidor foi promovido" é o mesmo que dizer que:</p>
+<ol class="alts"><li class="alt" data-l="A">todos os servidores foram promovidos;</li><li class="alt" data-l="B">algum servidor foi promovido;</li><li class="alt" data-l="C">algum servidor não foi promovido;</li><li class="alt" data-l="D">nenhum servidor deixou de ser promovido;</li><li class="alt" data-l="E">a maioria dos servidores foi promovida.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> A negação de "nenhum A é B" é "algum A é B" (pelo menos um).</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 11</div><p class="q-stem">A negação de "Se chego cedo e o trânsito está livre, então tomo café" é:</p>
+<ol class="alts"><li class="alt" data-l="A">Chego cedo e o trânsito está livre e não tomo café.</li><li class="alt" data-l="B">Não chego cedo ou o trânsito não está livre, e tomo café.</li><li class="alt" data-l="C">Se não chego cedo e o trânsito não está livre, então não tomo café.</li><li class="alt" data-l="D">Chego cedo ou o trânsito está livre, e não tomo café.</li><li class="alt" data-l="E">Não chego cedo e tomo café.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: A.</b> Mantém-se o antecedente inteiro ("chego cedo e o trânsito está livre"), conecta-se com "e" e nega-se o consequente.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Três colegas falam sobre a data de uma reunião, e exatamente um deles mente. Ana: "A reunião não é na terça". Beto: "A reunião é na terça". Caio: "A reunião é no dia seguinte a segunda". A reunião é:</p>
+<ol class="alts"><li class="alt" data-l="A">segunda, e Caio mente;</li><li class="alt" data-l="B">terça, e Ana mente;</li><li class="alt" data-l="C">terça, e Beto mente;</li><li class="alt" data-l="D">quarta, e Beto mente;</li><li class="alt" data-l="E">quarta, e Ana mente.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Ana e Beto se contradizem, então um deles mente e Caio fala a verdade: o dia seguinte a segunda é terça. Logo, Beto está certo e Ana mente.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 13</div><p class="q-stem">Uma gaveta tem 5 canetas azuis, 4 pretas e 3 vermelhas, misturadas. Retirando sem olhar, o menor número de canetas que garante pelo menos uma vermelha é:</p>
+<ol class="alts"><li class="alt" data-l="A">3;</li><li class="alt" data-l="B">4;</li><li class="alt" data-l="C">9;</li><li class="alt" data-l="D">10;</li><li class="alt" data-l="E">12.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: D.</b> No pior caso, saem primeiro as 5 azuis e as 4 pretas (9 canetas); a 10ª é necessariamente vermelha.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 14</div><p class="q-stem">Assinale o argumento <b>inválido</b>.</p>
+<ol class="alts"><li class="alt" data-l="A">Se há prova, há estudo. Há prova. Logo, há estudo.</li><li class="alt" data-l="B">Se há prova, há estudo. Não há estudo. Logo, não há prova.</li><li class="alt" data-l="C">Se há prova, há estudo. Há estudo. Logo, há prova.</li><li class="alt" data-l="D">Há prova ou há folga. Não há prova. Logo, há folga.</li><li class="alt" data-l="E">Se há prova, há estudo. Se há estudo, há cansaço. Logo, se há prova, há cansaço.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Afirmação do consequente: pode haver estudo sem prova. As demais são modus ponens, modus tollens, silogismo disjuntivo e silogismo hipotético.</p></div></details></div>
+
+<p class="src muted small">Fontes: Irving Copi, <i>Introdução à Lógica</i>; Edgard de Alencar Filho, <i>Iniciação à Lógica Matemática</i>; Sérgio Carvalho e Weber Campos, <i>Raciocínio Lógico Simplificado</i>.</p>
+
+<h2>Checklist</h2>
+<ul class="checklist">
+  <li>Sei reconhecer proposições e sentenças abertas.</li>
+  <li>Sei a tabela-verdade de todos os conectivos e o número de linhas.</li>
+  <li>Sei a contrapositiva e a forma "não p ou q" do condicional, e evito recíproca e inversa.</li>
+  <li>Sei negar "e", "ou", "se… então" e o bicondicional.</li>
+  <li>Sei negar "todo", "algum" e "nenhum", inclusive com predicado composto.</li>
+  <li>Sei usar diagramas para quantificadores.</li>
+  <li>Sei as regras de inferência válidas e as falácias formais.</li>
+  <li>Sei o método para deduções com premissas verdadeiras.</li>
+  <li>Sei resolver verdade e mentira, casa dos pombos, parentesco e tempo.</li>
+</ul>

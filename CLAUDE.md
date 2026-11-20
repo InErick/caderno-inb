@@ -129,7 +129,7 @@ Desempenho mostra horas, % por matéria e o card do banco (questões feitas × t
   3. **Não** incluir: roteiro de minutos (bloco `.roteiro`), referências às questões da aula como se já existissem ("as 20 questões da aula", "na questão X", tabela questão → seção), cópia ou paráfrase próxima de questões da API.
   4. Revisão independente por um segundo agente (fatos, contas dos exercícios, cobertura do banco, cópias, HTML).
   5. PR → merge → Erick dá `git pull` na VPS.
-- Feito: 10–15/11 (fase anterior) e **19/11 dos dois cargos** (reescritas no padrão novo em 20/11, aguardando aprovação do Erick). Próximo: 20–25/11 dos dois cargos.
+- Feito: 10–15/11 (fase anterior) e **19/11 a 25/11 dos dois cargos** no padrão novo (19/11 aprovada pelo Erick em 20/11). 20/11 (Normas) e 25/11 (Português) são o mesmo arquivo nos dois cargos, porque o banco dessas aulas é compartilhado. Próximo: 26/11 em diante.
 - Lembrete agendado para **26/11/2026 às 9h** (São Paulo): preparar as apostilas da semana 2 (26/11–02/12). O Erick precisa exportar e mandar o .txt.
 
 ## 8. Fluxo de git (Claude)
