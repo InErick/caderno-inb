@@ -30,7 +30,7 @@ namespace Financeiro           // namespace: agrupa classes e evita conflito de 
 }</code></pre>
 <ul>
 <li><code>using</code> no topo do arquivo apenas permite escrever <code>Console</code> em vez de <code>System.Console</code>. Não "importa código" para dentro do programa.</li>
-<li><code>Main</code> é o ponto de entrada. Ele é <code>static</code> (pertence à classe, não a um objeto) e pode retornar <code>void</code> ou <code>int</code> e receber ou não <code>string[] args</code> (os argumentos da linha de comando).</li>
+<li><code>Main</code> é o ponto de entrada. Ele é <code>static</code> (pertence à classe, não a um objeto) e pode retornar <code>void</code>, <code>int</code>, <code>Task</code> ou <code>Task&lt;int&gt;</code> (os dois últimos com <code>async</code>, desde o C# 7.1) e receber ou não <code>string[] args</code> (os argumentos da linha de comando).</li>
 <li>Desde o C# 9 existem as <b>instruções de nível superior</b> (top-level statements): um arquivo pode conter só <code>Console.WriteLine("Olá");</code> e o compilador gera a classe e o <code>Main</code> automaticamente. A forma "completa" acima continua válida e é a que aparece na maioria das questões.</li>
 <li>O C# diferencia <b>maiúsculas de minúsculas</b>: <code>Main</code> e <code>main</code> são nomes diferentes, e <code>console.writeline</code> não compila.</li>
 <li>Toda instrução termina com <code>;</code> e os blocos são delimitados por chaves. Comentários: <code>// linha</code>, <code>/* bloco */</code> e <code>/// documentação XML</code>.</li>
@@ -118,11 +118,11 @@ int y = (int)idade;     // compila, mas lança InvalidOperationException em exec
 
 <h3>Coalescência nula: <code>??</code> e <code>??=</code></h3>
 <p><code>a ?? b</code> devolve <code>a</code> se ele não for null; caso contrário, devolve <code>b</code>. O lado direito só é avaliado quando necessário. É uma <b>escolha</b>, não uma conta. Encadeado, <code>a ?? b ?? c</code> devolve o primeiro valor não nulo da esquerda para a direita. <code>x ??= y</code> atribui <code>y</code> a <code>x</code> somente se <code>x</code> for null.</p>
-<pre><code>int? a = null;   int? b = 45;   double? c = 5.1;
-Console.WriteLine(a ?? b);       // 45
-Console.WriteLine(b ?? a);       // 45   (b não é null, então fica com b)
-Console.WriteLine(b ?? c);       // 45   (o resultado é double?, mas 45.0 é impresso como 45)
-Console.WriteLine(c ?? b);       // 5.1
+<pre><code>int? a = null;   int? b = 30;   double? c = 2.5;
+Console.WriteLine(a ?? b);       // 30
+Console.WriteLine(b ?? a);       // 30   (b não é null, então fica com b)
+Console.WriteLine(b ?? c);       // 30   (o resultado é double?, mas 30.0 é impresso como 30)
+Console.WriteLine(c ?? b);       // 2.5
 Console.WriteLine(a ?? -1);      // -1
 int? d = null;
 Console.WriteLine($"[{a ?? d}]"); // []   (null ?? null = null, impresso como texto vazio)</code></pre>
@@ -271,7 +271,7 @@ else
 <li>Aceita expressões de tipos integrais, <code>char</code>, <code>string</code>, <code>enum</code> e, desde o C# 7, <b>padrões</b>: <code>case int n when n &gt; 0:</code>.</li>
 <li>Não pode haver dois <code>case</code> com o mesmo valor constante.</li>
 </ul>
-<p><b>Expressão switch</b> (C# 8), que produz um valor:</p>
+<p><b>Expressão switch</b> (C# 8; os padrões <code>or</code>, <code>and</code> e <code>&gt;=</code> usados no exemplo são do C# 9), que produz um valor:</p>
 <pre><code>string nome = dia switch
 {
     1 or 7 =&gt; "fim de semana",
@@ -322,7 +322,7 @@ for (int k = 0; k &lt; 3; k++) { }   // ✅ válido: cada k vive no seu próprio
 <h2>10. Arrays</h2>
 <p>Um array é uma coleção de tamanho fixo de elementos do mesmo tipo, com índices começando em 0. É um tipo de referência, e seus elementos recebem automaticamente o valor padrão do tipo.</p>
 <pre><code>int[] a = new int[3];               // {0, 0, 0}
-int[] b = { 4, 64, 32 };            // inicialização direta
+int[] b = { 4, 16, 8 };             // inicialização direta
 string[] c = new string[2];         // {null, null}
 Console.WriteLine(b.Length);        // 3 (propriedade)
 Console.WriteLine(b[3]);            // ❌ IndexOutOfRangeException (em execução)
