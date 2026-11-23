@@ -187,10 +187,20 @@
           <a class="av" href="#perfil" title="Perfil">${esc(initials(S.user.name))}</a>
           <div class="who"><b>${esc(S.user.name.split(" ")[0])}</b><span>${ED().nome} · ${ED().nivel.toLowerCase()}</span></div>
           <div class="top-chips" id="topChips"></div>
+          <button class="theme-btn" id="themeBtn" title="Modo noite / modo dia" aria-label="Alternar modo noite"></button>
         </header>
         <main class="main" id="view"></main>
       </div></div>`;
     updateTopbar();
+    const tb = document.getElementById("themeBtn");
+    const paintTheme = () => { const dark = document.documentElement.dataset.theme === "dark"; tb.innerHTML = Icon(dark ? "sun" : "moon", 18); tb.title = dark ? "Modo dia" : "Modo noite"; };
+    paintTheme();
+    tb.addEventListener("click", () => {
+      const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = t;
+      try { localStorage.setItem("caderno_theme", t); } catch {}
+      paintTheme();
+    });
   }
 
   // contagem regressiva, nível e sequência ficam sempre visíveis no topo
@@ -244,7 +254,7 @@
   function ring(p, color, label, sub) {
     const r = 46, c = 2 * Math.PI * r, x = Math.max(0, Math.min(1, p));
     return `<div class="ring"><svg width="112" height="112" viewBox="0 0 112 112">
-      <circle cx="56" cy="56" r="${r}" fill="none" stroke="#eeede9" stroke-width="10"/>
+      <circle cx="56" cy="56" r="${r}" fill="none" stroke="var(--track)" stroke-width="10"/>
       <circle cx="56" cy="56" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - x)}"/>
     </svg><div class="val"><div>${label}<small>${sub || ""}</small></div></div></div>`;
   }

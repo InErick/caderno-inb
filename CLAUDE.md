@@ -110,6 +110,9 @@ public/apostilas/{analista,assistente}/AAAA-MM-DD.html   apostilas (fragmentos H
 - Formatação no cliente (`tidyQuestion` em app.js): LaTeX simples → texto, blocos de código em `pre.qcode`, tabelas em `.tbl`, textos de apoio recolhíveis.
   Servidor (`bank.js`): allowlist de tags; imagens só de `media.quest.api.br`.
 
+### Modo noite
+Botão de sol/lua no topo (ao lado dos chips). A escolha fica no `localStorage` (`caderno_theme`); sem escolha, segue o tema do sistema. O `<head>` do index.html aplica `data-theme` antes de carregar o CSS (sem piscar). Cores em variáveis no `:root`; as do escuro ficam em `html[data-theme="dark"]` dentro de `@media screen` (o PDF/impressão continua claro). Cor nova no CSS: usar variável, nunca hex fixo de fundo ou texto.
+
 ## 6. Gamificação (game.js)
 XP: dia no prazo +50, dia recuperado +30, acerto +3, conquista +100, meta do dia +20. Níveis, sequência 🔥, conquistas, termômetro de aprovação pelos mínimos do edital.
 Desempenho mostra horas, % por matéria e o card do banco (questões feitas × total no banco).
