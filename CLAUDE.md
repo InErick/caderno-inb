@@ -70,15 +70,15 @@ public/apostilas/{analista,assistente}/AAAA-MM-DD.html   apostilas (fragmentos H
 
 ## 4. Cronogramas (plans.js)
 
-- Diário de **19/11/2026 a 09/01/2027**; 10–18/11 ficam como "fase anterior" (legado, com apostilas antigas).
+- Diário até **09/01/2027**. Início: **Assistente 19/11/2026**; **Analista 23/11/2026** (o Erick não tinha começado e pediu para recomeçar em 23/11: mesma ordem de aulas, 4 dias depois; saíram as 2 revisões finais de Específicos e foram unidas Normas 6+7 e Inglês 3+4 → Analista: ESP 26, POR 10, NOR 6, ING 3). Constantes `DIARIO_STARTS` e `LEGACY_END` em plans.js. 10–18/11 ficam como "fase anterior" (legado, com apostilas antigas).
 - Rotina semanal pelo peso do edital: **Seg/Ter/Qui/Sáb = Específicos, Qua = Português, Sex = Normas**, domingo alterna **Inglês (analista) ou RLM (assistente)** com **Português**.
   Totais: Específicos 28 dias, Português 10, Normas 7, Inglês/RLM 4.
 - Analista: 26 aulas de TI + 2 revisões; simulados de 4 h em 07 e 08/01. Assistente: 25 aulas + 3 revisões; simulados de 3 h.
 - Fases do timer: dia normal = **60 min de teoria** (sem fase de questões); domingo 30 teoria + 30 revisão; dias de revisão 60 "Revisão + questões"; simulado 240/180; véspera 30.
 - Etiquetas de Específicos mostram a área: "Específicos · Banco de dados".
-- Primeira semana (19–25/11):
-  - analista: 19 C# básico · 20 Normas (art. 37, Lei 9.784) · 21 POO I · 22 Inglês (estratégias de leitura) · 23 POO II · 24 Exceções + SOLID · 25 Português (interpretação)
-  - assistente: 19 Conceitos e funções administrativas · 20 Normas (art. 37) · 21 Planejamento e controle · 22 RLM (lógica proposicional) · 23 Estruturas organizacionais · 24 Departamentalização/delegação · 25 Português
+- Primeira semana:
+  - analista (23–29/11): 23 C# básico · 24 POO I · 25 Português (interpretação) · 26 POO II · 27 Normas (art. 37, Lei 9.784) · 28 Exceções + SOLID · 29 Inglês (estratégias de leitura)
+  - assistente (19–25/11): 19 Conceitos e funções administrativas · 20 Normas (art. 37) · 21 Planejamento e controle · 22 RLM (lógica proposicional) · 23 Estruturas organizacionais · 24 Departamentalização/delegação · 25 Português
 
 ## 5. Banco de questões (Quest API)
 
@@ -93,9 +93,11 @@ public/apostilas/{analista,assistente}/AAAA-MM-DD.html   apostilas (fragmentos H
   npm run importar -- --simular              # mostra plano e saldo
   npm run importar -- --max-creditos 6000    # teto de gasto
   node scripts/remapear-questoes.js [--aplicar]   # depois de mudar cronograma/mapa
+  node scripts/migrar-analista-23-11.js [--aplicar]  # (feito uma vez) move as questões do Analista para as datas novas
+  node scripts/resetar-progresso.js --listar | --email X [--aplicar]  # zera o progresso de um usuário (com backup)
   node scripts/exportar-questoes.js --de 2026-11-26 --ate 2026-12-02 > questoes-semana2.txt
   ```
-- Observação: em alguns dias o banco do tema é mais amplo que o título (ex.: 19/11 analista mistura "Linguagens de Programação" em geral com C#; 19/11 assistente traz liderança, motivação, equipes…). As apostilas cobrem o que as questões cobram. O mapa (questoes-map.js) pode ser refinado depois.
+- Observação: em alguns dias o banco do tema é mais amplo que o título (ex.: a aula de C# básico do analista mistura "Linguagens de Programação" em geral com C#; 19/11 assistente traz liderança, motivação, equipes…). As apostilas cobrem o que as questões cobram. O mapa (questoes-map.js) pode ser refinado depois.
 
 ### Como as questões funcionam no app
 - **Aula**: as primeiras **20** questões do dia (`pos < 20`) aparecem na aula ("Abrir as questões da aula").
@@ -129,8 +131,8 @@ Desempenho mostra horas, % por matéria e o card do banco (questões feitas × t
   3. **Não** incluir: roteiro de minutos (bloco `.roteiro`), referências às questões da aula como se já existissem ("as 20 questões da aula", "na questão X", tabela questão → seção), cópia ou paráfrase próxima de questões da API, **inclusive nos exemplos da teoria** (nada de reaproveitar o cenário, os nomes, os números ou a resposta de uma questão do banco: inventar casos novos). O repositório é público.
   4. Revisão independente por um segundo agente (fatos, contas dos exercícios, cobertura do banco, cópias, HTML).
   5. PR → merge → Erick dá `git pull` na VPS.
-- Feito: 10–15/11 (fase anterior) e **19/11 a 25/11 dos dois cargos** no padrão novo (19/11 aprovada pelo Erick em 20/11). 20/11 (Normas) e 25/11 (Português) são o mesmo arquivo nos dois cargos, porque o banco dessas aulas é compartilhado. Próximo: 26/11 em diante.
-- Lembrete agendado para **26/11/2026 às 9h** (São Paulo): preparar as apostilas da semana 2 (26/11–02/12). O Erick precisa exportar e mandar o .txt.
+- Feito: 10–15/11 (fase anterior); **Assistente 19–25/11** e **Analista 23–29/11** (as mesmas 7 primeiras aulas, renomeadas para as datas novas em 23/11). Normas 1 e Português 1 são o mesmo texto nos dois cargos. Próximo: Assistente a partir de 26/11; Analista a partir de 30/11.
+- Lembrete agendado para **26/11/2026 às 9h** (São Paulo): preparar as apostilas da semana 2. Exportar `--de 2026-11-26 --ate 2026-12-06` (cobre Assistente 26/11–02/12 e Analista 30/11–06/12).
 
 ## 8. Fluxo de git (Claude)
 Branch por mudança → commit com trailers (`Co-Authored-By` / `Claude-Session`) → `git -c push.negotiate=true push` →

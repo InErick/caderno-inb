@@ -144,11 +144,16 @@ const FINAL = [
 }
 
 // =====================================================================
-// Analista de Sistemas — cronograma DIÁRIO (19/11/2026 → 09/01/2027)
+// Analista de Sistemas — cronograma DIÁRIO (23/11/2026 → 09/01/2027; recomeçou em 23/11)
 // Rotina: Seg/Ter/Qui/Sáb = TI · Qua = Português · Sex = Normas · Dom = Inglês + revisão
 // Cada bloco: a = área, t = título, s = subtópicos do edital, k = buscas no YouTube, f = foco
 // =====================================================================
-const DIARIO_START = [2026, 10, 19], SIM_START = [2027, 0, 7];
+// Início do cronograma diário de cada cargo. O Analista foi reiniciado em 23/11 (segunda):
+// as aulas seguem a mesma ordem, só começam 4 dias depois; para caber até a prova,
+// as 2 revisões finais de Específicos saem e duas aulas foram unidas (Normas 6+7 e Inglês 3+4).
+// A "fase anterior" (legado) continua indo só até 18/11.
+const DIARIO_STARTS = { analista: [2026, 10, 23], assistente: [2026, 10, 19] };
+const LEGACY_END = [2026, 10, 19], SIM_START = [2027, 0, 7];
 
 // =====================================================================
 // Rotina semanal (revisada pelo edital — peso de cada matéria):
@@ -209,14 +214,12 @@ const NOR = [
   {a:"Integridade",t:"LAI (Lei 12.527/2011), conflito de interesses e governança corporativa",s:["Lei de Acesso à Informação (12.527/2011)","Conflito de interesses","Governança corporativa"],k:["Lei de Acesso à Informação resumo prazos","conflito de interesses Lei 12.813","governança corporativa princípios estatais Lei 13.303"],f:"LAI: <b>20 + 10 dias</b>; sigilo 25/15/5 anos; não se exige o motivo do pedido."},
   {a:"Proteção de dados",t:"LGPD (Lei 13.709/2018) e noções de segurança da informação",s:["LGPD (Lei 13.709/2018)","Dados pessoais e dados sensíveis","Bases legais para tratamento","Responsabilidade no tratamento de dados de candidatos","Segurança da informação (CID)"],k:["LGPD resumo para concurso","bases legais LGPD art 7 art 11","confidencialidade integridade disponibilidade"],f:"Agentes: <b>controlador, operador, encarregado</b>. Dado sensível tem bases próprias (art. 11)."},
   {a:"Segurança nuclear",t:"Segurança nuclear — ANSN, normas CNEN, proteção radiológica e controle de materiais nucleares",s:["ANSN e CNEN","Normas da CNEN","Proteção radiológica (justificação, otimização, limitação)","Radioproteção na prática (tempo, distância, blindagem)","Controle de materiais nucleares (salvaguardas)","Segurança operacional em instalações nucleares"],k:["ANSN Autoridade Nacional de Segurança Nuclear","princípios de proteção radiológica ALARA","CNEN NN 3.01 limites de dose","salvaguardas materiais nucleares ABACC"],f:"Limites: <b>20 mSv/ano</b> (trabalhador) e <b>1 mSv/ano</b> (público)."},
-  {a:"Trabalho e meio ambiente",t:"NR-01, prevenção de acidentes, Política Nacional do Meio Ambiente, licenciamento e resíduos",s:["NR-01 (GRO e PGR)","Prevenção de acidentes industriais","Política Nacional do Meio Ambiente (Lei 6.938/1981)","Licenciamento e responsabilidade ambiental","Gestão de resíduos industriais","Sustentabilidade e desenvolvimento sustentável"],k:["NR 01 GRO PGR","Lei 6.938/81 Política Nacional do Meio Ambiente","licença prévia instalação operação","Política Nacional de Resíduos Sólidos"],f:"LP → LI → LO. EPI é a <b>última</b> medida de controle."},
-  {a:"Qualidade",t:"Qualidade e gestão de processos + revisão de Normas",s:["Qualidade (PDCA, ISO 9001, ferramentas)","Gestão de processos"],k:["ciclo PDCA","ferramentas da qualidade Ishikawa Pareto 5W2H","gestão de processos BPM"],f:"<b>PDCA</b> = Plan, Do, Check, Act. Revise os prazos das leis de Normas."}
+  {a:"Trabalho, meio ambiente e qualidade",t:"NR-01, meio ambiente e resíduos + qualidade e gestão de processos",s:["NR-01 (GRO e PGR)","Prevenção de acidentes industriais","Política Nacional do Meio Ambiente (Lei 6.938/1981)","Licenciamento e responsabilidade ambiental","Gestão de resíduos industriais","Sustentabilidade e desenvolvimento sustentável","Qualidade (PDCA, ISO 9001, ferramentas)","Gestão de processos"],k:["NR 01 GRO PGR","Lei 6.938/81 Política Nacional do Meio Ambiente","licença prévia instalação operação","Política Nacional de Resíduos Sólidos","ciclo PDCA","ferramentas da qualidade Ishikawa Pareto 5W2H"],f:"LP → LI → LO. EPI é a <b>última</b> medida de controle. <b>PDCA</b> = Plan, Do, Check, Act."}
 ];
 const ING = [
   {a:"Estratégias de leitura",t:"Estratégias de leitura — skimming, scanning, palavras-chave, ideia principal e inferência",s:["Skimming (leitura global)","Scanning (informação específica)","Palavras-chave e ideias principais × secundárias","Inferência e objetivo comunicativo do texto"],k:["skimming e scanning inglês instrumental","ideia principal texto em inglês","inferência inglês instrumental"],f:"Leia <b>o enunciado antes do texto</b>; skimming = ideia geral, scanning = dado específico."},
   {a:"Vocabulário técnico",t:"Vocabulário técnico — cognatos, falsos cognatos, prefixos e sufixos, marcadores discursivos",s:["Cognatos e falsos cognatos","Prefixos e sufixos","Marcadores discursivos (however, therefore, although)","Expressões técnicas e dedução pelo contexto"],k:["falsos cognatos inglês lista","prefixos e sufixos em inglês","linking words however therefore although"],f:"<b>Eventually</b> = por fim; <b>actually</b> = na verdade; <b>unless</b> = a menos que; <b>-less</b> = sem."},
-  {a:"Textos técnicos",t:"Textos técnicos e normativos — relatórios, manuais, normas, abstracts, segurança e qualidade",s:["Gêneros técnicos (reports, manuals, abstracts, notices)","Normas internacionais (shall, should, may)","Linguagem formal técnica","Termos de segurança, qualidade e conformidade"],k:["inglês técnico leitura de manuais","shall should may must normas","safety quality compliance vocabulary"],f:"Em normas: <b>shall</b> = obrigatório; <b>should</b> = recomendado; <b>may</b> = permitido."},
-  {a:"Gráficos e revisão",t:"Gráficos, tabelas e dados em inglês",s:["Leitura de gráficos e tabelas","Vocabulário de tendência (increase, peak, decline)","Revisão final: falsos cognatos e marcadores"],k:["describing graphs in english vocabulary","inglês gráficos increase decrease"],f:"Vocabulário de tendência: <b>increase, decrease, peak, steady, drop</b>."}
+  {a:"Textos técnicos e gráficos",t:"Textos técnicos e normativos + gráficos e tabelas em inglês",s:["Gêneros técnicos (reports, manuals, abstracts, notices)","Normas internacionais (shall, should, may)","Linguagem formal técnica","Termos de segurança, qualidade e conformidade","Leitura de gráficos e tabelas","Vocabulário de tendência (increase, peak, decline)"],k:["inglês técnico leitura de manuais","shall should may must normas","describing graphs in english vocabulary"],f:"Em normas: <b>shall</b> = obrigatório; <b>should</b> = recomendado; <b>may</b> = permitido. Tendência: <b>increase, decrease, peak, steady, drop</b>."}
 ];
 const FINAL = [
  {m:"FIN",kind:"SIM",a:"Simulado",t:"Simulado 1 — prova antiga da FGV, cronometrado (4h) + revisão dos erros",s:[],k:["prova FGV analista de sistemas pdf","prova FGV desenvolvimento de sistemas"],f:"Faça uma prova completa da FGV em <b>4 horas</b>, sem consulta. Lance os acertos <b>por matéria</b> como simulado."},
@@ -304,7 +307,7 @@ function phasesFor(d, edital) {
 
 function buildDiario(edital) {
   const { L, FINAL } = edital === "assistente" ? dataAssistenteDiario() : dataAnalistaDiario();
-  const start = new Date(...DIARIO_START), end = new Date(...END), simStart = new Date(...SIM_START);
+  const start = new Date(...(DIARIO_STARTS[edital] || DIARIO_STARTS.analista)), end = new Date(...END), simStart = new Date(...SIM_START);
   const days = []; let iF = 0, sundays = 0;
   const idx = { ESP: 0, POR: 0, NOR: 0, ING: 0 };
   // dia da semana → matéria; domingo alterna Inglês/RLM (1º, 3º, 5º, 7º) e Português
@@ -365,7 +368,7 @@ function build(edital) {
 
 // Dias da fase anterior (antes do cronograma diário), só para consulta
 function legacy(edital) {
-  const first = keyOf(new Date(...DIARIO_START));
+  const first = keyOf(new Date(...LEGACY_END));
   return buildRotativo(edital).filter(d => d.key < first).map(d => ({ ...d, legacy: true }));
 }
 
