@@ -204,10 +204,13 @@ window.Reader = (() => {
       const it = e.target.closest("[data-gid]"); if (!it) return;
       const first = segsOf(it.dataset.gid)[0];
       const el = st.art.querySelector(`mark.hl[data-id="${first.id}"]`);
-      if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1400); }
+      if (el) { openParents(el); el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1400); }
       st.panel.classList.remove("open");
     };
   }
+
+  // abre os <details> recolhidos (ex.: "Aprofundamento") que escondem o elemento
+  function openParents(el) { for (let d = el.closest("details"); d; d = d.parentElement?.closest("details")) d.open = true; }
 
   // ---------- parei aqui ----------
   function markBlock(b) {
@@ -262,6 +265,7 @@ window.Reader = (() => {
   function goBookmark(smooth = true) {
     const el = st.data.bookmark && st.art.querySelector(`[data-b="${st.data.bookmark.b}"]`);
     if (!el) return false;
+    openParents(el);
     const y = el.getBoundingClientRect().top + scrollY - ((document.querySelector(".rd-bar")?.offsetHeight || 60) + 90);
     scrollTo({ top: y, behavior: smooth ? "smooth" : "auto" });
     return true;

@@ -1,6 +1,7 @@
 <h1>C# básico: plataforma, tipos, operadores, controle de fluxo, métodos, exceções e arquivos</h1>
 <p class="lead">Este capítulo constrói a base da linguagem C# exigida no edital de Analista de Sistemas. O objetivo não é só saber "o que é" cada recurso, mas conseguir <b>prever a saída de um trecho de código</b> e <b>identificar o que compila e o que não compila</b>, que é a forma mais comum de cobrança da FGV. No final, há um panorama de outras linguagens e tecnologias web (JavaScript, Java, HTML5, CSS3 e WSDL) que costumam ser cobradas no mesmo bloco de "linguagens de programação".</p>
 <div class="meta-row"><span class="chip-i">Específicos · C#</span><span class="chip-i">Dia 1 do cronograma</span><span class="chip-i">⏱ 1 hora</span></div>
+<div class="box dica"><span class="bt">Tempo de estudo</span>O núcleo deste capítulo cabe na hora do dia. Os blocos recolhidos <b>Aprofundamento (opcional)</b> trazem tópicos que caem menos: leia se sobrar tempo ou na revisão.</div>
 
 <div class="box dica"><span class="bt">Como estudar este capítulo</span>Questões de código se resolvem com <b>rastreio</b> (trace table): uma coluna por variável e uma linha por instrução executada, anotando o valor depois de cada passo. Nos exemplos resolvidos, cubra a resposta, faça o rastreio no papel e só depois confira. Tentar recuperar a resposta antes de ler (prática de recuperação) fixa muito mais do que reler o texto.</div>
 
@@ -374,6 +375,7 @@ B(ref n);              // n = 11
 int[] arr = { 5 };
 C(arr);                // arr[0] = 99 (o conteúdo mudou; a troca de referência não volta)</code></pre></div>
 
+<details class="aprof"><summary>Aprofundamento (opcional) · exceções, pré-processador e arquivos (System.IO)</summary>
 <h2>12. Tratamento de exceções</h2>
 <p>Exceções representam erros em tempo de execução. Quando uma é lançada e não é tratada no método atual, ela sobe pela pilha de chamadas até encontrar um <code>catch</code> compatível; se não encontrar nenhum, o programa termina.</p>
 <pre><code>try
@@ -480,6 +482,7 @@ using (var w = new StreamWriter(fs))
 foreach (string linha in File.ReadLines("dados.csv"))
     Console.WriteLine(linha);</code></pre>
 <div class="box dica"><span class="bt">Memorizando os seis FileMode</span>Pense no ciclo de vida de um arquivo: <b>nascer</b> (Create, CreateNew), <b>abrir</b> (Open, OpenOrCreate), <b>esvaziar</b> (Truncate) e <b>acrescentar</b> (Append).</div>
+</details>
 
 <h2>15. Outras linguagens e tecnologias cobradas no mesmo bloco</h2>
 <p>Em provas de TI, o assunto "linguagens de programação" costuma misturar C# com conceitos gerais e com outras linguagens. Os pontos abaixo resolvem a maior parte dessas questões.</p>
@@ -491,6 +494,7 @@ foreach (string linha in File.ReadLines("dados.csv"))
 <li><b>Híbridas:</b> compilam para um código intermediário executado por uma máquina virtual: <b>Java</b> (bytecode, JVM) e <b>C#</b> (IL, CLR).</li>
 </ul>
 
+<details class="aprof"><summary>Aprofundamento (opcional) · JavaScript, Java, HTML5/CSS3 e WSDL</summary>
 <h3>15.2 JavaScript</h3>
 <p>JavaScript é uma linguagem interpretada, de tipagem <b>dinâmica</b> e fraca, executada no navegador (e no servidor, com Node.js). Para incluir um arquivo externo numa página usa-se <code>&lt;script src="js/app.js"&gt;&lt;/script&gt;</code>; o atributo <code>type="text/javascript"</code> é opcional no HTML5. Os pontos mais cobrados:</p>
 <ul>
@@ -553,6 +557,7 @@ Os operandos de <code>+</code> são avaliados da esquerda para a direita: <code>
 <tr><td><code>service</code> / <code>port</code></td><td><code>service</code> / <code>endpoint</code></td><td><b>onde</b> o serviço está: endereços de acesso</td></tr>
 </table></div>
 <p>Resumo: na WSDL 2.0, o elemento que descreve as mensagens trocadas é a <b><code>interface</code></b>, e o componente que indica o ponto de acesso é o <b><code>service</code></b>, com seus <code>endpoint</code>s.</p>
+</details>
 
 <h2>Síntese</h2>
 <div class="tbl"><table>
@@ -653,29 +658,30 @@ Console.WriteLine(7 / 2 * 2.0);</code></pre>
 <ol class="alts"><li class="alt" data-l="A">A4, 4A, 7</li><li class="alt" data-l="B">A31, 4A, 6</li><li class="alt" data-l="C">A31, 31A, 7</li><li class="alt" data-l="D">A4, 31A, 6</li><li class="alt" data-l="E">A31, 4A, 7</li></ol>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> "A" + 3 = "A3", depois + 1 = "A31". Em <code>a + 1 + "A"</code>, a soma numérica vem antes: 4, depois "4A". <code>7 / 2</code> é divisão inteira (3), e 3 × 2.0 = 6.</p></div></details></div>
 
-<div class="q"><div class="q-n">Exercício 7</div><p class="q-stem">Um programa deve gravar logs detalhados apenas quando compilado na configuração Debug. A construção adequada em C# é:</p>
-<ol class="alts"><li class="alt" data-l="A"><code>if (DEBUG) { Log(); }</code></li><li class="alt" data-l="B"><code>#if DEBUG</code>, <code>Log();</code> e <code>#endif</code>, cada um em sua própria linha</li><li class="alt" data-l="C"><code>#ifdef DEBUG { Log(); }</code></li><li class="alt" data-l="D"><code>#when DEBUG Log(); #end</code></li><li class="alt" data-l="E"><code>@if(Debug) Log(); @endif</code></li></ol>
-<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> A compilação condicional usa <code>#if</code> / <code>#else</code> / <code>#endif</code>, uma diretiva por linha. <code>#ifdef</code> é de C/C++; <code>if (DEBUG)</code> trataria DEBUG como variável.</p></div></details></div>
-
-<div class="q"><div class="q-n">Exercício 8</div><p class="q-stem">Assinale a opção que contém somente métodos estáticos existentes na classe <code>System.IO.File</code>.</p>
-<ol class="alts"><li class="alt" data-l="A">Copy; Rename</li><li class="alt" data-l="B">AppendAllText; Size</li><li class="alt" data-l="C">Move; ReadAllLines</li><li class="alt" data-l="D">Erase; Exists</li><li class="alt" data-l="E">OpenReadWrite; Decrypt</li></ol>
-<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Rename, Size, Erase e OpenReadWrite não existem (usa-se Move, FileInfo.Length, Delete e Open com FileAccess.ReadWrite).</p></div></details></div>
-
-<div class="q"><div class="q-n">Exercício 9</div><p class="q-stem">Deseja-se abrir um arquivo existente e apagar todo o seu conteúdo, gerando erro caso ele não exista. O valor de <code>FileMode</code> adequado é:</p>
-<ol class="alts"><li class="alt" data-l="A">Create</li><li class="alt" data-l="B">Truncate</li><li class="alt" data-l="C">OpenOrCreate</li><li class="alt" data-l="D">Rewrite</li><li class="alt" data-l="E">Append</li></ol>
-<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Truncate abre um arquivo que já existe e o zera. Create também zeraria, mas criaria o arquivo inexistente sem erro. Rewrite não existe.</p></div></details></div>
-
-<div class="q"><div class="q-n">Exercício 10</div><p class="q-stem">Sobre tratamento de exceções em C#, assinale a afirmativa correta.</p>
-<ol class="alts"><li class="alt" data-l="A">O bloco <code>finally</code> só executa quando nenhuma exceção é lançada.</li><li class="alt" data-l="B">É possível escrever <code>catch (Exception e)</code> antes de <code>catch (FormatException e)</code> no mesmo try.</li><li class="alt" data-l="C">Uma estrutura válida é <code>try { } catch (Exception e) { } finally { }</code>, sendo o bloco <code>finally</code> opcional.</li><li class="alt" data-l="D">O tratamento é feito com <code>try</code> / <code>except</code>.</li><li class="alt" data-l="E">Todo <code>try</code> exige pelo menos um <code>catch</code>.</li></ol>
-<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O finally sempre executa (A). O catch geral antes do específico não compila (B). <code>except</code> é Python (D). <code>try</code> + <code>finally</code> sem catch é válido (E).</p></div></details></div>
-
-<div class="q"><div class="q-n">Exercício 11</div><p class="q-stem">Considere:</p>
+<div class="q"><div class="q-n">Exercício 7</div><p class="q-stem">Considere:</p>
 <pre><code>static void Muda(int x, ref int y, int[] z) { x++; y++; z[0]++; }
 int a = 1, b = 1;  int[] c = { 1 };
 Muda(a, ref b, c);
 Console.WriteLine($"{a} {b} {c[0]}");</code></pre>
 <ol class="alts"><li class="alt" data-l="A">1 1 1</li><li class="alt" data-l="B">2 2 2</li><li class="alt" data-l="C">1 2 2</li><li class="alt" data-l="D">1 2 1</li><li class="alt" data-l="E">2 1 2</li></ol>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> <code>a</code> foi passado por valor (cópia), então não muda. <code>b</code> foi passado por <code>ref</code>, então muda para 2. O array é tipo de referência: o método altera o conteúdo do mesmo objeto, então <code>c[0]</code> vira 2.</p></div></details></div>
+
+<details class="aprof"><summary>Aprofundamento (opcional) · exercícios dos tópicos de aprofundamento</summary>
+<div class="q"><div class="q-n">Exercício 8</div><p class="q-stem">Um programa deve gravar logs detalhados apenas quando compilado na configuração Debug. A construção adequada em C# é:</p>
+<ol class="alts"><li class="alt" data-l="A"><code>if (DEBUG) { Log(); }</code></li><li class="alt" data-l="B"><code>#if DEBUG</code>, <code>Log();</code> e <code>#endif</code>, cada um em sua própria linha</li><li class="alt" data-l="C"><code>#ifdef DEBUG { Log(); }</code></li><li class="alt" data-l="D"><code>#when DEBUG Log(); #end</code></li><li class="alt" data-l="E"><code>@if(Debug) Log(); @endif</code></li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> A compilação condicional usa <code>#if</code> / <code>#else</code> / <code>#endif</code>, uma diretiva por linha. <code>#ifdef</code> é de C/C++; <code>if (DEBUG)</code> trataria DEBUG como variável.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 9</div><p class="q-stem">Assinale a opção que contém somente métodos estáticos existentes na classe <code>System.IO.File</code>.</p>
+<ol class="alts"><li class="alt" data-l="A">Copy; Rename</li><li class="alt" data-l="B">AppendAllText; Size</li><li class="alt" data-l="C">Move; ReadAllLines</li><li class="alt" data-l="D">Erase; Exists</li><li class="alt" data-l="E">OpenReadWrite; Decrypt</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> Rename, Size, Erase e OpenReadWrite não existem (usa-se Move, FileInfo.Length, Delete e Open com FileAccess.ReadWrite).</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 10</div><p class="q-stem">Deseja-se abrir um arquivo existente e apagar todo o seu conteúdo, gerando erro caso ele não exista. O valor de <code>FileMode</code> adequado é:</p>
+<ol class="alts"><li class="alt" data-l="A">Create</li><li class="alt" data-l="B">Truncate</li><li class="alt" data-l="C">OpenOrCreate</li><li class="alt" data-l="D">Rewrite</li><li class="alt" data-l="E">Append</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> Truncate abre um arquivo que já existe e o zera. Create também zeraria, mas criaria o arquivo inexistente sem erro. Rewrite não existe.</p></div></details></div>
+
+<div class="q"><div class="q-n">Exercício 11</div><p class="q-stem">Sobre tratamento de exceções em C#, assinale a afirmativa correta.</p>
+<ol class="alts"><li class="alt" data-l="A">O bloco <code>finally</code> só executa quando nenhuma exceção é lançada.</li><li class="alt" data-l="B">É possível escrever <code>catch (Exception e)</code> antes de <code>catch (FormatException e)</code> no mesmo try.</li><li class="alt" data-l="C">Uma estrutura válida é <code>try { } catch (Exception e) { } finally { }</code>, sendo o bloco <code>finally</code> opcional.</li><li class="alt" data-l="D">O tratamento é feito com <code>try</code> / <code>except</code>.</li><li class="alt" data-l="E">Todo <code>try</code> exige pelo menos um <code>catch</code>.</li></ol>
+<details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: C.</b> O finally sempre executa (A). O catch geral antes do específico não compila (B). <code>except</code> é Python (D). <code>try</code> + <code>finally</code> sem catch é válido (E).</p></div></details></div>
 
 <div class="q"><div class="q-n">Exercício 12</div><p class="q-stem">Na especificação WSDL 2.0, o componente que agrupa as operações abstratas de um serviço, incluindo as mensagens trocadas, é:</p>
 <ol class="alts"><li class="alt" data-l="A">portType</li><li class="alt" data-l="B">message</li><li class="alt" data-l="C">interface</li><li class="alt" data-l="D">endpoint</li><li class="alt" data-l="E">binding</li></ol>
@@ -690,6 +696,7 @@ Console.WriteLine($"{a} {b} {c[0]}");</code></pre>
 <details><summary>Ver gabarito comentado</summary><div class="gab-body"><p><b>Gabarito: B.</b> <code>x[y]</code> seleciona elementos x que têm o atributo y, qualquer que seja o valor.</p></div></details></div>
 
 <p class="src muted small">Fontes: Microsoft Learn (visão geral do .NET e do CLR; tipos internos; tipos de valor anuláveis; operadores e precedência; instruções de seleção, iteração e salto; parâmetros de método; try-catch-finally; diretivas de pré-processador; classes File, FileStream e enum FileMode), especificação W3C WSDL 2.0, MDN Web Docs (JavaScript, canvas, elementos HTML e seletores CSS) e documentação Java SE da Oracle (java.util.regex e Java Language Specification).</p>
+</details>
 
 <h2>Checklist</h2>
 <ul class="checklist">

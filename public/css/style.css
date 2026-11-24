@@ -490,6 +490,9 @@ body.reading { background: var(--card); }
 .apostila .cards summary { cursor: pointer; font-weight: 700; }
 .apostila .cards details[open] { background: var(--green-l); }
 .apostila .cards details > div { margin-top: 6px; }
+.apostila details.aprof { border: 1px dashed var(--line-2); border-radius: 12px; padding: 4px 16px; margin: 18px 0; background: var(--bg-soft); }
+.apostila details.aprof > summary { cursor: pointer; font: 700 14px var(--head); color: var(--ink-2); padding: 8px 0; }
+.apostila details.aprof[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 10px; }
 
 mark.hl { color: inherit; border-radius: 3px; padding: 1px 0; cursor: pointer; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 mark.hl-y, .dot.hl-y { background: #fde68a; } mark.hl-g, .dot.hl-g { background: #bbf0d2; }
