@@ -159,6 +159,7 @@ window.Reader = (() => {
     return Object.entries(COLORS).map(([k, n]) => `<button class="sw sw-${k}" data-c="${k}" title="${n}"></button>`).join("");
   }
   function onSelectionEnd() {
+    if (st?.picking) return;
     setTimeout(() => {
       const got = selectionSegments();
       if (!got) return;
@@ -209,16 +210,54 @@ window.Reader = (() => {
   }
 
   // ---------- parei aqui ----------
-  function topBlock() {
-    const lim = (document.querySelector(".rd-bar")?.getBoundingClientRect().bottom || 80) + 8;
-    const blocks = st.art.querySelectorAll("[data-b]");
-    for (const b of blocks) { const r = b.getBoundingClientRect(); if (r.bottom > lim + 4) return b; }
-    return blocks[0];
-  }
-  function setBookmark() {
-    const b = topBlock(); if (!b) return;
+  function markBlock(b) {
     st.data.bookmark = { b: +b.dataset.b, at: new Date().toISOString() };
     paint(); save("Marcado: você parou aqui 🔖");
+  }
+  // Clicar em "Parei aqui": se houver texto selecionado, marca ali; senão entra no modo
+  // "toque no trecho onde parou" (o próximo clique num parágrafo marca; Esc ou o botão cancelam).
+  function setBookmark() {
+    if (st.picking) return stopPick();
+    const sel = getSelection();
+    if (sel && !sel.isCollapsed && st.art.contains(sel.anchorNode)) {
+      const b = blockOf(sel.anchorNode);
+      if (b) { sel.removeAllRanges(); return markBlock(b); }
+    }
+    startPick();
+  }
+  function startPick() {
+    const s = st;
+    s.picking = true;
+    document.body.classList.add("bm-picking");
+    document.querySelectorAll("#rdMark, #rdFMark").forEach(x => x.classList.add("on"));
+    s.toast("Toque no parágrafo onde você parou 🔖 (Esc cancela)");
+    s.pickOver = e => {
+      const b = e.target.closest?.("[data-b]");
+      s.art.querySelectorAll(".bm-hover").forEach(x => x !== b && x.classList.remove("bm-hover"));
+      if (b && s.art.contains(b)) b.classList.add("bm-hover");
+    };
+    s.pickClick = e => {
+      if (e.target.closest(".rd-bar, .rd-focusbar, #rdMark, #rdFMark")) return;
+      const b = e.target.closest?.("[data-b]");
+      if (!b || !s.art.contains(b)) return;
+      e.preventDefault(); e.stopPropagation();
+      stopPick();
+      markBlock(b);
+    };
+    s.pickKey = e => { if (e.key === "Escape") stopPick(); };
+    document.addEventListener("mouseover", s.pickOver);
+    document.addEventListener("click", s.pickClick, true);
+    document.addEventListener("keydown", s.pickKey);
+  }
+  function stopPick() {
+    const s = st; if (!s || !s.picking) return;
+    s.picking = false;
+    document.body.classList.remove("bm-picking");
+    document.querySelectorAll("#rdMark, #rdFMark").forEach(x => x.classList.remove("on"));
+    s.art.querySelectorAll(".bm-hover").forEach(x => x.classList.remove("bm-hover"));
+    document.removeEventListener("mouseover", s.pickOver);
+    document.removeEventListener("click", s.pickClick, true);
+    document.removeEventListener("keydown", s.pickKey);
   }
   function goBookmark(smooth = true) {
     const el = st.data.bookmark && st.art.querySelector(`[data-b="${st.data.bookmark.b}"]`);
@@ -341,6 +380,7 @@ window.Reader = (() => {
 
   function close() {
     if (!st) return;
+    stopPick();
     document.body.classList.remove("reading", "rd-scrolled");
     document.removeEventListener("fullscreenchange", st.onFs);
     if (st.fsByUs && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
